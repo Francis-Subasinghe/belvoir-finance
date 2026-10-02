@@ -11,6 +11,7 @@ Roles: **Atlas** (architect/coordinator), **Forge** (developer), **Sentinel** (Q
 5. No purchases, DNS/registrar changes, repo-visibility changes or production deploys without explicit owner authorisation.
 6. Feature branches only; merge to `main` requires green CI + Sentinel PASS + Aegis no open Critical/High.
 7. Never report a check as passed if it did not run.
+8. Push with the fine-grained `belvoir-finance` token (`BELVOIR_GH_TOKEN`), never the owner's admin login. Never interpolate external text into workflow `run:` steps.
 
 ## Source of truth
 
