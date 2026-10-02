@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# F1-19: read-only default token. Only the codeql job adds security-events: write (needed to upload results).
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guards:
+    name: Repo guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: "F1-32: no PR-target trigger and no repo secrets in workflows"
+        run: |
+          if grep -rnE 'pull_request_targe[t]|secrets[.]' .github/workflows; then
+            echo "::error::Forbidden trigger or secrets reference found in .github/workflows"
+            exit 1
+          fi
+
+      - name: "F1-20: every third-party action pinned to a 40-char SHA"
+        run: |
+          bad=$(grep -rhE '^\s*-?\s*uses:' .github/workflows | grep -vE 'uses:\s*\./' | grep -vE '@[0-9a-f]{40}(\s|$)' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Unpinned actions:"; echo "$bad"; exit 1
+          fi
+
+      - name: "F1-30: dev and preview servers bind to localhost only"
+        # Scans package.json, astro.config.* and everything under scripts/ (Aegis L1).
+        # tests/unit/repo-guards.test.ts runs this exact step against fixtures.
+        run: |
+          targets=$(ls -d package.json astro.config.* scripts 2>/dev/null || true)
+          if [ -n "$targets" ] && grep -rnE -- '--host|0\.0\.0\.0|host:\s*true' $targets; then
+            echo "::error::A dev or preview server is exposed beyond localhost"
+            exit 1
+          fi
+
+      - name: "Aegis M3: no .mdx under content/"
+        run: |
+          if [ -d content ] && find content -name '*.mdx' | grep -q .; then
+            echo "::error::.mdx files are not allowed under content/"
+            find content -name '*.mdx'; exit 1
+          fi
+
+  build:
+    name: Install, check, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Format check
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Content checks
+        run: npm run check:content
+      - name: Build (includes dist/ assertions via postbuild)
+        run: npm run build
+      - name: "Aegis M2: no keystatic route in dist/"
+        run: |
+          if find dist -ipath '*keystatic*' | grep -q .; then
+            echo "::error::keystatic found in dist/"
+            find dist -ipath '*keystatic*'; exit 1
+          fi
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: "F1-26: Playwright and axe e2e"
+        run: npm run test:e2e
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: high
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2

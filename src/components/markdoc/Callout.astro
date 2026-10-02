@@ -1,0 +1,23 @@
+---
+import type { CalloutType } from "../../lib/markdoc-allowlist";
+
+interface Props {
+  type: CalloutType;
+  title?: string;
+}
+const LABELS: Record<CalloutType, string> = {
+  fact: "Fact",
+  estimate: "Estimate",
+  example: "Example",
+  opinion: "Opinion",
+};
+const { type, title } = Astro.props;
+---
+
+<aside class={`callout callout-${type}`} aria-label={LABELS[type]}>
+  <p class="callout-label">
+    {LABELS[type]}
+    {title ? `: ${title}` : ""}
+  </p>
+  <slot />
+</aside>

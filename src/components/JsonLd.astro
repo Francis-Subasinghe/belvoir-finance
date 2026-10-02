@@ -1,0 +1,12 @@
+---
+// The only component allowed to emit JSON-LD (F1-31).
+import { serializeJsonLd } from "../lib/jsonld";
+
+interface Props {
+  data: Record<string, unknown>;
+}
+const { data } = Astro.props;
+const json = serializeJsonLd(data);
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

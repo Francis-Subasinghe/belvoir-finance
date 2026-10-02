@@ -1,0 +1,195 @@
+@import "@fontsource/source-serif-4/latin-600.css";
+@import "@fontsource/source-serif-4/latin-700.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 100%;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-alabaster);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  line-height: 1.25;
+  color: var(--color-navy);
+}
+
+h1 {
+  font-size: var(--step-4);
+}
+h2 {
+  font-size: var(--step-3);
+}
+
+a {
+  color: var(--color-link);
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.numeric,
+.metric {
+  font-family: var(--font-mono);
+  font-variant-numeric: var(--numeric);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: -100px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-white);
+  color: var(--color-navy);
+  z-index: 10;
+}
+.skip-link:focus {
+  top: var(--space-2);
+}
+
+.container {
+  width: min(100% - 2 * var(--space-3), 72rem);
+  margin-inline: auto;
+}
+
+main {
+  flex: 1;
+  padding-block: var(--space-5);
+}
+
+.prose {
+  max-width: var(--measure);
+}
+
+/* ---- Dark surfaces: the only places --color-gold may be used ---- */
+.surface-navy {
+  background: var(--color-navy);
+  color: var(--color-text-on-dark);
+}
+.surface-slate {
+  background: var(--color-slate);
+  color: var(--color-text-on-dark);
+}
+.surface-navy a,
+.surface-slate a {
+  color: var(--color-gold);
+}
+.surface-navy :focus-visible,
+.surface-slate :focus-visible {
+  outline-color: var(--color-focus-on-dark);
+}
+.surface-navy .brand-accent,
+.surface-slate .brand-accent {
+  color: var(--color-gold);
+}
+
+/* ---- Light-surface accents use the darker gold ---- */
+.eyebrow {
+  color: var(--color-gold-on-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: var(--step--1);
+}
+
+.site-header .container,
+.site-footer .container {
+  padding-block: var(--space-3);
+}
+.site-header .brand {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-text-on-dark);
+}
+.site-header nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+.site-header nav a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: var(--space-1);
+}
+
+.notice {
+  background: var(--color-notice-bg);
+  color: var(--color-notice-text);
+  border-block: 1px solid var(--color-border);
+  font-size: var(--step--1);
+}
+.notice p {
+  margin: 0;
+  padding-block: var(--space-2);
+}
+
+.demo-banner {
+  background: var(--color-white);
+  border: 2px dashed var(--color-border-strong);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.callout {
+  border-left: 4px solid var(--color-border-strong);
+  background: var(--color-white);
+  padding: var(--space-3);
+  margin-block: var(--space-4);
+}
+.callout-label {
+  font-weight: 600;
+  color: var(--color-gold-on-light);
+  margin: 0 0 var(--space-1);
+}
+
+.story-list {
+  list-style: none;
+  padding: 0;
+}
+.story-list li {
+  border-bottom: 1px solid var(--color-border);
+  padding-block: var(--space-3);
+}
+
+.site-footer {
+  font-size: var(--step--1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
