@@ -12,6 +12,7 @@ Roles: **Atlas** (architect/coordinator), **Forge** (developer), **Sentinel** (Q
 6. Feature branches only; merge to `main` requires green CI + Sentinel PASS + Aegis no open Critical/High.
 7. Never report a check as passed if it did not run.
 8. Push with the fine-grained `belvoir-finance` token (`BELVOIR_GH_TOKEN`), never the owner's admin login. Never interpolate external text into workflow `run:` steps.
+9. Commit as `<Name> (bot) <name@belvoir-finance.invalid>` (e.g. `Forge (bot) <forge@belvoir-finance.invalid>`). Never use `<name>@users.noreply.github.com`, which links to unrelated GitHub accounts.
 
 ## Source of truth
 
