@@ -5,6 +5,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { countTags, firstTagIndex, scriptBlocks, tagAttributes } from "../helpers/html";
 
 const DIST = "dist";
 const BASE = "/belvoir-finance/";
@@ -25,8 +26,6 @@ beforeAll(() => {
   pages = files.filter((f) => f.endsWith(".html")).map((file) => ({ file, html: readFileSync(file, "utf8") }));
   if (pages.length === 0) throw new Error("no HTML pages in dist/");
 });
-
-const scriptTags = (html: string) => [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
 
 describe("F1-02 static output", () => {
   it("builds the expected pages under the Pages base path", () => {
@@ -89,8 +88,8 @@ describe("F1-14 CSP meta tag on every page", () => {
       expect(scriptSrc).not.toMatch(/unsafe-inline|unsafe-eval/);
       expect(csp).not.toMatch(/unsafe-inline|unsafe-eval/);
       const cspAt = html.indexOf("Content-Security-Policy");
-      for (const tag of ["<script", "<style", '<link rel="stylesheet"']) {
-        const at = html.indexOf(tag);
+      for (const tag of ["script", "style", "link"]) {
+        const at = firstTagIndex(html, tag);
         if (at !== -1) expect(cspAt).toBeLessThan(at);
       }
     }
@@ -100,12 +99,14 @@ describe("F1-14 CSP meta tag on every page", () => {
 describe("F1-15 no inline script or event handlers", () => {
   it("only JSON-LD script blocks are inline; no inline <style>", () => {
     for (const { file, html } of pages) {
-      for (const m of scriptTags(html)) {
-        const attrs = m[1] ?? "";
-        if (/\bsrc=/.test(attrs)) continue;
-        expect(attrs, file).toMatch(/type="application\/ld\+json"/);
+      const blocks = scriptBlocks(html);
+      // Every <script> opening tag must belong to a matched block.
+      expect(blocks.length, file).toBe(countTags(html, "script"));
+      for (const { attrs } of blocks) {
+        if (/\bsrc\s*=/i.test(attrs)) continue;
+        expect(attrs, file).toMatch(/type="application\/ld\+json"/i);
       }
-      expect(html, file).not.toMatch(/<style\b/i);
+      expect(countTags(html, "style"), file).toBe(0);
       expect(html, file).not.toMatch(/\sstyle="/i);
     }
   });
@@ -122,10 +123,9 @@ describe("F1-31 JSON-LD in the build", () => {
   it("every ld+json block parses and contains no raw < > &", () => {
     let count = 0;
     for (const { html } of pages) {
-      for (const m of scriptTags(html)) {
-        if (!/application\/ld\+json/.test(m[1] ?? "")) continue;
+      for (const { attrs, body } of scriptBlocks(html)) {
+        if (!/application\/ld\+json/i.test(attrs)) continue;
         count++;
-        const body = m[2] ?? "";
         expect(body).not.toMatch(/[<>&]/);
         expect(() => JSON.parse(body)).not.toThrow();
       }
@@ -140,10 +140,7 @@ describe("F1-26 page shell structure (static checks; axe runs in Playwright)", (
       expect(html, file).toContain('<html lang="en-GB"');
       expect(html, file).toMatch(/<a class="skip-link" href="#main">/);
       expect(html, file).toMatch(/<main id="main"/);
-      expect(html.match(/<h1\b/g), file).toHaveLength(1);
-      expect(html.match(/<header\b/g), file).toHaveLength(1);
-      expect(html.match(/<main\b/g), file).toHaveLength(1);
-      expect(html.match(/<footer\b/g), file).toHaveLength(1);
+      for (const tag of ["h1", "header", "main", "footer"]) expect(countTags(html, tag), `${file} <${tag}>`).toBe(1);
     }
   });
 });
@@ -180,8 +177,7 @@ describe("External links (ADR-0001 req. 2)", () => {
   it("every external link is https with rel=noopener noreferrer", () => {
     let count = 0;
     for (const { html } of pages) {
-      for (const m of html.matchAll(/<a\b([^>]*)>/g)) {
-        const attrs = m[1] ?? "";
+      for (const attrs of tagAttributes(html, "a")) {
         const href = /href="([^"]*)"/.exec(attrs)?.[1] ?? "";
         if (!/^[a-z][a-z0-9+.-]*:|^\/\//i.test(href)) continue;
         count++;
