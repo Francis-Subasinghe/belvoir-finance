@@ -1,0 +1,21 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { onlyPublished } from "../../lib/stories";
+import { withBase } from "../../lib/paths";
+
+const stories = onlyPublished(await getCollection("stories"));
+---
+
+<BaseLayout title="Stories">
+  <h1>Stories</h1>
+  <ul class="story-list">
+    {stories.map((s) => (
+      <li>
+        <a href={withBase(`/stories/${s.id}/`)}>{s.data.title}</a>
+        {s.data.demo && <span> (demo)</span>}
+        <p>{s.data.summary}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

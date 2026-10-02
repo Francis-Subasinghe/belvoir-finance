@@ -1,0 +1,35 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DemoBanner from "../../components/DemoBanner.astro";
+import JsonLd from "../../components/JsonLd.astro";
+import { onlyPublished } from "../../lib/stories";
+
+export async function getStaticPaths() {
+  const stories = onlyPublished(await getCollection("stories"));
+  return stories.map((story) => ({ params: { slug: story.id }, props: { story } }));
+}
+
+const { story } = Astro.props;
+const { Content } = await render(story);
+const d = story.data;
+// Minimal Article data; full SEO metadata is F7.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: d.title,
+  description: d.summary,
+  datePublished: d.firstPublished?.toISOString().slice(0, 10),
+};
+---
+
+<BaseLayout title={d.title} description={d.summary} noindex={d.demo}>
+  <JsonLd slot="head" data={jsonLd} />
+  {d.demo && <DemoBanner />}
+  <div class="prose">
+    <p class="eyebrow">{d.format.replace("-", " ")}</p>
+    <h1>{d.title}</h1>
+    <p>{d.summary}</p>
+    <Content />
+  </div>
+</BaseLayout>

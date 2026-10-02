@@ -1,0 +1,16 @@
+---
+// Use for any hand-written external link in templates. Refuses non-https.
+import { toSafeLink } from "../lib/links";
+
+interface Props {
+  href: string;
+}
+const link = toSafeLink(Astro.props.href);
+if (!link.ok || !link.external) {
+  throw new Error(`ExternalLink needs an https URL: ${Astro.props.href}`);
+}
+---
+
+<a href={link.href} rel={link.rel}>
+  <slot />
+</a>
