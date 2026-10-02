@@ -1,0 +1,11 @@
+dist/
+.astro/
+node_modules/
+package-lock.json
+content/**/*.mdoc
+coverage/
+test-results/
+playwright-report/
+
+# Planning and QA docs are owned by Atlas and Sentinel; not reformatted here.
+docs/

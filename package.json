@@ -1,0 +1,56 @@
+{
+  "name": "belvoir-finance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.11.0 <25"
+  },
+  "dependencies": {
+    "@astrojs/markdoc": "2.0.9",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/source-serif-4": "5.3.0",
+    "@markdoc/markdoc": "0.5.10",
+    "astro": "7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@astrojs/react": "7.0.0",
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@keystatic/astro": "6.0.0",
+    "@keystatic/core": "0.6.9",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.11.0",
+    "eslint-plugin-astro": "3.2.1",
+    "eslint-plugin-jsx-a11y-x": "0.2.0",
+    "globals": "17.13.0",
+    "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "keystatic": "node scripts/keystatic.ts",
+    "build": "astro build",
+    "preview": "astro preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "astro check && tsc --noEmit",
+    "test": "vitest run",
+    "test:build": "vitest run --config vitest.build.config.ts",
+    "check:content": "node scripts/check-content.ts",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:content && npm run build",
+    "postbuild": "npm run test:build",
+    "test:e2e": "playwright test"
+  }
+}
