@@ -21,7 +21,7 @@
 | End-to-end | Playwright (Chromium, WebKit, Firefox) | Primary journeys, navigation, forms, explorer, at the three breakpoints | CI, every PR touching `src/` or `content/` |
 | Accessibility | `@axe-core/playwright` + manual keyboard and screen-reader pass | WCAG 2.2 AA | Automated in CI; manual before preview (S2) |
 | Visual regression | Playwright screenshots | Layout drift on key templates at the three breakpoints | CI, non-blocking until the design system (F2) is approved |
-| Performance, SEO, best practices | Lighthouse CI against the built site | Budgets below | CI, every PR touching `src/` |
+| Performance, SEO, best practices | Lighthouse against the built site | Budgets below | Locally by Sentinel (scores on the PR) until Launchpad's Lighthouse CI task lands; then CI, every PR touching `src/` |
 | Review freshness | Repo script (F10) | Lists every story whose `nextReviewDue` is in the past | CI, every PR and weekly; **warning only** |
 | Links | lychee | Internal links (blocking) and external links (report only) | CI, every PR; external links also weekly |
 | Dependencies and code scanning | `npm audit` / dependency review, CodeQL (L2) | Known vulnerabilities | CI, every PR (Launchpad) |
@@ -33,7 +33,7 @@ A PR cannot merge unless all of the following pass. Launchpad makes them require
 3. Content-schema check, including the no-`.mdx`-under-`content/` check (L2).
 4. `astro build` plus the `dist/` assertions, including no `keystatic` path (L2).
 5. Playwright e2e and the automated axe scan (zero serious or critical violations).
-6. Lighthouse CI budgets (all four categories, from the PRD quality bar).
+6. Lighthouse budgets (all four categories, from the PRD quality bar). Lighthouse CI is a separate Launchpad task: report only at first, and merge-blocking before F3 merges. Until then, Sentinel runs Lighthouse locally and attaches the scores to the PR.
 7. Internal link check.
 8. Dependency review and CodeQL with no new High or Critical alerts.
 9. Sentinel PASS recorded on the PR, and an Aegis verdict with no open Critical or High findings.
@@ -63,7 +63,7 @@ At each breakpoint: no horizontal scroll at the page level, no clipped or overla
 - Content reflows at 320 px width and at 200 % zoom without loss of content.
 
 ## Performance budgets
-Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
+Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, locally by Sentinel until Lighthouse CI lands (see merge-blocking check 6):
 | Metric | Budget |
 | --- | --- |
 | Lighthouse Performance | ≥ 90 |
