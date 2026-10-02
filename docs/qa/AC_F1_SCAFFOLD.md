@@ -41,7 +41,7 @@ Each criterion has a check type: **CI** (automated, merge-blocking), **Build** (
 | ID | Criterion | Check |
 | --- | --- | --- |
 | F1-18 | `.github/workflows/ci.yml` runs on `pull_request` and on `push` to `main`, and runs install, format check, lint, type check, unit tests, build, the no-`.mdx` check, the no-`keystatic` `dist/` check, dependency review and CodeQL as separately named steps or jobs (L2). | Manual + CI run |
-| F1-19 | `ci.yml` sets top-level `permissions: contents: read`, and no job raises it. | Manual (file review) |
+| F1-19 | `ci.yml` sets top-level `permissions: contents: read`, and no job raises it. **Only allowed exception:** the CodeQL job may add `security-events: write` (needed to upload results); it may not add any other permission, and no other job may raise permissions. | Manual (file review) |
 | F1-32 | No workflow uses the `pull_request_target` trigger, and `ci.yml` references no `secrets.*` (the default `GITHUB_TOKEN` only). A CI grep step fails the build if either appears under `.github/workflows/`. | CI (grep step) |
 | F1-20 | Every third-party `uses:` reference is pinned to a full 40-character commit SHA, with the version in a trailing comment. | CI (pin check) + Manual |
 | F1-21 | CI passes on the F1 PR's head commit, and the run link is posted on the PR. | CI |
