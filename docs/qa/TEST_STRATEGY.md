@@ -94,7 +94,7 @@ Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
 | L3 Preview workflow | `docs/qa/AC_L3.md` (to write) | Launchpad | Sentinel (smoke test), Aegis (A3) |
 | L4 Feed-intake workflow | `docs/qa/AC_L4.md` (to write) | Aegis | Sentinel |
 | F1 Scaffold | `docs/qa/AC_F1_SCAFFOLD.md` | Sentinel | Aegis, Launchpad |
-| F2 Design system | `docs/qa/AC_F2.md` (to write) | Sentinel | Atlas (design fit, D12 wireframes) |
+| F2 Design system | [`docs/qa/AC_F2_DESIGN_SYSTEM.md`](AC_F2_DESIGN_SYSTEM.md) | Sentinel | Atlas (design fit, D12 wireframes) |
 | F3 Pages | `docs/qa/AC_F3.md` (to write) | Sentinel | Atlas |
 | F4 Cash-vs-profit explorer | `docs/qa/AC_F4.md` + S3 calculation table (to write) | Sentinel | Aegis |
 | F5 Source registry and parser | `docs/qa/AC_F5.md` (to write) | Sentinel (failure modes) | Aegis (hardening fixtures) |
@@ -107,7 +107,7 @@ Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
 | A1–A3 | Aegis's own reports | Aegis | Atlas |
 | X1–X2 | Up-to-date docs and merge log | Atlas | Francis |
 
-`TASKS.md` names AC files as `docs/qa/AC_<task>.md`. F1 keeps its descriptive name because `TASKS.md` links to `AC_F1_SCAFFOLD.md` directly; the others use the bare task ID until a task links a different name.
+`TASKS.md` names AC files as `docs/qa/AC_<task>.md`. F1 keeps its descriptive name because `TASKS.md` links to `AC_F1_SCAFFOLD.md` directly, and F2 uses `AC_F2_DESIGN_SYSTEM.md` as the team asked; the others use the bare task ID until a task links a different name.
 
 ## Definition of done (copied from the brief, §17)
 The MVP is ready for preview when:
