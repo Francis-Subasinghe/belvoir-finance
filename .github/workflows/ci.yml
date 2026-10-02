@@ -64,7 +64,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
       - name: Install
         run: npm ci
@@ -76,7 +76,9 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test
-      - name: Build
+      - name: Content checks
+        run: npm run check:content
+      - name: Build (includes dist/ assertions via postbuild)
         run: npm run build
       - name: "Aegis M2: no keystatic route in dist/"
         run: |
@@ -84,6 +86,10 @@ jobs:
             echo "::error::keystatic found in dist/"
             find dist -ipath '*keystatic*'; exit 1
           fi
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: "F1-26: Playwright and axe e2e"
+        run: npm run test:e2e
 
   dependency-review:
     name: Dependency review
