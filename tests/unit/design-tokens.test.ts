@@ -43,6 +43,7 @@ const PAIRS: [string, string, string, number][] = [
   ["Text on navy", "color-text-on-dark", "color-navy", 4.5],
   ["Text on slate", "color-text-on-dark", "color-slate", 4.5],
   ["Notice text on notice background", "color-notice-text", "color-notice-bg", 4.5],
+  ["Gold-on-light (links, focus) on notice background", "color-gold-on-light", "color-notice-bg", 4.5],
   ["Focus ring on alabaster", "color-focus", "color-alabaster", 3],
   ["Focus ring (dark) on navy", "color-focus-on-dark", "color-navy", 3],
   ["Strong border on white (callout, demo banner)", "color-border-strong", "color-white", 3],
@@ -56,6 +57,7 @@ describe("F1-24 / F1-25 contrast", () => {
   it("gold-on-light measures 5.85:1 on white and 5.59:1 on alabaster", () => {
     expect(contrastRatio("#7e6026", "#ffffff").toFixed(2)).toBe("5.85");
     expect(contrastRatio("#7e6026", "#f8fafc").toFixed(2)).toBe("5.59");
+    expect(contrastRatio("#7e6026", "#fff8e6").toFixed(2)).toBe("5.52");
   });
 
   it("brand gold fails on light surfaces (why the rule exists)", () => {

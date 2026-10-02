@@ -178,7 +178,9 @@ describe("F1-27 preview is not indexable", () => {
 describe("F1-28 not-advice notice slot", () => {
   it("every page renders the placeholder notice", () => {
     for (const { file, html } of pages) {
-      expect(html, file).toContain('data-testid="not-advice-notice"');
+      expect(html, file).toMatch(
+        /<aside class="notice" aria-label="Not financial advice" data-testid="not-advice-notice">/,
+      );
       expect(html, file).toContain("Educational information, not financial advice.");
       expect(html, file).toContain("awaiting editorial sign-off");
     }

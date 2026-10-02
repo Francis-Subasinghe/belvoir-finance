@@ -53,13 +53,13 @@ const nav = [
         </nav>
       </div>
     </header>
-    <div class="notice" data-testid="not-advice-notice" role="note">
+    <aside class="notice" aria-label="Not financial advice" data-testid="not-advice-notice">
       <div class="container">
         <slot name="notice">
           <p>{NOT_ADVICE_PLACEHOLDER}</p>
         </slot>
       </div>
-    </div>
+    </aside>
     <main id="main" class="container" tabindex="-1">
       <slot />
     </main>

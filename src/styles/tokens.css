@@ -1,7 +1,7 @@
 /*
  * Design tokens (F1-22, F1-23). The ONLY place brand hex values are defined.
  * Contrast for every pair the shell uses is asserted in
- * tests/unit/contrast.test.ts and tabulated in docs/design/CONTRAST.md.
+ * tests/unit/design-tokens.test.ts and tabulated in docs/design/CONTRAST.md.
  *
  * RULE (F1-24): --color-gold (#C5A059) may only sit on navy or slate
  * surfaces. Gold text on white/alabaster uses --color-gold-on-light.

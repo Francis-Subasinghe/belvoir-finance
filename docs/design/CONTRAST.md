@@ -15,6 +15,7 @@ Measured with the WCAG 2.x formula in `src/lib/contrast.ts`. The same pairs are 
 | Alabaster text on navy (header) | 17.57:1 | 4.5 |
 | Alabaster text on slate (footer) | 14.44:1 | 4.5 |
 | Notice text `#5C4511` on notice background `#FFF8E6` | 8.56:1 | 4.5 |
+| Gold-on-light `#7E6026` on notice background `#FFF8E6` (links or focus ring inside the not-advice notice) | 5.52:1 | 4.5 |
 | Strong border `#64748B` on white (callout rule, demo banner) | 4.76:1 | 3 |
 | Focus ring `#7E6026` on alabaster / `#C5A059` on navy | 5.59:1 / 7.48:1 | 3 |
 

@@ -16,6 +16,8 @@ for (const path of PAGES) {
         .analyze();
       const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
       expect(bad.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+      // All content sits inside a landmark (axe "region", moderate impact).
+      expect(results.violations.filter((v) => v.id === "region").map((v) => v.nodes.length)).toEqual([]);
       expect(cspErrors, "no CSP violations in the console").toEqual([]);
     });
 
