@@ -18,6 +18,7 @@ Every entry has a stable `id` (a slug, never reused) and, where relevant, `statu
 | body | rich text | Uses fact, estimate, example and opinion callout blocks |
 | relatedStories, relatedTools | ref[] | |
 | disclosure | string? | Required if any commercial interest exists |
+| demo | boolean | `true` shows a demo banner and sets `noindex` |
 | status | enum | |
 
 ## Topic
@@ -55,3 +56,10 @@ Every entry has a stable `id` (a slug, never reused) and, where relevant, `statu
 `id, sourceId, title (plain text, capped at 300 chars), url (https only, never fetched), publishedAt, fetchedAt, excerpt (plain text, capped at 500 chars, and only if rights allow), status: queued | dismissed | used, usedInStory?`
 
 SourceItems are never shown publicly unless a published Story references them together with Belvoir's explanation.
+
+## Feed intake failure modes
+- **Feed dead, timing out or returning a non-200:** record `lastError` and `lastErrorAt` on the source, then skip it. After three consecutive failures, open an issue for the source owner.
+- **Malformed XML:** reject the whole fetch and record the error. Never partially import.
+- **Duplicates:** dedupe on normalised `url`, falling back to `sourceId` + `title` + `publishedAt`.
+- **Paused or retired source:** never fetched.
+- **Rights `unknown`:** store the title and link only, with no excerpt.

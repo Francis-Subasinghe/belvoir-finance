@@ -28,7 +28,11 @@ After a visit, a reader understands one finance idea or change well enough to as
 Reader accounts, payments, ads, affiliates, a client portal, accounting integrations, personalised advice, investment calls, auto-published AI summaries, and service pricing. A "Work with Belvoir" link is included only if the owner confirms it (D4).
 
 ## Quality bar
-WCAG 2.2 AA basics, mobile-first, fast static delivery, and no unverified claims. Aegis must report no open Critical or High findings, and all CI checks must be green.
+- Accessibility: zero serious or critical axe issues on every template, a full keyboard path through both journeys, and WCAG 2.2 AA contrast.
+- Performance: Lighthouse at least 90 in every category on mobile, LCP under 2.5 s and CLS under 0.1.
+- Content: a site-wide "Educational information, not financial advice" notice, a CI warning for any `nextReviewDue` in the past, and the editorial checklist from the brief (§7.4) on every story PR.
+- Demo content is flagged `demo: true`, which shows a visible banner and sets `noindex`.
+- No unverified claims. Aegis must report no open Critical or High findings, and all CI checks must be green.
 
 ## Measures
-Learning-path completion, return visits, newsletter opt-ins, source-link clicks, tool completions and error rate, search impressions and clicks, and review freshness. Targets are set only once baseline data exists.
+Learning-path completion, return visits, newsletter opt-ins, source-link clicks, tool completions and error rate, search impressions and clicks, and review freshness. Targets are set only once baseline data exists. Measurement needs the analytics decision (D6), so until then only the build-time checks apply.
