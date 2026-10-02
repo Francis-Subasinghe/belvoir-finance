@@ -1,4 +1,15 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -43,10 +54,72 @@ describe("F1-01 toolchain pinning", () => {
   });
 });
 
+// Same pattern as the CI "F1-30" guard step.
+const EXPOSED_HOST = /--host|0\.0\.0\.0|host:\s*true/;
+
+/** Extracts the `run: |` block of the named step from ci.yml. */
+function ciStepScript(stepName: string): string {
+  const lines = readFileSync(".github/workflows/ci.yml", "utf8").split("\n");
+  const start = lines.findIndex((l) => l.includes(`name: "${stepName}`));
+  if (start === -1) throw new Error(`step not found: ${stepName}`);
+  const runAt = lines.findIndex((l, i) => i > start && /^\s*run: \|\s*$/.test(l));
+  const indent = (lines[runAt + 1] ?? "").search(/\S/);
+  const body: string[] = [];
+  for (const line of lines.slice(runAt + 1)) {
+    if (line.trim() !== "" && line.search(/\S/) < indent) break;
+    body.push(line.slice(indent));
+  }
+  return body.join("\n");
+}
+
 describe("F1-30 dev and preview servers bind to localhost only", () => {
-  it("no script passes --host or 0.0.0.0", () => {
+  it("nothing under scripts/ passes --host, 0.0.0.0 or host: true", () => {
+    const files = readdirSync("scripts").map((f) => join("scripts", f));
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) expect(readFileSync(f, "utf8"), f).not.toMatch(EXPOSED_HOST);
+  });
+
+  describe.skipIf(process.platform === "win32")("the CI guard step itself (Aegis L1)", () => {
+    const guard = ciStepScript("F1-30");
+    const runGuard = (files: Record<string, string>) => {
+      const dir = mkdtempSync(join(tmpdir(), "belvoir-f130-"));
+      try {
+        for (const [name, body] of Object.entries(files)) {
+          mkdirSync(join(dir, name, ".."), { recursive: true });
+          writeFileSync(join(dir, name), body);
+        }
+        return spawnSync("bash", ["-e", "-c", guard], { cwd: dir, encoding: "utf8" }).status;
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+    const safe = {
+      "package.json": '{"scripts":{"dev":"astro dev"}}',
+      "astro.config.mjs": 'server: { host: "127.0.0.1" }',
+    };
+
+    it("scans scripts/", () => {
+      expect(guard).toMatch(/\bscripts\b/);
+    });
+
+    it("passes a localhost-only project", () => {
+      expect(runGuard({ ...safe, "scripts/dev.ts": 'spawn("npx", ["astro", "dev"])' })).toBe(0);
+    });
+
+    it.each([
+      ["scripts/dev.ts", 'spawn("npx", ["astro", "dev", "--host"])'],
+      ["scripts/nested/serve.mjs", 'listen(4321, "0.0.0.0")'],
+      ["scripts/cfg.ts", "server: { host: true }"],
+      ["package.json", '{"scripts":{"dev":"astro dev --host"}}'],
+      ["astro.config.mjs", "server: { host: true }"],
+    ])("fails when %s exposes the server", (name, body) => {
+      expect(runGuard({ ...safe, [name]: body })).toBe(1);
+    });
+  });
+
+  it("no npm script passes --host or 0.0.0.0", () => {
     for (const cmd of Object.values(pkg.scripts)) {
-      expect(cmd).not.toMatch(/--host|0\.0\.0\.0/);
+      expect(cmd).not.toMatch(EXPOSED_HOST);
     }
   });
 

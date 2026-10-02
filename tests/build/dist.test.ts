@@ -78,6 +78,25 @@ describe("F1-14 CSP meta tag on every page", () => {
     },
   );
 
+  it("img-src is exactly 'self' and no directive allows data: (Aegis L2)", () => {
+    for (const { file, html } of pages) {
+      const csp = (/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] ?? "").replace(
+        /&#39;/g,
+        "'",
+      );
+      const imgSrc = csp.split(";").find((d) => d.trim().startsWith("img-src"));
+      expect(imgSrc?.trim(), file).toBe("img-src 'self'");
+      expect(csp, file).not.toMatch(/\bdata:/);
+    }
+  });
+
+  it("nothing in the build needs data: URLs (CSS, HTML src/href)", () => {
+    for (const f of files.filter((x) => x.endsWith(".css"))) {
+      expect(readFileSync(f, "utf8"), f).not.toMatch(/url\(\s*["']?data:/i);
+    }
+    for (const { file, html } of pages) expect(html, file).not.toMatch(/(?:src|href)\s*=\s*["']?\s*data:/i);
+  });
+
   it("script-src has no unsafe-inline or unsafe-eval, and the CSP comes before any script or style", () => {
     for (const { html } of pages) {
       const csp = (/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] ?? "").replace(

@@ -40,9 +40,11 @@ jobs:
           fi
 
       - name: "F1-30: dev and preview servers bind to localhost only"
+        # Scans package.json, astro.config.* and everything under scripts/ (Aegis L1).
+        # tests/unit/repo-guards.test.ts runs this exact step against fixtures.
         run: |
-          files=$(ls package.json astro.config.* 2>/dev/null || true)
-          if [ -n "$files" ] && grep -nE -- '--host|0\.0\.0\.0|host:\s*true' $files; then
+          targets=$(ls -d package.json astro.config.* scripts 2>/dev/null || true)
+          if [ -n "$targets" ] && grep -rnE -- '--host|0\.0\.0\.0|host:\s*true' $targets; then
             echo "::error::A dev or preview server is exposed beyond localhost"
             exit 1
           fi

@@ -22,7 +22,8 @@ export const CSP_DIRECTIVES: Readonly<Record<string, string>> = {
   "default-src": "'self'",
   "script-src": "'self'",
   "style-src": "'self'",
-  "img-src": "'self' data:",
+  // No data: images (Aegis L2). Fonts are self-hosted files and no CSS uses data: URLs.
+  "img-src": "'self'",
   "font-src": "'self'",
   "connect-src": "'self'",
   "object-src": "'none'",
