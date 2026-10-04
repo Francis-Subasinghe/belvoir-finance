@@ -1,31 +1,44 @@
 ---
 import "../styles/global.css";
-import { CSP_DIRECTIVES, NOT_ADVICE_PLACEHOLDER, PREVIEW, SITE_NAME, SITE_TAGLINE, cspString } from "../config/site";
+import {
+  CSP_DIRECTIVES,
+  FOOTER_NAV,
+  MAIN_NAV,
+  NOT_ADVICE_PLACEHOLDER,
+  PREVIEW,
+  SITE_NAME,
+  SITE_TAGLINE,
+  cspString,
+} from "../config/site";
 import { withBase } from "../lib/paths";
 import SiteNav, { type NavItem } from "../components/SiteNav.astro";
 import SiteFooter from "../components/SiteFooter.astro";
+import DemoBanner from "../components/DemoBanner.astro";
 
 interface Props {
   title: string;
   description?: string;
   /** Per-page noindex, e.g. for demo content (CONTENT_MODEL `demo: true`). */
   noindex?: boolean;
-  /** True only when the page's content entry has `demo: true`; emits the belvoir-demo marker (Launchpad's Lighthouse runner). */
+  /**
+   * True when the page's content entry has `demo: true`, or the page is in
+   * PLACEHOLDER_PAGES (F3-33, F3-47). Shows the demo banner, forces
+   * `noindex, nofollow` even with PUBLIC_PREVIEW=false, and emits the
+   * belvoir-demo marker (Launchpad's Lighthouse runner).
+   */
   demo?: boolean;
   /** Override the main nav (used only by the dev-only D12 wireframes). */
   nav?: NavItem[];
 }
 const { title, description = SITE_TAGLINE, noindex = false, demo = false } = Astro.props;
-const robots = PREVIEW || noindex ? "noindex, nofollow" : "index, follow";
+const robots = PREVIEW || noindex || demo ? "noindex, nofollow" : "index, follow";
 const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
 // The CSP is emitted in production builds only; Astro's dev server injects
 // inline scripts and styles that a strict policy would block.
 const csp = import.meta.env.PROD ? cspString(CSP_DIRECTIVES) : null;
-// Only pages that exist are linked; F3 adds Explore, Topics, Tools and Sources.
-const nav: NavItem[] = Astro.props.nav ?? [
-  { href: withBase("/"), label: "Home" },
-  { href: withBase("/stories/"), label: "Stories" },
-];
+// F3-03: Home, Explore, Tools and Sources; the footer has the other sitemap pages.
+const nav: NavItem[] = Astro.props.nav ?? MAIN_NAV.map((n) => ({ href: withBase(n.path), label: n.label }));
+const footer: NavItem[] = FOOTER_NAV.map((n) => ({ href: withBase(n.path), label: n.label }));
 ---
 
 <!doctype html>
@@ -63,8 +76,9 @@ const nav: NavItem[] = Astro.props.nav ?? [
       </div>
     </aside>
     <main id="main" class="container" tabindex="-1">
+      {demo && <DemoBanner />}
       <slot />
     </main>
-    <SiteFooter links={nav} />
+    <SiteFooter links={footer} />
   </body>
 </html>

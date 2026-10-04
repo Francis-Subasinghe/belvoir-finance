@@ -2,10 +2,11 @@
 /**
  * F2-22 story card. The heading level is a prop so lists keep a valid
  * outline. The title link is the card's only interactive element. Format,
- * level and demo status are always text, never colour alone.
+ * level, a non-UK jurisdiction (F3-22) and demo status are always text,
+ * never colour alone.
  * Surfaces: white (default), alabaster, slate.
  */
-import { formatDateGB, isoDate, labelOf } from "../lib/format";
+import { formatDateGB, isoDate, jurisdictionLabel, labelOf } from "../lib/format";
 
 interface Props {
   title: string;
@@ -15,10 +16,25 @@ interface Props {
   level: string;
   date?: Date | undefined;
   demo?: boolean;
+  jurisdiction?: string | undefined;
+  jurisdictionNote?: string | undefined;
   headingLevel?: 2 | 3 | 4;
   surface?: "white" | "alabaster" | "slate";
 }
-const { title, href, summary, format, level, date, demo = false, headingLevel = 2, surface = "white" } = Astro.props;
+const {
+  title,
+  href,
+  summary,
+  format,
+  level,
+  date,
+  demo = false,
+  jurisdiction,
+  jurisdictionNote,
+  headingLevel = 2,
+  surface = "white",
+} = Astro.props;
+const place = jurisdictionLabel(jurisdiction, jurisdictionNote);
 const Heading = `h${headingLevel}` as "h2" | "h3" | "h4";
 ---
 
@@ -45,5 +61,10 @@ const Heading = `h${headingLevel}` as "h2" | "h3" | "h4";
       </div>
     )}
   </dl>
+  {place && (
+    <p class="story-card-jurisdiction" data-testid="jurisdiction-label">
+      {place}
+    </p>
+  )}
   {demo && <p class="story-card-demo">Demo content</p>}
 </article>

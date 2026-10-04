@@ -1,0 +1,56 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StoryCard from "../../components/StoryCard.astro";
+import { cardProps, creditedPeople, publishedStories, verifiedCredentials } from "../../lib/site-content";
+
+// F3-43: a page for every person credited on a published story, and no one else.
+// Shows the allowlisted fields only; no contact details exist in the repo.
+export async function getStaticPaths() {
+  return (await creditedPeople()).map((person) => ({ params: { slug: person.id }, props: { person } }));
+}
+
+const { person } = Astro.props;
+const d = person.data;
+const credentials = verifiedCredentials(person);
+const stories = (await publishedStories()).filter((s) => s.data.author === person.id || s.data.reviewer === person.id);
+---
+
+<BaseLayout
+  title={d.displayName}
+  description={`${d.displayName}: ${d.role}. Stories on Belvoir Finance.`}
+  demo={d.demo}
+>
+  <p class="eyebrow">Person</p>
+  <h1>{d.displayName}</h1>
+  {d.demo && (
+    <p class="story-card-demo" data-testid="placeholder-flag">
+      Placeholder person: not a real person
+    </p>
+  )}
+  <dl class="definition-list page-intro">
+    <dt>Role</dt>
+    <dd>{d.role}</dd>
+    {d.bio && (
+      <>
+        <dt>About</dt>
+        <dd>{d.bio}</dd>
+      </>
+    )}
+    {credentials.length > 0 && (
+      <>
+        <dt>Verified credentials</dt>
+        <dd data-testid="person-credentials">{credentials.join(", ")}</dd>
+      </>
+    )}
+  </dl>
+  <section class="page-section" aria-labelledby="stories-heading">
+    <h2 id="stories-heading">Stories</h2>
+    <ul class="story-list">
+      {stories.map((s) => (
+        <li>
+          <StoryCard {...cardProps(s)} headingLevel={3} />
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>

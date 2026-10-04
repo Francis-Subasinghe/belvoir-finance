@@ -24,3 +24,10 @@ export const JURISDICTION_LABELS: Record<string, string> = {
   US: "United States",
   other: "Other jurisdiction",
 };
+
+/** F3-22: the visible label for a non-UK jurisdiction ("Jurisdiction: Ireland"), or undefined for UK. */
+export function jurisdictionLabel(jurisdiction: string | undefined, note?: string): string | undefined {
+  if (!jurisdiction || jurisdiction === "UK") return undefined;
+  const name = JURISDICTION_LABELS[jurisdiction] ?? jurisdiction;
+  return `Jurisdiction: ${name}${jurisdiction === "other" && note ? ` (${note})` : ""}`;
+}

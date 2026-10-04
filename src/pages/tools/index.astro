@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { toolHref, tools } from "../../lib/site-content";
+
+// F3-10: every Tool entry with its title, summary and a link.
+const all = await tools();
+---
+
+<BaseLayout title="Tools" description="Illustrative Belvoir Finance tools for exploring business finance ideas.">
+  <h1>Tools</h1>
+  <p class="page-intro prose">Illustrative tools that let you explore one finance idea. They collect no data.</p>
+  <ul class="story-list">
+    {all.map((t) => (
+      <li>
+        <article class="story-card surface-white" data-testid="tool-card">
+          <h2 class="story-card-title">
+            <a href={toolHref(t.id)}>{t.data.title}</a>
+          </h2>
+          <p class="story-card-summary">{t.data.summary}</p>
+          {t.data.demo && <p class="story-card-demo">Demo content</p>}
+        </article>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

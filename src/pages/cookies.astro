@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { isPlaceholderPage } from "../config/site";
+---
+
+<BaseLayout
+  title="Cookies"
+  description="How Belvoir Finance uses cookies (placeholder, awaiting owner sign-off)."
+  demo={isPlaceholderPage("/cookies/")}
+>
+  <h1>Cookies</h1>
+  <div class="prose">
+    <p data-testid="awaiting-sign-off">
+      <strong>Placeholder wording, awaiting owner sign-off.</strong>
+    </p>
+    <p>
+      This site sets no cookies and stores nothing in your browser. A cookie notice will be published before anything
+      changes that.
+    </p>
+  </div>
+</BaseLayout>

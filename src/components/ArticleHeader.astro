@@ -1,60 +1,88 @@
 ---
 /**
  * F2-23 article header: the page's one h1, summary, byline, dates (en-GB),
- * period and a jurisdiction label when the story isn't UK. The data rules
- * behind these fields (reviewer required, jurisdiction list) are F3.
+ * period and a jurisdiction label when the story isn't UK.
+ * F3-09 / F3-52: each byline person may link to their Person page, carry a
+ * visible placeholder flag (text, never colour alone) and list VERIFIED
+ * credentials only; callers pass only verified labels (site-content.ts).
  * A <div>, not <header>, so it doesn't create a second banner landmark.
  */
-import { JURISDICTION_LABELS, formatDateGB, isoDate, labelOf } from "../lib/format";
+import { formatDateGB, isoDate, jurisdictionLabel, labelOf } from "../lib/format";
 
+export interface BylinePerson {
+  name: string;
+  href?: string | undefined;
+  /** A placeholder (demo) person: shows the text flag. */
+  demo?: boolean | undefined;
+  /** Verified credential labels only. */
+  credentials?: string[] | undefined;
+}
 interface Props {
   title: string;
   summary: string;
-  author: string;
-  reviewer?: string | undefined;
+  author: string | BylinePerson;
+  reviewer?: string | BylinePerson | undefined;
   format?: string | undefined;
   firstPublished?: Date | undefined;
   lastReviewed?: Date | undefined;
   period?: string | undefined;
   jurisdiction?: string | undefined;
+  jurisdictionNote?: string | undefined;
   /** 1 on real pages. The gallery shows several headers, so it passes 2 to keep one h1. */
   titleLevel?: 1 | 2;
 }
 const {
   title,
   summary,
-  author,
-  reviewer,
   format,
   firstPublished,
   lastReviewed,
   period,
   jurisdiction = "UK",
+  jurisdictionNote,
   titleLevel = 1,
 } = Astro.props;
+const asPerson = (p: string | BylinePerson | undefined): BylinePerson | undefined =>
+  typeof p === "string" ? { name: p } : p;
+const author = asPerson(Astro.props.author) as BylinePerson;
+const reviewer = asPerson(Astro.props.reviewer);
 const Title = titleLevel === 1 ? "h1" : "h2";
+const place = jurisdictionLabel(jurisdiction, jurisdictionNote);
+const people = [
+  { role: "By", testid: "byline-author", person: author },
+  ...(reviewer ? [{ role: "Reviewed by", testid: "reviewed-by", person: reviewer }] : []),
+];
 ---
 
 <div class="article-header" data-testid="article-header">
   {format && <p class="eyebrow">{labelOf(format)}</p>}
   <Title class="article-title">{title}</Title>
   <p class="article-summary">{summary}</p>
-  {jurisdiction !== "UK" && (
+  {place && (
     <p class="article-jurisdiction" data-testid="jurisdiction-label">
-      Jurisdiction: {JURISDICTION_LABELS[jurisdiction] ?? jurisdiction}
+      {place}
     </p>
   )}
   <dl class="article-meta">
-    <div>
-      <dt>By</dt>
-      <dd>{author}</dd>
-    </div>
-    {reviewer && (
-      <div data-testid="reviewed-by">
-        <dt>Reviewed by</dt>
-        <dd>{reviewer}</dd>
+    {people.map(({ role, testid, person }) => (
+      <div data-testid={testid}>
+        <dt>{role}</dt>
+        <dd>
+          {person.href ? <a href={person.href}>{person.name}</a> : person.name}
+          {person.demo && (
+            <span class="byline-flag" data-testid="placeholder-flag">
+              {" "}
+              (placeholder person, not a real person)
+            </span>
+          )}
+          {person.credentials && person.credentials.length > 0 && (
+            <span class="byline-credentials" data-testid="byline-credentials">
+              , {person.credentials.join(", ")}
+            </span>
+          )}
+        </dd>
       </div>
-    )}
+    ))}
     {firstPublished && (
       <div>
         <dt>First published</dt>

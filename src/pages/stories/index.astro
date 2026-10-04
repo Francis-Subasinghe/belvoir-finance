@@ -1,28 +1,22 @@
 ---
-import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import StoryCard from "../../components/StoryCard.astro";
-import { onlyPublished } from "../../lib/stories";
+import { cardProps, publishedStories } from "../../lib/site-content";
 import { withBase } from "../../lib/paths";
 
-const stories = onlyPublished(await getCollection("stories"));
+// F3-07 (Q-5): every published story, newest first (ties by id). Not a redirect.
+const stories = await publishedStories();
 ---
 
-<BaseLayout title="Stories">
-  <h1>Stories</h1>
+<BaseLayout title="All stories" description="Every published Belvoir Finance story, newest first.">
+  <h1>All stories</h1>
+  <p class="page-intro prose">
+    Every published story, newest first. <a href={withBase("/explore/")}>Explore by topic</a>.
+  </p>
   <ul class="story-list">
     {stories.map((s) => (
       <li>
-        <StoryCard
-          title={s.data.title}
-          href={withBase(`/stories/${s.id}/`)}
-          summary={s.data.summary}
-          format={s.data.format}
-          level={s.data.level}
-          date={s.data.firstPublished}
-          demo={s.data.demo}
-          headingLevel={2}
-        />
+        <StoryCard {...cardProps(s)} headingLevel={2} />
       </li>
     ))}
   </ul>

@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusNotice from "../components/StatusNotice.astro";
+import { isPlaceholderPage } from "../config/site";
+
+// F3-13 (Q-15, Aegis): no contact route yet. No mailto:, tel:, address or form.
+---
+
+<BaseLayout
+  title="Contact"
+  description="How to reach Belvoir Finance about corrections, source suggestions and general questions, once a route exists."
+  demo={isPlaceholderPage("/contact/")}
+>
+  <h1>Contact</h1>
+  <StatusNotice variant="info" title="There is no contact route yet">
+    <p data-testid="no-contact-route">
+      We don't have a way to contact us yet. This page will explain how to reach us once one exists.
+    </p>
+  </StatusNotice>
+  <div class="prose">
+    <p>
+      <strong>Placeholder wording, awaiting owner sign-off.</strong> When it opens, you'll be able to contact us about:
+    </p>
+    <ul>
+      <li>Corrections to a story</li>
+      <li>Source suggestions</li>
+      <li>General questions</li>
+    </ul>
+  </div>
+</BaseLayout>

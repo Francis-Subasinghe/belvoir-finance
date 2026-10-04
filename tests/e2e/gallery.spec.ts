@@ -68,9 +68,20 @@ test.describe("gallery page", () => {
     await page.goto(GALLERY_PAGE);
   });
 
+  test("F3-52: the new StoryCard label and ArticleHeader byline variants are shown", async ({ page }) => {
+    await expect(page.getByTestId("card-non-uk").getByTestId("jurisdiction-label")).toHaveText("Jurisdiction: Ireland");
+    await expect(page.getByTestId("card-other").getByTestId("jurisdiction-label")).toHaveText(
+      "Jurisdiction: Other jurisdiction (Placeholder territory)",
+    );
+    const header = page.getByTestId("article-header").nth(1);
+    await expect(header.getByTestId("placeholder-flag")).toHaveCount(2);
+    await expect(header.getByTestId("byline-credentials")).toHaveText(", Placeholder verified credential");
+    await expect(header.getByRole("link", { name: "Placeholder Author" })).toHaveCount(1);
+  });
+
   test("F2-01: every component is present in every variant", async ({ page }) => {
-    await expect(page.getByTestId("story-card")).toHaveCount(4);
-    await expect(page.getByTestId("article-header")).toHaveCount(2);
+    await expect(page.getByTestId("story-card")).toHaveCount(6);
+    await expect(page.getByTestId("article-header")).toHaveCount(3);
     await expect(page.getByTestId("source-note")).toHaveCount(2);
     await expect(page.getByTestId("callout")).toHaveCount(8);
     await expect(page.getByTestId("chart")).toHaveCount(1);

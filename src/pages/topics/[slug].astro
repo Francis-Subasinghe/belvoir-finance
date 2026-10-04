@@ -1,0 +1,85 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StoryCard from "../../components/StoryCard.astro";
+import ExternalLink from "../../components/ExternalLink.astro";
+import { PILLAR_LABELS } from "../../content/schemas";
+import { publishedByIds } from "../../lib/stories";
+import { cardProps, publishedStories, tool, toolHref, verifiedSources } from "../../lib/site-content";
+import { withBase } from "../../lib/paths";
+
+export async function getStaticPaths() {
+  return (await getCollection("topics")).map((topic) => ({ params: { slug: topic.id }, props: { topic } }));
+}
+
+// F3-08: title, summary, reading path in order (published only), featured tool,
+// other published stories on the topic, and the active sources tagged with it.
+const { topic } = Astro.props;
+const d = topic.data;
+const stories = await publishedStories();
+const path = publishedByIds(d.readingPath, stories);
+const inPath = new Set(path.map((s) => s.id));
+const more = stories.filter((s) => s.data.topics.includes(topic.id) && !inPath.has(s.id));
+const featuredTool = d.featuredTool ? await tool(d.featuredTool) : undefined;
+const sources = (await verifiedSources()).filter((s) => s.data.topics.includes(topic.id));
+---
+
+<BaseLayout title={d.title} description={`${d.summary} A Belvoir Finance topic.`} demo={d.demo}>
+  <p class="eyebrow">Topic: {PILLAR_LABELS[d.pillar]}</p>
+  <h1>{d.title}</h1>
+  <p class="page-intro prose">{d.summary}</p>
+
+  {path.length > 0 && (
+    <section class="page-section" aria-labelledby="path-heading">
+      <h2 id="path-heading">Reading path</h2>
+      <ol class="story-list" data-testid="reading-path">
+        {path.map((s) => (
+          <li>
+            <StoryCard {...cardProps(s)} headingLevel={3} />
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  {featuredTool && (
+    <section class="page-section" aria-labelledby="tools-heading">
+      <h2 id="tools-heading">Tools</h2>
+      <article class="story-card surface-white" data-testid="topic-tool">
+        <h3 class="story-card-title">
+          <a href={toolHref(featuredTool.id)}>{featuredTool.data.title}</a>
+        </h3>
+        <p class="story-card-summary">{featuredTool.data.summary}</p>
+      </article>
+    </section>
+  )}
+
+  {more.length > 0 && (
+    <section class="page-section" aria-labelledby="more-heading">
+      <h2 id="more-heading">More stories on this topic</h2>
+      <ul class="story-list">
+        {more.map((s) => (
+          <li>
+            <StoryCard {...cardProps(s)} headingLevel={3} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {sources.length > 0 && (
+    <section class="page-section" aria-labelledby="sources-heading">
+      <h2 id="sources-heading">Source notes</h2>
+      <ul class="page-links">
+        {sources.map((s) => (
+          <li>
+            <ExternalLink href={s.data.website}>{s.data.name}</ExternalLink>, {s.data.publisher}
+          </li>
+        ))}
+      </ul>
+      <p>
+        <a href={withBase("/sources/")}>About our sources</a>
+      </p>
+    </section>
+  )}
+</BaseLayout>

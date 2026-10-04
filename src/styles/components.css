@@ -159,7 +159,8 @@
 .article-meta dd {
   margin: 0;
 }
-.story-card-demo {
+.story-card-demo,
+.story-card-jurisdiction {
   display: inline-block;
   margin: var(--space-2) 0 0;
   padding: 0 var(--space-2);
@@ -187,6 +188,11 @@
   border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius);
   font-weight: 600;
+}
+
+.byline-flag,
+.byline-credentials {
+  font-weight: 400;
 }
 
 /* ---------------------------------------------------------------- source note (F2-24) */
@@ -486,4 +492,86 @@
 .button-primary:disabled,
 .button-secondary:disabled {
   border-color: var(--color-border-strong);
+}
+
+/* ---------------------------------------------------------------- F3 page sections (tokens only, F3-37) */
+.page-intro {
+  max-width: var(--measure);
+  margin-bottom: var(--space-4);
+}
+.page-section {
+  margin-block: var(--space-5);
+}
+.page-section > h2 {
+  margin-top: 0;
+}
+.feature-band {
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  margin-block: var(--space-5);
+}
+.feature-band > :last-child {
+  margin-bottom: 0;
+}
+.feature-band a {
+  display: inline-block;
+  min-height: var(--target-min);
+}
+.link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+.link-list a,
+.page-links a {
+  display: inline-block;
+  min-height: var(--target-min);
+  padding-block: var(--space-1);
+}
+.page-links {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0;
+}
+.source-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.source-entry {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+.source-entry h2 {
+  font-size: var(--step-1);
+  margin: 0 0 var(--space-2);
+}
+.source-entry a {
+  display: inline-block;
+  min-height: var(--target-min);
+}
+.definition-list {
+  margin: 0;
+}
+.definition-list dt {
+  font-weight: 600;
+}
+.definition-list dd {
+  margin: 0 0 var(--space-2);
+}
+.disclosure {
+  max-width: var(--measure);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.disclosure-label {
+  font-weight: 600;
 }

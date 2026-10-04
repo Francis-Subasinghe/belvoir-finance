@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { isPlaceholderPage } from "../config/site";
+---
+
+<BaseLayout
+  title="Terms"
+  description="The terms for using Belvoir Finance (placeholder, awaiting owner sign-off)."
+  demo={isPlaceholderPage("/terms/")}
+>
+  <h1>Terms</h1>
+  <div class="prose">
+    <p data-testid="awaiting-sign-off">
+      <strong>Placeholder wording, awaiting owner sign-off.</strong>
+    </p>
+    <p>
+      The content on this site is educational information, not financial advice. Full terms of use will be published
+      before launch.
+    </p>
+  </div>
+</BaseLayout>

@@ -1,36 +1,74 @@
 ---
-import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import StoryCard from "../components/StoryCard.astro";
+import { getCollection } from "astro:content";
 import { SITE_NAME, SITE_TAGLINE } from "../config/site";
-import { onlyPublished } from "../lib/stories";
+import { featuredStory } from "../lib/stories";
+import { cardProps, publishedStories, tool, toolHref, topicHref, topics } from "../lib/site-content";
 import { withBase } from "../lib/paths";
 
-const stories = onlyPublished(await getCollection("stories"));
+// F3-06: promise, featured story (Q-6), topic paths, featured tool, newsletter CTA.
+const featured = featuredStory(await publishedStories());
+const allTopics = await topics();
+const featuredToolId = allTopics.find((t) => t.data.featuredTool)?.data.featuredTool;
+const featuredTool = featuredToolId ? await tool(featuredToolId) : undefined;
+const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
 ---
 
-<BaseLayout title={SITE_NAME}>
+<BaseLayout
+  title={SITE_NAME}
+  description="Belvoir Finance explains business finance for UK founders and operators, one clear idea at a time."
+>
   <p class="eyebrow">Education-first publication</p>
   <h1>{SITE_TAGLINE}</h1>
-  <p class="prose">
-    Belvoir Finance explains business finance for UK founders and operators. This is the page shell; the real pages
-    arrive in F3.
+  <p class="page-intro prose">
+    Belvoir Finance explains business finance for UK founders and operators. Belvoir Finance is the publisher. The
+    stories here are demo content while the publication is being built.
   </p>
-  <h2>Latest stories</h2>
-  <ul class="story-list">
-    {stories.map((s) => (
-      <li>
-        <StoryCard
-          title={s.data.title}
-          href={withBase(`/stories/${s.id}/`)}
-          summary={s.data.summary}
-          format={s.data.format}
-          level={s.data.level}
-          date={s.data.firstPublished}
-          demo={s.data.demo}
-          headingLevel={3}
-        />
-      </li>
-    ))}
-  </ul>
+
+  {featured && (
+    <section class="page-section" aria-labelledby="featured-heading">
+      <h2 id="featured-heading">Featured story</h2>
+      <StoryCard {...cardProps(featured)} headingLevel={3} />
+    </section>
+  )}
+
+  <section class="page-section" aria-labelledby="topics-heading">
+    <h2 id="topics-heading">Topic paths</h2>
+    <ul class="story-list">
+      {allTopics.map((t) => (
+        <li>
+          <article class="story-card surface-white" data-testid="topic-card">
+            <h3 class="story-card-title">
+              <a href={topicHref(t.id)}>{t.data.title}</a>
+            </h3>
+            <p class="story-card-summary">{t.data.summary}</p>
+            {t.data.demo && <p class="story-card-demo">Demo content</p>}
+          </article>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {featuredTool && (
+    <section class="feature-band surface-navy" aria-labelledby="tool-heading" data-testid="featured-tool">
+      <p class="eyebrow">Featured tool</p>
+      <h2 id="tool-heading">{featuredTool.data.title}</h2>
+      <p>{featuredTool.data.summary}</p>
+      <p>
+        <a href={toolHref(featuredTool.id)}>Try the {featuredTool.data.title.toLowerCase()}</a>
+      </p>
+    </section>
+  )}
+
+  {cta && (
+    <section class="page-section" aria-labelledby="newsletter-heading" data-testid="newsletter-cta">
+      <h2 id="newsletter-heading">{cta.data.heading}</h2>
+      <p>{cta.data.valueProp}</p>
+      <p>Cadence: {cta.data.cadence}</p>
+      <p>
+        <a href={withBase("/newsletter/")}>About the newsletter</a>
+      </p>
+    </section>
+  )}
 </BaseLayout>

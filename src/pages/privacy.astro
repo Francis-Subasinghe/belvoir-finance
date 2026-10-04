@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { isPlaceholderPage } from "../config/site";
+---
+
+<BaseLayout
+  title="Privacy"
+  description="How Belvoir Finance handles personal data (placeholder, awaiting owner sign-off)."
+  demo={isPlaceholderPage("/privacy/")}
+>
+  <h1>Privacy</h1>
+  <div class="prose">
+    <p data-testid="awaiting-sign-off">
+      <strong>Placeholder wording, awaiting owner sign-off.</strong>
+    </p>
+    <p>
+      This site does not ask for personal data and has no forms, accounts or analytics. A full privacy notice will be
+      published before any feature that collects data.
+    </p>
+  </div>
+</BaseLayout>

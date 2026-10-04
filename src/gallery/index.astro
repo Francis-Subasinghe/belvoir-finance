@@ -101,6 +101,20 @@ const levels = [
           <p class="gallery-label">White card nested in a navy band (gold resets to gold-on-light)</p>
           <StoryCard {...card} headingLevel={3} surface="white" />
         </div>
+        <div class="gallery-surface surface-white" data-surface="white" data-testid="card-non-uk">
+          <p class="gallery-label">F3-22: non-UK jurisdiction label (Ireland), demo</p>
+          <StoryCard {...card} jurisdiction="IE" demo headingLevel={3} surface="white" />
+        </div>
+        <div class="gallery-surface surface-alabaster" data-surface="alabaster" data-testid="card-other">
+          <p class="gallery-label">F3-22: "other" jurisdiction with its note</p>
+          <StoryCard
+            {...card}
+            jurisdiction="other"
+            jurisdictionNote="Placeholder territory"
+            headingLevel={3}
+            surface="alabaster"
+          />
+        </div>
       </div>
     </section>
 
@@ -118,6 +132,26 @@ const levels = [
         lastReviewed={day}
         period="2025 to 2026 tax year"
         jurisdiction="IE"
+      />
+      <p class="gallery-label">
+        F3-09 byline: Person links, placeholder flag, a verified credential (placeholder wording), "other" jurisdiction
+      </p>
+      <ArticleHeader
+        titleLevel={2}
+        title="Placeholder article title"
+        summary="One-sentence placeholder summary."
+        format="explainer"
+        author={{ name: "Placeholder Author", href: withBase("/design/"), demo: true }}
+        reviewer={{
+          name: "Placeholder Reviewer",
+          href: withBase("/design/"),
+          demo: true,
+          credentials: ["Placeholder verified credential"],
+        }}
+        firstPublished={day}
+        lastReviewed={day}
+        jurisdiction="other"
+        jurisdictionNote="Placeholder territory"
       />
       <p class="gallery-label">Minimal: UK, no reviewer, no period</p>
       <ArticleHeader

@@ -40,3 +40,32 @@ export function cspString(directives: Readonly<Record<string, string>> = CSP_DIR
 
 export const NOT_ADVICE_PLACEHOLDER =
   "Educational information, not financial advice. [Placeholder wording — awaiting editorial sign-off; final notice ships in F10.]";
+
+/** F3-03: the main navigation (the D12 target nav). Paths are base-relative. */
+export const MAIN_NAV: readonly { path: string; label: string }[] = [
+  { path: "/", label: "Home" },
+  { path: "/explore/", label: "Explore" },
+  { path: "/tools/", label: "Tools" },
+  { path: "/sources/", label: "Sources" },
+];
+
+/** F3-03: footer links. Never a "Work with Belvoir" link (D4). */
+export const FOOTER_NAV: readonly { path: string; label: string }[] = [
+  { path: "/about/", label: "About" },
+  { path: "/editorial-standards/", label: "Editorial standards" },
+  { path: "/newsletter/", label: "Newsletter" },
+  { path: "/contact/", label: "Contact" },
+  { path: "/privacy/", label: "Privacy" },
+  { path: "/cookies/", label: "Cookies" },
+  { path: "/terms/", label: "Terms" },
+];
+
+/**
+ * F3-47 (Atlas, Q-10): pages with no content entry whose wording is still a
+ * placeholder until D8 and D9 are decided. Each passes `demo` to BaseLayout
+ * from this list, so it gets the demo banner, `noindex` and the belvoir-demo
+ * marker. Removing a page from this list is an Atlas decision recorded in the PR.
+ */
+export const PLACEHOLDER_PAGES = ["/about/", "/contact/", "/privacy/", "/cookies/", "/terms/"] as const;
+export type PlaceholderPage = (typeof PLACEHOLDER_PAGES)[number];
+export const isPlaceholderPage = (path: PlaceholderPage): boolean => PLACEHOLDER_PAGES.includes(path);

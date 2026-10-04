@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import StatusNotice from "../components/StatusNotice.astro";
+import { JURISDICTION_LABELS, labelOf } from "../lib/format";
+import { verifiedSources } from "../lib/site-content";
+
+// F3-11 (Q-8, C-4, Aegis): only `active` sources, rendered from a FIXED
+// ALLOWLIST of fields. feedUrl, editorialNotes, rightsNotes and owner are never
+// read here. Do not spread or iterate over the entry (a unit scan enforces it).
+const sources = (await verifiedSources()).map((s) => ({
+  id: s.id,
+  name: s.data.name,
+  publisher: s.data.publisher,
+  category: s.data.category,
+  role: s.data.role,
+  jurisdiction: s.data.jurisdiction,
+  jurisdictionNote: s.data.jurisdictionNote,
+  website: s.data.website,
+  demo: s.data.demo,
+}));
+const ROLE_TEXT: Record<string, string> = {
+  primary: "Primary material: the original data, rules or publication",
+  "expert-interpretation": "Expert interpretation of primary material",
+  commentary: "Commentary and context",
+};
+---
+
+<BaseLayout title="Source library" description="The sources Belvoir Finance uses, and what each one is used for.">
+  <h1>Source library</h1>
+  <p class="page-intro prose">
+    What each source is used for. Only sources whose registry entry is active are listed here.
+  </p>
+  {sources.length === 0 ? (
+    <StatusNotice variant="info" title="The source library is being built">
+      <p data-testid="sources-empty">
+        No verified sources are listed yet. Verified registry entries arrive in a later release.
+      </p>
+    </StatusNotice>
+  ) : (
+    <ul class="source-list" data-testid="source-list">
+      {sources.map((s) => (
+        <li class="source-entry surface-white" data-testid="source-entry">
+          <h2>{s.name}</h2>
+          {s.demo && <p class="story-card-demo">Demo</p>}
+          <dl class="definition-list">
+            <dt>Publisher</dt>
+            <dd>{s.publisher}</dd>
+            <dt>Category</dt>
+            <dd>{labelOf(s.category)}</dd>
+            <dt>Used for</dt>
+            <dd>{ROLE_TEXT[s.role] ?? labelOf(s.role)}</dd>
+            <dt>Jurisdiction</dt>
+            <dd>
+              {JURISDICTION_LABELS[s.jurisdiction] ?? s.jurisdiction}
+              {s.jurisdiction === "other" && s.jurisdictionNote && <span> ({s.jurisdictionNote})</span>}
+            </dd>
+          </dl>
+          <p>
+            <ExternalLink href={s.website}>Visit {s.name}</ExternalLink>
+          </p>
+        </li>
+      ))}
+    </ul>
+  )}
+</BaseLayout>

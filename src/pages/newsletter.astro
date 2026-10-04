@@ -1,0 +1,25 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusNotice from "../components/StatusNotice.astro";
+
+// F3-13: the NewsletterCTA text only. No form until F6 (provider is D6).
+const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+---
+
+<BaseLayout
+  title="Newsletter"
+  description="What the Belvoir Finance newsletter will cover and how often it will arrive."
+>
+  <h1>Newsletter</h1>
+  {cta && (
+    <div class="prose" data-testid="newsletter-cta">
+      <h2>{cta.data.heading}</h2>
+      <p>{cta.data.valueProp}</p>
+      <p>Cadence: {cta.data.cadence}</p>
+    </div>
+  )}
+  <StatusNotice variant="info" title="Signup is not open yet">
+    <p>There is no signup form yet. When it opens, it will ask for your email address and your consent only.</p>
+  </StatusNotice>
+</BaseLayout>
