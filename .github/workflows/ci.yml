@@ -15,6 +15,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# F2-38 visual regression is REPORT-ONLY until it is made blocking (AC_F2 decisions).
+# To make it blocking, change one line: VISUAL_BLOCKING: "false" -> "true". That removes
+# continue-on-error from the comparison and fails the job when no baselines are committed.
+# Then add "Visual regression" to the required status checks on main.
+env:
+  VISUAL_BLOCKING: "false"
+
 jobs:
   guards:
     name: Repo guards
@@ -57,6 +64,13 @@ jobs:
             echo "::error::A dev or preview server is exposed beyond localhost"
             exit 1
           fi
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: "F2-38: visual baselines match BASELINES.sha256"
+        # Pure Node, no install or network; git-tracked *-linux.png only (tests/unit/visual-baselines.test.ts).
+        run: npm run check:visual-baselines
 
       - name: "Aegis M3: no .mdx under content/"
         run: |
@@ -130,3 +144,93 @@ jobs:
         with:
           languages: javascript-typescript
       - uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
+
+  visual:
+    name: Visual regression
+    # F2-38: gallery screenshots at 360, 768 and 1280 px (playwright.visual.config.ts).
+    # Baselines come only from this runner image, so font rendering matches.
+    # No baselines committed -> generate them and upload the "visual-baselines" artifact.
+    # Baselines committed    -> compare; on a difference, upload "visual-diff".
+    # To (re)baseline: gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
+    # `git add -f` the *-linux.png files and update tests/visual/BASELINES.sha256 (hashes, run,
+    # artifact and commit). Repo guards checks the hashes (npm run check:visual-baselines).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build the gallery (dist-gallery/, never deployed)
+        run: npm run build:gallery
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Look for committed baselines
+        id: baselines
+        run: |
+          if [ -d tests/visual/__screenshots__ ] && find tests/visual/__screenshots__ -name '*-linux.png' | grep -q .; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "Committed baselines:"; find tests/visual/__screenshots__ -name '*-linux.png' | sort
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No committed baselines: this run generates them."
+          fi
+      - name: Generate baselines (no baselines committed)
+        if: steps.baselines.outputs.present == 'false'
+        # Only the three gallery projects; the "wireframes" project rewrites docs/design/wireframes/.
+        run: |
+          npx playwright test --config playwright.visual.config.ts \
+            --project visual-360 --project visual-768 --project visual-1280 --update-snapshots
+          if [ "$VISUAL_BLOCKING" = "true" ]; then
+            echo "::error::Visual regression is blocking but no baselines are committed. Commit the visual-baselines artifact."
+            exit 1
+          fi
+      - name: Upload generated baselines
+        if: always() && steps.baselines.outputs.present == 'false'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: visual-baselines
+          path: tests/visual/__screenshots__/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Compare with baselines
+        id: compare
+        if: steps.baselines.outputs.present == 'true'
+        continue-on-error: ${{ env.VISUAL_BLOCKING != 'true' }}
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+        run: |
+          npx playwright test --config playwright.visual.config.ts \
+            --project visual-360 --project visual-768 --project visual-1280 --reporter=list,html
+      - name: Upload visual diff
+        if: always() && steps.compare.outcome == 'failure'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: visual-diff
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Visual summary
+        if: always()
+        env:
+          PRESENT: ${{ steps.baselines.outputs.present }}
+          COMPARE: ${{ steps.compare.outcome }}
+        run: |
+          mode=$([ "$VISUAL_BLOCKING" = "true" ] && echo blocking || echo report-only)
+          {
+            echo "## Visual regression (F2-38, $mode)"
+            if [ "$PRESENT" = "false" ]; then
+              echo "No baselines committed. Generated them on this runner: download the \`visual-baselines\` artifact and commit it under \`tests/visual/__screenshots__/\`."
+            elif [ "$COMPARE" = "success" ]; then
+              echo "All gallery screenshots match the committed baselines."
+            else
+              echo "Screenshots differ from the baselines (or the run failed). See the \`visual-diff\` artifact."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

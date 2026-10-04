@@ -54,6 +54,7 @@
     "test": "vitest run",
     "test:build": "vitest run --config vitest.build.config.ts",
     "check:content": "node scripts/check-content.ts",
+    "check:visual-baselines": "node scripts/check-visual-baselines.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:content && npm run build",
     "postbuild": "npm run test:build",
     "test:e2e": "npm run build:gallery && playwright test",

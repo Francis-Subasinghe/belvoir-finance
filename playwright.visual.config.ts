@@ -2,9 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 import { GALLERY } from "./tests/helpers/e2e-urls";
 
 /**
- * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e` or CI.
- * Baselines must be generated in the CI Linux image (font rendering), so none
- * are committed; Launchpad makes this blocking after F2 is approved.
+ * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e`; CI runs
+ * it in the "Visual regression" job (ci.yml, ubuntu-24.04, VISUAL_BLOCKING switch).
+ * Baselines must come from that CI image (font rendering), never a local machine:
+ * with none committed the job uploads them as the `visual-baselines` artifact. To
+ * (re)baseline: download that artifact, copy it into tests/visual/__screenshots__/,
+ * `git add -f` the *-linux.png files (the folder is gitignored) and update
+ * tests/visual/BASELINES.sha256 (hashes plus run, artifact and commit); the Repo
+ * guards step `npm run check:visual-baselines` checks the hashes.
  *   npm run test:visual -- --update-snapshots   (in the CI image) creates baselines
  *   npm run test:visual                          compares, threshold below
  *   npm run wireframes                           regenerates docs/design/wireframes/*.png (D12)
@@ -13,7 +18,8 @@ import { GALLERY } from "./tests/helpers/e2e-urls";
 export default defineConfig({
   testDir: "tests/visual",
   reporter: "list",
-  snapshotPathTemplate: "tests/visual/__screenshots__/{projectName}/{arg}{ext}",
+  // {platform} keeps local (darwin/win32) snapshots from overwriting the CI linux baselines.
+  snapshotPathTemplate: "tests/visual/__screenshots__/{projectName}/{arg}-{platform}{ext}",
   expect: {
     // Documented diff threshold: up to 1 % of pixels may differ, per-pixel colour tolerance 0.2.
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, threshold: 0.2, animations: "disabled", caret: "hide" },
