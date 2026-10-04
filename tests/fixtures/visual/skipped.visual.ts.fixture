@@ -1,0 +1,10 @@
+// Failing fixture for check:visual-tests: each of these would make a regenerated set partial.
+import { expect, test } from "@playwright/test";
+
+test.skip("skipped page", async ({ page }) => {
+  await expect(page).toHaveScreenshot("a.png");
+});
+test.fixme("fixme page", async () => {});
+test.describe.only("only block", () => {});
+test.describe.configure({ mode: "skip" });
+// test.skip in a comment is fine
