@@ -1,11 +1,11 @@
 name: Lighthouse
 
-# TEST_STRATEGY.md merge-blocking check 6. REPORT-ONLY until before F3 merges.
+# TEST_STRATEGY.md merge-blocking check 6. BLOCKING (LHCI_BLOCKING: "true" below).
 #
-# To make it blocking, change one line: LHCI_BLOCKING: "false" -> "true" (under env: below).
-# That turns every lighthouserc.cjs assertion from warn to error and drops
-# continue-on-error from the collect and assert steps. Then add the "Lighthouse"
-# check to the required status checks on main.
+# "true" makes every lighthouserc.cjs assertion an error (lhci assert exits 1 on any
+# budget miss) and drops continue-on-error from the collect, save and assert steps, so
+# the "Lighthouse" job fails. "false" is report-only: assertions warn and those steps
+# never fail the job. Add "Lighthouse" to the required status checks on main.
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LHCI_BLOCKING: "false"
+  LHCI_BLOCKING: "true"
 
 jobs:
   lighthouse:

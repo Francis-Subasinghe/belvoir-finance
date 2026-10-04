@@ -15,12 +15,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# F2-38 visual regression is REPORT-ONLY until it is made blocking (AC_F2 decisions).
-# To make it blocking, change one line: VISUAL_BLOCKING: "false" -> "true". That removes
-# continue-on-error from the comparison and fails the job when no baselines are committed.
-# Then add "Visual regression" to the required status checks on main.
+# F2-38 visual regression is BLOCKING (VISUAL_BLOCKING: "true"; AC_F2 decisions).
+# "true" removes continue-on-error from the comparison, so a screenshot diff fails the
+# "Visual regression" job, and fails the job when no baselines are committed. "false" is
+# report-only. Add "Visual regression" to the required status checks on main.
 env:
-  VISUAL_BLOCKING: "false"
+  VISUAL_BLOCKING: "true"
 
 jobs:
   guards:
@@ -152,8 +152,9 @@ jobs:
     # No baselines committed -> generate them and upload the "visual-baselines" artifact.
     # Baselines committed    -> compare; on a difference, upload "visual-diff".
     # To (re)baseline: gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
-    # `git add -f` the *-linux.png files and update tests/visual/BASELINES.sha256 (hashes, run,
-    # artifact and commit). Repo guards checks the hashes (npm run check:visual-baselines).
+    # `git add -f` the *-linux.png files, then rewrite tests/visual/BASELINES.sha256 with
+    # `npm run visual:manifest -- --run <run-id> --artifact <artifact-id> --commit <sha>`.
+    # Repo guards checks the hashes and rejects non-*-linux.png files (check:visual-baselines).
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

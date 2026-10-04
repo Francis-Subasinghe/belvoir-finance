@@ -1,10 +1,9 @@
 # F2-38 visual baselines (sha256sum format; check with `npm run check:visual-baselines`).
 # Source: GitHub Actions run 37241177888, artifact "visual-baselines" (id 11317806928),
 # built from commit 747e4d846bfd494c0762051a7124fdc2d9661e79 on runner ubuntu-24.04.
-# To update: download the artifact from a new CI run, copy the files into
-# tests/visual/__screenshots__/<project>/, `git add -f` them, and regenerate these
-# lines with `sha256sum` (paths relative to the repo root, sorted), updating the run,
-# artifact and commit above.
+# Written by `npm run visual:manifest`. To update: download the artifact from a new CI
+# run, copy the files into tests/visual/__screenshots__/<project>/, `git add -f` them,
+# then run `npm run visual:manifest -- --run <run id> --artifact <artifact id> --commit <sha>`.
 a86f2d4cb67edf5176dc422a768244e96e4035670106c3d2e38acd402eda4ea1  tests/visual/__screenshots__/visual-1280/gallery-linux.png
 ecaa9a1246b970d5c21015dbfb62393abd6cbb2490bf7284f225aceb8c8af1bd  tests/visual/__screenshots__/visual-360/gallery-linux.png
 1ff4809641de13f0a594ae31b8703e75a3512333f9bcc03d62ebf92bac45b794  tests/visual/__screenshots__/visual-768/gallery-linux.png

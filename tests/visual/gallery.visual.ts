@@ -1,4 +1,4 @@
-// F2-38 (report only): full-page gallery screenshots at 360, 768 and 1280 px.
+// F2-38 (blocking in CI): full-page gallery screenshots at 360, 768 and 1280 px.
 // EVIDENCE_DIR=<folder> instead saves plain and greyscale copies for the PR (F2-01, F2-31).
 import { expect, test } from "@playwright/test";
 

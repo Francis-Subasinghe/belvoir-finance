@@ -11,7 +11,7 @@ test-results/
 playwright-report/
 dist-gallery/
 # F2-38 visual baselines come only from the CI "visual-baselines" artifact (ubuntu-24.04).
-# Add downloaded ones with `git add -f` and update tests/visual/BASELINES.sha256.
+# Add downloaded ones with `git add -f`, then `npm run visual:manifest` (tests/visual/BASELINES.sha256).
 tests/visual/__screenshots__/
 
 # Lighthouse CI (CI-only build and reports)

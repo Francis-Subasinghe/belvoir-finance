@@ -5,11 +5,18 @@
  */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { MANIFEST, checkBaselines, parseManifest } from "../../scripts/visual-baselines";
+import {
+  MANIFEST,
+  buildManifest,
+  checkBaselines,
+  manifestHeader,
+  parseManifest,
+  parseManifestArgs,
+} from "../../scripts/visual-baselines";
 
 const P360 = "tests/visual/__screenshots__/visual-360/gallery-linux.png";
 const P768 = "tests/visual/__screenshots__/visual-768/gallery-linux.png";
@@ -46,11 +53,41 @@ describe("checkBaselines", () => {
     expect(checkBaselines(fixture({ "README.md": "x" }), ["README.md"])).toEqual([]);
   });
 
-  it("ignores files that are not *-linux.png baselines", () => {
+  it("ignores *-linux.png files outside the screenshot folder", () => {
     const root = fixture({ [MANIFEST]: manifest() });
-    expect(checkBaselines(root, ["tests/visual/__screenshots__/visual-360/gallery.png", "docs/x-linux.png"])).toEqual(
-      [],
-    );
+    expect(checkBaselines(root, ["docs/x-linux.png", "tests/visual/gallery-linux.png"])).toEqual([]);
+  });
+
+  it.each([
+    ["a macOS render", "tests/visual/__screenshots__/visual-360/gallery-darwin.png"],
+    ["a Windows render", "tests/visual/__screenshots__/visual-768/gallery-win32.png"],
+    ["a PNG with no platform suffix", "tests/visual/__screenshots__/visual-360/gallery.png"],
+    ["a text file", "tests/visual/__screenshots__/notes.txt"],
+    ["a -linux file that is not a PNG", "tests/visual/__screenshots__/visual-360/gallery-linux.jpg"],
+  ])("fails on %s under the screenshot folder", (_name, path) => {
+    const root = fixture({ [P360]: "a", [path]: "x", [MANIFEST]: manifest(`${sha("a")}  ${P360}`) });
+    expect(checkBaselines(root, [P360, path])).toEqual([
+      `${path} is not a *-linux.png baseline (only CI-generated *-linux.png files belong in tests/visual/__screenshots__/)`,
+    ]);
+  });
+
+  it("reports one error per stray file, sorted, alongside other problems", () => {
+    const darwin = "tests/visual/__screenshots__/visual-360/gallery-darwin.png";
+    const win = "tests/visual/__screenshots__/visual-1280/gallery-win32.png";
+    const root = fixture({ [P360]: "tampered", [MANIFEST]: manifest(`${sha("a")}  ${P360}`) });
+    const errors = checkBaselines(root, [win, P360, darwin]);
+    expect(errors).toHaveLength(3);
+    expect(errors[0]).toMatch(new RegExp(`^${win} is not a \\*-linux\\.png baseline`));
+    expect(errors[1]).toMatch(new RegExp(`^${darwin} is not a \\*-linux\\.png baseline`));
+    expect(errors[2]).toContain(`${P360}: sha256`);
+  });
+
+  it("fails on stray files even when the manifest is missing", () => {
+    const stray = "tests/visual/__screenshots__/visual-360/gallery-darwin.png";
+    const root = fixture({ [stray]: "x" });
+    expect(checkBaselines(root, [stray])).toEqual([
+      `${stray} is not a *-linux.png baseline (only CI-generated *-linux.png files belong in tests/visual/__screenshots__/)`,
+    ]);
   });
 
   it("(a) fails when a baseline's hash does not match", () => {
@@ -135,5 +172,79 @@ describe("the committed baselines", () => {
       .filter(Boolean);
     expect(tracked.filter((f) => f.endsWith("-linux.png"))).toHaveLength(3);
     expect(checkBaselines(".", tracked)).toEqual([]);
+  });
+});
+
+const RUN = "37241177888";
+const ARTIFACT = "11317806928";
+const COMMIT = "747e4d846bfd494c0762051a7124fdc2d9661e79";
+const P1280 = "tests/visual/__screenshots__/visual-1280/gallery-linux.png";
+
+describe("parseManifestArgs (npm run visual:manifest)", () => {
+  it("accepts --run, --artifact and --commit, in any order and as --flag=value", () => {
+    const want = { source: { run: RUN, artifact: ARTIFACT, commit: COMMIT }, errors: [] };
+    expect(parseManifestArgs(["--run", RUN, "--artifact", ARTIFACT, "--commit", COMMIT])).toEqual(want);
+    expect(parseManifestArgs([`--commit=${COMMIT}`, `--artifact=${ARTIFACT}`, `--run=${RUN}`])).toEqual(want);
+  });
+
+  it("requires all three", () => {
+    const { source, errors } = parseManifestArgs([]);
+    expect(source).toBeUndefined();
+    expect(errors.slice(0, 3)).toEqual(["--run is required", "--artifact is required", "--commit is required"]);
+    expect(errors[3]).toMatch(/^usage: npm run visual:manifest/);
+  });
+
+  it.each([
+    ["a non-numeric run", ["--run", "abc", "--artifact", ARTIFACT, "--commit", COMMIT], /--run must be a numeric id/],
+    ["a negative run", ["--run=-1", "--artifact", ARTIFACT, "--commit", COMMIT], /--run must be a numeric id/],
+    [
+      "a zero-padded artifact",
+      ["--run", RUN, "--artifact", "011", "--commit", COMMIT],
+      /--artifact must be a numeric id/,
+    ],
+    ["a URL as artifact", ["--run", RUN, "--artifact", "https://x/1", "--commit", COMMIT], /--artifact must be/],
+    ["a short sha", ["--run", RUN, "--artifact", ARTIFACT, "--commit", "747e4d8"], /--commit must be a full 40/],
+    ["an upper-case sha", ["--run", RUN, "--artifact", ARTIFACT, "--commit", COMMIT.toUpperCase()], /--commit must/],
+    ["a 41-char sha", ["--run", RUN, "--artifact", ARTIFACT, "--commit", `${COMMIT}0`], /--commit must/],
+    ["a missing value", ["--run", "--artifact", ARTIFACT, "--commit", COMMIT], /--run needs a value/],
+    ["an unknown flag", ["--run", RUN, "--artifact", ARTIFACT, "--commit", COMMIT, "--out", "x"], /unknown argument/],
+    ["a repeated flag", ["--run", RUN, "--run", RUN, "--artifact", ARTIFACT, "--commit", COMMIT], /more than once/],
+  ])("rejects %s", (_name, argv, message) => {
+    const { source, errors } = parseManifestArgs(argv);
+    expect(source).toBeUndefined();
+    expect(errors.join("\n")).toMatch(message);
+  });
+});
+
+describe("buildManifest", () => {
+  const source = { run: "1", artifact: "2", commit: "a".repeat(40) };
+
+  it("writes the header, then sha256sum lines sorted by path in byte order", () => {
+    const root = fixture({ [P360]: "a", [P768]: "b", [P1280]: "c" });
+    const text = buildManifest(root, [P768, P360, P1280, "README.md"], source);
+    expect(text).toBe(`${manifestHeader(source)}\n${sha("c")}  ${P1280}\n${sha("a")}  ${P360}\n${sha("b")}  ${P768}\n`);
+    expect(manifestHeader(source)).toContain('run 1, artifact "visual-baselines" (id 2)');
+    expect(manifestHeader(source)).toContain(`commit ${"a".repeat(40)} on runner ubuntu-24.04`);
+  });
+
+  it("round-trips through the guard", () => {
+    const root = fixture({ [P360]: "a", [P768]: "b" });
+    writeFileSync(join(root, MANIFEST), buildManifest(root, [P360, P768], source));
+    expect(checkBaselines(root, [P360, P768])).toEqual([]);
+  });
+
+  it("refuses stray files, missing files and an empty set", () => {
+    const stray = "tests/visual/__screenshots__/visual-360/gallery-darwin.png";
+    expect(() => buildManifest(fixture({ [P360]: "a", [stray]: "x" }), [P360, stray], source)).toThrow(stray);
+    expect(() => buildManifest(fixture({}), [P360], source)).toThrow(`${P360} is tracked but missing on disk`);
+    expect(() => buildManifest(fixture({}), ["README.md"], source)).toThrow(/no tracked \*-linux\.png baselines/);
+  });
+
+  it("reproduces the committed tests/visual/BASELINES.sha256 byte for byte", () => {
+    const tracked = spawnSync("git", ["ls-files", "-z", "--", "tests/visual/__screenshots__/"], { encoding: "utf8" })
+      .stdout.split("\0")
+      .filter(Boolean);
+    const text = buildManifest(".", tracked, { run: RUN, artifact: ARTIFACT, commit: COMMIT });
+    expect(text).toBe(readFileSync(MANIFEST, "utf8"));
   });
 });

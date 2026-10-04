@@ -38,11 +38,13 @@ npm run build          # astro build to dist/, then the dist/ assertions (postbu
 npm run build:gallery  # gallery test build to dist-gallery/ (never deployed) + its assertions
 npm run test:e2e       # build:gallery, then Playwright + axe at 360/768/1280 px on dist/ and dist-gallery/
                        # (run `npm run build` first; needs `npx playwright install chromium` once)
-npm run test:visual    # gallery screenshot comparison, report only (F2-38; baselines come only from the CI
-                       # "visual-baselines" artifact: `git add -f` them and update tests/visual/BASELINES.sha256)
+npm run test:visual    # gallery screenshot comparison, blocking in CI (F2-38; baselines come only from the CI
+                       # "visual-baselines" artifact: `git add -f` them, then run `npm run visual:manifest`)
+npm run visual:manifest -- --run <id> --artifact <id> --commit <sha>
+                       # rewrite tests/visual/BASELINES.sha256 from the tracked *-linux.png baselines
 npm run wireframes     # regenerate the D12 wireframe screenshots in docs/design/wireframes/
 npm run check:content  # no .mdx, Markdoc allowlist, no raw HTML, safe links
-npm run check:visual-baselines  # committed visual baselines match tests/visual/BASELINES.sha256
+npm run check:visual-baselines  # committed visual baselines match tests/visual/BASELINES.sha256 (only *-linux.png)
 npm run verify         # everything above except e2e
 ```
 

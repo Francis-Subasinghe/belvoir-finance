@@ -20,8 +20,8 @@
 | Search index | Pagefind (F9, D13) | Index builds from `dist/`; results only from `published` entries | CI, every PR from F9 on |
 | End-to-end | Playwright (Chromium, WebKit, Firefox) | Primary journeys, navigation, forms, explorer, at the three breakpoints | CI, every PR touching `src/` or `content/` |
 | Accessibility | `@axe-core/playwright` + manual keyboard and screen-reader pass | WCAG 2.2 AA | Automated in CI; manual before preview (S2) |
-| Visual regression | Playwright screenshots | Layout drift on key templates at the three breakpoints | CI, non-blocking until the design system (F2) is approved |
-| Performance, SEO, best practices | Lighthouse against the built site | Budgets below | CI on every PR and push to `main` (`.github/workflows/lighthouse.yml`), **report only** until it is made blocking before F3 merges; Sentinel's local run (F2-41) stays the F2 gate |
+| Visual regression | Playwright screenshots | Layout drift on key templates at the three breakpoints | CI, merge-blocking (`Visual regression` job, `VISUAL_BLOCKING: "true"`) |
+| Performance, SEO, best practices | Lighthouse against the built site | Budgets below | CI on every PR and push to `main` (`.github/workflows/lighthouse.yml`), merge-blocking (`LHCI_BLOCKING: "true"`) |
 | Review freshness | Repo script (F10) | Lists every story whose `nextReviewDue` is in the past | CI, every PR and weekly; **warning only** |
 | Links | lychee | Internal links (blocking) and external links (report only) | CI, every PR; external links also weekly |
 | Dependencies and code scanning | `npm audit` / dependency review, CodeQL (L2) | Known vulnerabilities | CI, every PR (Launchpad) |
@@ -33,12 +33,13 @@ A PR cannot merge unless all of the following pass. Launchpad makes them require
 3. Content-schema check, including the no-`.mdx`-under-`content/` check (L2).
 4. `astro build` plus the `dist/` assertions, including no `keystatic` path (L2).
 5. Playwright e2e and the automated axe scan (zero serious or critical violations).
-6. Lighthouse budgets (all four categories, from the PRD quality bar). Lighthouse CI (`.github/workflows/lighthouse.yml`) runs **report only** for now, and becomes merge-blocking before F3 merges (set `LHCI_BLOCKING: "true"` and add the `Lighthouse` required check). Until then, Sentinel runs Lighthouse locally and attaches the scores to the PR.
+6. Lighthouse budgets (all four categories, from the PRD quality bar). Lighthouse CI (`.github/workflows/lighthouse.yml`, `LHCI_BLOCKING: "true"`) fails the `Lighthouse` check on any budget miss; the owner adds `Lighthouse` to the required status checks on `main`.
 7. Internal link check.
 8. Dependency review and CodeQL with no new High or Critical alerts.
 9. Sentinel PASS recorded on the PR, and an Aegis verdict with no open Critical or High findings.
+10. Visual regression (F2-38): the gallery screenshots match the committed CI baselines (`Visual regression` job, `VISUAL_BLOCKING: "true"`); the owner adds it to the required status checks on `main`.
 
-**Report only (non-blocking):** visual regression until F2 is approved, the external link check, and the overdue-review warning (F10).
+**Report only (non-blocking):** the external link check, and the overdue-review warning (F10).
 
 **Not testable on the preview:** response headers. GitHub Pages can't send them, which ADR-0001 accepts as a preview-only limitation. The header assertion becomes merge-blocking once the header-capable host from D5 exists.
 
@@ -63,7 +64,7 @@ At each breakpoint: no horizontal scroll at the page level, no clipped or overla
 - Content reflows at 320 px width and at 200 % zoom without loss of content.
 
 ## Performance budgets
-Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by Lighthouse CI (report only for now) and locally by Sentinel (see merge-blocking check 6). CI measures a separate `PUBLIC_PREVIEW=false` build (`dist-lhci/`, never deployed) so SEO is scored with the preview `noindex` off; pages marked `<meta name="belvoir-demo" content="true">` (demo content, whose `noindex` is deliberate, F10) are not asserted for SEO, but every other budget still applies to them:
+Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by Lighthouse CI (merge-blocking) and locally by Sentinel (see merge-blocking check 6). CI measures a separate `PUBLIC_PREVIEW=false` build (`dist-lhci/`, never deployed) so SEO is scored with the preview `noindex` off; pages marked `<meta name="belvoir-demo" content="true">` (demo content, whose `noindex` is deliberate, F10) are not asserted for SEO, but every other budget still applies to them:
 | Metric | Budget |
 | --- | --- |
 | Lighthouse Performance | ≥ 90 |
