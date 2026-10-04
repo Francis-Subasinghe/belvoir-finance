@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { expectedSite } from "../helpers/expected-site";
+import { parse } from "yaml";
 import { checkContentRules } from "../../src/lib/content-rules";
 
 const DIST = "dist";
@@ -94,6 +95,50 @@ describe("F3-04 internal links resolve", () => {
     expect(brokenInternalLinks(fixture, DIST, "fixture/index.html")).toEqual([
       "fixture/index.html: /belvoir-finance/missing/",
     ]);
+  });
+});
+
+describe("F3-08 topic pages", () => {
+  const front = (file: string) => parse(readFileSync(file, "utf8").split(/^---$/m)[1] ?? "") as Record<string, unknown>;
+  const stories = readdirSync("content/stories").map((n) => ({
+    id: n.replace(/\.mdoc$/, ""),
+    ...front(join("content/stories", n)),
+  })) as {
+    id: string;
+    status?: string;
+    topics?: string[];
+  }[];
+  const published = new Set(stories.filter((s) => s.status === "published").map((s) => s.id));
+  const topics = readdirSync("content/topics").map((n) => ({
+    id: n.replace(/\.yaml$/, ""),
+    ...(parse(readFileSync(join("content/topics", n), "utf8")) as {
+      title: string;
+      summary: string;
+      readingPath: string[];
+      featuredTool?: string;
+    }),
+  }));
+  const storyLinks = (markup: string) =>
+    [...markup.matchAll(/href="\/belvoir-finance\/stories\/([^/"]+)\/"/g)].map((m) => m[1]);
+
+  it("F3-08 one page per Topic entry with its h1, summary, ordered published reading path, featured tool and other stories", () => {
+    expect(topics.length).toBeGreaterThan(0);
+    for (const t of topics) {
+      const h = html(`topics/${t.id}/index.html`);
+      expect(h, t.id).not.toBe("");
+      expect(h).toMatch(new RegExp(`<h1[^>]*>${t.title}</h1>`));
+      expect(h).toContain(t.summary);
+      const ol = /<ol[^>]*data-testid="reading-path"[^>]*>([\s\S]*?)<\/ol>/.exec(h)?.[1] ?? "";
+      const path = t.readingPath.filter((id) => published.has(id));
+      expect([...new Set(storyLinks(ol))], `${t.id} reading path`).toEqual(path);
+      if (t.featuredTool) expect(h).toContain(`href="/belvoir-finance/tools/${t.featuredTool}/"`);
+      const rest = h.slice(h.indexOf("</ol>"));
+      const more = stories
+        .filter((s) => published.has(s.id) && s.topics?.includes(t.id) && !path.includes(s.id))
+        .map((s) => s.id);
+      for (const id of more) expect(storyLinks(rest), `${t.id} more`).toContain(id);
+      for (const s of stories.filter((x) => !published.has(x.id))) expect(h).not.toContain(`/stories/${s.id}/`);
+    }
   });
 });
 
