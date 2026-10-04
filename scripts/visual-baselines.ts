@@ -1,8 +1,8 @@
 // F2-38: checks committed visual baselines against tests/visual/BASELINES.sha256.
 // Pure Node (no network, no deps). The CLI is scripts/check-visual-baselines.ts.
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 
 export const SCREENSHOT_DIR = "tests/visual/__screenshots__/";
 export const MANIFEST = "tests/visual/BASELINES.sha256";
@@ -88,6 +88,26 @@ export function checkBaselines(root: string, files: readonly string[]): string[]
     if (!present.has(e.path)) errors.push(`${e.path} is listed in ${MANIFEST}:${e.line} but not committed`);
   }
   return errors;
+}
+
+/**
+ * Warnings for `*-linux.png` files on disk under SCREENSHOT_DIR (below `root`) that are not
+ * in `tracked` (e.g. local renders on a developer machine). They are ignored by the check
+ * and must never be committed: baselines come only from the CI artifact.
+ */
+export function untrackedBaselineWarnings(root: string, tracked: readonly string[]): string[] {
+  const dir = join(root, SCREENSHOT_DIR);
+  if (!existsSync(dir)) return [];
+  const known = new Set(tracked);
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((d) => d.isFile())
+    .map((d) => `${SCREENSHOT_DIR}${relative(dir, join(d.parentPath, d.name)).split(sep).join("/")}`)
+    .filter((p) => isBaseline(p) && !known.has(p))
+    .sort()
+    .map(
+      (p) =>
+        `${p} is untracked and ignored by this check (a local render?). Never commit it: baselines come only from the CI "visual-baselines" artifact.`,
+    );
 }
 
 export interface ManifestSource {

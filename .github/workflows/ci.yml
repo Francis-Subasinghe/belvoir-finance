@@ -149,7 +149,8 @@ jobs:
     name: Visual regression
     # F2-38: gallery screenshots at 360, 768 and 1280 px (playwright.visual.config.ts).
     # Baselines come only from this runner image, so font rendering matches.
-    # No baselines committed -> generate them and upload the "visual-baselines" artifact.
+    # No baselines committed -> generate all three, upload the "visual-baselines" artifact,
+    #   then (blocking) fail the job in a separate step that runs after the upload.
     # Baselines committed    -> compare; on a difference (or a missing snapshot), upload
     #   "visual-diff", then regenerate the FULL set (--update-snapshots=all, gallery projects
     #   only) and upload it as "visual-baselines". The job still fails via the compare step.
@@ -186,24 +187,29 @@ jobs:
             echo "No committed baselines: this run generates them."
           fi
       - name: Generate baselines (no baselines committed)
+        id: generate
         if: steps.baselines.outputs.present == 'false'
         # Only the three gallery projects; the "wireframes" project rewrites docs/design/wireframes/.
+        # Writes all three *-linux.png. Never fails for being blocking: that is the step below,
+        # after the upload, so the artifact always exists when the job fails for lack of baselines.
         run: |
           npx playwright test --config playwright.visual.config.ts \
-            --project visual-360 --project visual-768 --project visual-1280 --update-snapshots
-          if [ "$VISUAL_BLOCKING" = "true" ]; then
-            echo "::error::Visual regression is blocking but no baselines are committed. Commit the visual-baselines artifact."
-            exit 1
-          fi
+            --project visual-360 --project visual-768 --project visual-1280 --update-snapshots=all
       - name: Upload generated baselines
         id: generated-upload
-        if: always() && steps.baselines.outputs.present == 'false'
+        # Only a complete set: skipped when the generation itself failed.
+        if: always() && steps.baselines.outputs.present == 'false' && steps.generate.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: visual-baselines
-          path: tests/visual/__screenshots__/
+          path: tests/visual/__screenshots__/**/*-linux.png
           if-no-files-found: error
           retention-days: 30
+      - name: Fail when no baselines are committed (blocking)
+        if: always() && steps.baselines.outputs.present == 'false' && env.VISUAL_BLOCKING == 'true'
+        run: |
+          echo "::error::Visual regression is blocking but no baselines are committed. Commit the visual-baselines artifact (see the job summary)."
+          exit 1
       - name: Compare with baselines
         id: compare
         if: steps.baselines.outputs.present == 'true'
@@ -250,16 +256,24 @@ jobs:
         env:
           PRESENT: ${{ steps.baselines.outputs.present }}
           COMPARE: ${{ steps.compare.outcome }}
+          GENERATE: ${{ steps.generate.outcome }}
           REGEN: ${{ steps.regen.outcome }}
           ARTIFACT_ID: ${{ steps.regen-upload.outputs.artifact-id || steps.generated-upload.outputs.artifact-id }}
           RUN_ID: ${{ github.run_id }}
-          BUILT_SHA: ${{ github.sha }}
+          # The commit to record: the PR head (what was pushed), or the pushed commit on push.
+          # On a pull request the run actually builds GitHub's test merge commit; the run id
+          # links the recorded head commit to that build.
+          BUILT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           mode=$([ "$VISUAL_BLOCKING" = "true" ] && echo blocking || echo report-only)
           {
             echo "## Visual regression (F2-38, $mode)"
             if [ "$PRESENT" = "false" ]; then
-              echo "No baselines committed. Generated them on this runner."
+              if [ "$GENERATE" = "success" ]; then
+                echo "No baselines committed. Generated them on this runner."
+              else
+                echo "No baselines committed, and generating them failed (\`$GENERATE\`), so no \`visual-baselines\` artifact was uploaded."
+              fi
             elif [ "$COMPARE" = "success" ]; then
               echo "All gallery screenshots match the committed baselines."
             else
@@ -272,7 +286,7 @@ jobs:
             if [ -n "$ARTIFACT_ID" ]; then
               echo ""
               echo "### To accept these screenshots as the new baselines"
-              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID, built from commit $BUILT_SHA (on a pull request, GitHub's test merge commit). Review the diff first, then:"
+              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then:"
               echo ""
               echo '```sh'
               echo "rm -rf tests/visual/__screenshots__"

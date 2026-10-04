@@ -44,7 +44,7 @@ npm run visual:manifest -- --run <id> --artifact <id> --commit <sha>
                        # rewrite tests/visual/BASELINES.sha256 from the tracked *-linux.png baselines
 npm run wireframes     # regenerate the D12 wireframe screenshots in docs/design/wireframes/
 npm run check:content  # no .mdx, Markdoc allowlist, no raw HTML, safe links
-npm run check:visual-baselines  # committed visual baselines match tests/visual/BASELINES.sha256 (only *-linux.png)
+npm run check:visual-baselines  # committed visual baselines match tests/visual/BASELINES.sha256 (only *-linux.png; warns on untracked local renders)
 npm run verify         # everything above except e2e
 ```
 

@@ -16,6 +16,7 @@ import {
   manifestHeader,
   parseManifest,
   parseManifestArgs,
+  untrackedBaselineWarnings,
 } from "../../scripts/visual-baselines";
 
 const P360 = "tests/visual/__screenshots__/visual-360/gallery-linux.png";
@@ -246,5 +247,33 @@ describe("buildManifest", () => {
       .filter(Boolean);
     const text = buildManifest(".", tracked, { run: RUN, artifact: ARTIFACT, commit: COMMIT });
     expect(text).toBe(readFileSync(MANIFEST, "utf8"));
+  });
+});
+
+describe("untrackedBaselineWarnings (check:visual-baselines ::warning:: lines)", () => {
+  it("warns once per untracked *-linux.png on disk, sorted, and ignores tracked and other files", () => {
+    const local1280 = P1280;
+    const nested = "tests/visual/__screenshots__/visual-360/sub/extra-linux.png";
+    const root = fixture({
+      [P360]: "a",
+      [P768]: "b",
+      [local1280]: "local render",
+      [nested]: "x",
+      "tests/visual/__screenshots__/visual-360/gallery-darwin.png": "mac",
+      "tests/visual/gallery-linux.png": "outside the folder",
+    });
+    const warnings = untrackedBaselineWarnings(root, [P360, P768]);
+    expect(warnings).toEqual([
+      `${local1280} is untracked and ignored by this check (a local render?). Never commit it: baselines come only from the CI "visual-baselines" artifact.`,
+      `${nested} is untracked and ignored by this check (a local render?). Never commit it: baselines come only from the CI "visual-baselines" artifact.`,
+    ]);
+    // Warnings only: the check itself is unaffected by the untracked files.
+    writeFileSync(join(root, MANIFEST), manifest(`${sha("a")}  ${P360}`, `${sha("b")}  ${P768}`));
+    expect(checkBaselines(root, [P360, P768])).toEqual([]);
+  });
+
+  it("is empty when everything on disk is tracked, or the folder does not exist", () => {
+    expect(untrackedBaselineWarnings(fixture({ [P360]: "a" }), [P360])).toEqual([]);
+    expect(untrackedBaselineWarnings(fixture({ "README.md": "x" }), [])).toEqual([]);
   });
 });

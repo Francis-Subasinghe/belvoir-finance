@@ -47,7 +47,6 @@ describe("Visual regression gate (ci.yml)", () => {
     const visual = job(ci, "visual");
     expect(visual).toMatch(/^ {4}name: Visual regression$/m);
     expect(step(visual, "Compare with baselines")).toContain("continue-on-error: ${{ env.VISUAL_BLOCKING != 'true' }}");
-    expect(step(visual, "Generate baselines")).toMatch(/if \[ "\$VISUAL_BLOCKING" = "true" \]; then[\s\S]*exit 1/);
     // Only the regeneration step may never fail; the comparison carries the job's result.
     expect(visual.match(/continue-on-error: true/g)).toHaveLength(1);
     expect(step(visual, "Regenerate the full baseline set")).toContain("continue-on-error: true");
@@ -77,10 +76,50 @@ describe("Visual regression gate (ci.yml)", () => {
     expect(upload).toContain("retention-days: 30");
   });
 
+  it("with no baselines committed: generates all three, uploads, and only then fails (blocking)", () => {
+    const visual = job(ci, "visual");
+    const names = [...visual.matchAll(/^ {6}- name: (.+)$/gm)].map((m) => m[1]);
+    const at = (n: string) => names.findIndex((x) => x?.startsWith(n));
+    expect(at("Look for committed baselines")).toBeLessThan(at("Generate baselines"));
+    expect(at("Generate baselines")).toBeLessThan(at("Upload generated baselines"));
+    expect(at("Upload generated baselines")).toBeLessThan(at("Fail when no baselines are committed"));
+    expect(at("Fail when no baselines are committed")).toBeLessThan(at("Compare with baselines"));
+
+    const generate = step(visual, "Generate baselines");
+    expect(generate).toContain("if: steps.baselines.outputs.present == 'false'");
+    expect(generate).toContain(
+      "--project visual-360 --project visual-768 --project visual-1280 --update-snapshots=all",
+    );
+    expect(generate).not.toMatch(/--project wireframes|exit 1|::error::/);
+
+    const upload = step(visual, "Upload generated baselines");
+    expect(upload).toContain(
+      "if: always() && steps.baselines.outputs.present == 'false' && steps.generate.outcome == 'success'",
+    );
+    expect(upload).toContain("name: visual-baselines");
+    expect(upload).toContain("path: tests/visual/__screenshots__/**/*-linux.png");
+    expect(upload).toContain("if-no-files-found: error");
+
+    const fail = step(visual, "Fail when no baselines are committed");
+    expect(fail).toContain(
+      "if: always() && steps.baselines.outputs.present == 'false' && env.VISUAL_BLOCKING == 'true'",
+    );
+    expect(fail).toMatch(/::error::[\s\S]*exit 1/);
+    expect(fail).not.toContain("continue-on-error");
+
+    // The only ::error:: / exit 1 lines in the job are in that step.
+    expect(visual.match(/::error::/g)).toHaveLength(1);
+    expect(visual.match(/exit 1/g)).toHaveLength(1);
+    expect(step(visual, "Compare with baselines")).toContain("if: steps.baselines.outputs.present == 'true'");
+  });
+
   it("the summary prints the visual:manifest command from trusted context only", () => {
     const summary = step(job(ci, "visual"), "Visual summary");
     expect(summary).toContain("RUN_ID: ${{ github.run_id }}");
-    expect(summary).toContain("BUILT_SHA: ${{ github.sha }}");
+    // Aegis (Low): record the PR head commit (what was pushed), not the test merge commit.
+    expect(summary).toContain("BUILT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}");
+    expect(summary).toContain("is the PR head commit (what was pushed");
+    expect(summary).toContain("links it to the merge build");
     expect(summary).toContain("steps.regen-upload.outputs.artifact-id");
     expect(summary).toContain("npm run visual:manifest -- --run $RUN_ID --artifact $ARTIFACT_ID --commit $BUILT_SHA");
     // No ${{ }} inside the script itself: every value arrives through env.
