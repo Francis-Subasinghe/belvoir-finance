@@ -1,0 +1,7 @@
+/* F2-32 negatives: raw durations, and a looping animation. */
+.x {
+  transition: color 200ms ease;
+}
+.y {
+  animation: spin var(--motion-duration-base) infinite;
+}

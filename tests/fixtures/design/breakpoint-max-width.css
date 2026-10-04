@@ -1,0 +1,6 @@
+/* F2-17 negative: desktop-first max-width. */
+@media (max-width: 48rem) {
+  .x {
+    display: block;
+  }
+}

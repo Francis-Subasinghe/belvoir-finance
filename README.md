@@ -29,12 +29,17 @@ Requires the Node version in `.nvmrc` (Node 24, also pinned in `package.json` `e
 npm ci                 # install exactly what package-lock.json pins
 npm run dev            # site at http://127.0.0.1:4321/belvoir-finance/ (localhost only)
 npm run keystatic      # Keystatic admin at http://127.0.0.1:4321/keystatic (localhost only)
+npm run dev:gallery    # component gallery at http://127.0.0.1:4322/belvoir-finance/design/ (dev only)
 npm run format:check   # Prettier
 npm run lint           # ESLint (TypeScript, Astro, jsx-a11y rules)
 npm run typecheck      # astro check + tsc --noEmit (strictest)
 npm test               # Vitest unit tests, including the content checks
 npm run build          # astro build to dist/, then the dist/ assertions (postbuild)
-npm run test:e2e       # Playwright + axe at 360/768/1280 px (after build; needs `npx playwright install chromium` once)
+npm run build:gallery  # gallery test build to dist-gallery/ (never deployed) + its assertions
+npm run test:e2e       # build:gallery, then Playwright + axe at 360/768/1280 px on dist/ and dist-gallery/
+                       # (run `npm run build` first; needs `npx playwright install chromium` once)
+npm run test:visual    # gallery screenshot comparison, report only (F2-38; baselines come from the CI image)
+npm run wireframes     # regenerate the D12 wireframe screenshots in docs/design/wireframes/
 npm run check:content  # no .mdx, Markdoc allowlist, no raw HTML, safe links
 npm run verify         # everything above except e2e
 ```
@@ -43,7 +48,11 @@ npm run verify         # everything above except e2e
 
 `npm run keystatic` starts the dev server with the Keystatic admin enabled. Edits are written straight to `content/` on your machine; commit them on a branch and open a PR like any other change. Keystatic uses `storage: { kind: 'local' }` only: there is no GitHub mode, GitHub App or session secret. Keystatic's admin calls a fixed `/api/keystatic` path, so in this mode the site is served from `/` rather than `/belvoir-finance/`. Keystatic is never loaded by `astro build`, and a build test fails if anything containing `keystatic` reaches `dist/`.
 
-Both dev servers bind to `127.0.0.1`. Never add `--host` or `0.0.0.0`; CI rejects it.
+### Component gallery (dev and tests only)
+
+The F2 component gallery (`/design/`) and the D12 wireframes (`/design/wireframes/<page>/`) exist only when `BELVOIR_GALLERY=1` is set, which only `scripts/gallery.ts` does (`npm run dev:gallery`, `build:gallery`, `preview:gallery`). `npm run build` never sets it, and a build test fails if anything from the gallery reaches `dist/`. The gallery runs on port 4322 so it can run alongside `npm run dev`. See `docs/design/DESIGN_SYSTEM.md`.
+
+All dev and preview servers bind to `127.0.0.1`. Never add `--host` or `0.0.0.0`; CI rejects it.
 
 ## Content rules
 

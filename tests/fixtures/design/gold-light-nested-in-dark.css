@@ -1,0 +1,4 @@
+/* Extra negative: a light card nested inside a navy band is a light surface. */
+.surface-navy .surface-white a {
+  color: var(--color-gold);
+}

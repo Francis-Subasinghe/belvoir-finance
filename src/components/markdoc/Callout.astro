@@ -1,4 +1,9 @@
 ---
+/**
+ * F2-25 callout. The visible label always names the type, so the type
+ * never depends on the accent colour (each accent pair is in CONTRAST.md).
+ * The Markdoc allowlist (src/lib/markdoc-allowlist.ts) holds exactly these four types.
+ */
 import type { CalloutType } from "../../lib/markdoc-allowlist";
 
 interface Props {
@@ -12,12 +17,13 @@ const LABELS: Record<CalloutType, string> = {
   opinion: "Opinion",
 };
 const { type, title } = Astro.props;
+const name = title ? `${LABELS[type]}: ${title}` : LABELS[type];
 ---
 
-<aside class={`callout callout-${type}`} aria-label={LABELS[type]}>
+<aside class={`callout callout-${type}`} aria-label={name} data-testid="callout">
   <p class="callout-label">
-    {LABELS[type]}
-    {title ? `: ${title}` : ""}
+    <span class="callout-type">{LABELS[type]}</span>
+    {title && <span class="callout-title">: {title}</span>}
   </p>
   <slot />
 </aside>

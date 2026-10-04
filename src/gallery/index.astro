@@ -1,0 +1,340 @@
+---
+/**
+ * F2-01 component gallery. DEV AND TESTS ONLY: this route exists only when
+ * BELVOIR_GALLERY=1 (scripts/gallery.ts); `npm run build` never builds it.
+ * Placeholder demo content only. Every component, variant and state, on
+ * each surface it supports.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StoryCard from "../components/StoryCard.astro";
+import ArticleHeader from "../components/ArticleHeader.astro";
+import SourceNote from "../components/SourceNote.astro";
+import Callout from "../components/markdoc/Callout.astro";
+import ChartWrapper from "../components/ChartWrapper.astro";
+import StatusNotice from "../components/StatusNotice.astro";
+import DemoBanner from "../components/DemoBanner.astro";
+import TextField from "../components/forms/TextField.astro";
+import SelectField from "../components/forms/SelectField.astro";
+import CheckboxField from "../components/forms/CheckboxField.astro";
+import Button from "../components/forms/Button.astro";
+import { withBase } from "../lib/paths";
+import { WIREFRAMES } from "./wireframes/pages";
+import "../styles/gallery.css";
+
+const day = new Date("2026-10-02T00:00:00Z");
+const card = {
+  title: "Placeholder story title",
+  href: withBase("/design/"),
+  summary: "Placeholder summary sentence for layout testing.",
+  format: "explainer",
+  level: "beginner",
+  date: day,
+};
+const LIGHT = ["white", "alabaster"] as const;
+const levels = [
+  { value: "", label: "Choose a level" },
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+];
+---
+
+<BaseLayout title="Component gallery (dev only)" noindex>
+  <div class="design-gallery" data-testid="design-gallery">
+    <h1>Component gallery</h1>
+    <p class="prose">
+      Development and test page for the F2 design system. Placeholder content only; never built into the site. Every
+      component is shown in each variant and state, on each surface it supports. Header and footer above and below are
+      the navigation (navy) and footer (slate) components.
+    </p>
+
+    <nav aria-label="Gallery sections" class="gallery-toc">
+      <ul>
+        <li>
+          <a href="#story-cards">Story card</a>
+        </li>
+        <li>
+          <a href="#article-header">Article header</a>
+        </li>
+        <li>
+          <a href="#source-note">Source note</a>
+        </li>
+        <li>
+          <a href="#callouts">Callouts</a>
+        </li>
+        <li>
+          <a href="#chart">Chart wrapper</a>
+        </li>
+        <li>
+          <a href="#forms">Form controls</a>
+        </li>
+        <li>
+          <a href="#status">Status notice</a>
+        </li>
+        <li>
+          <a href="#notices">Demo banner and notice</a>
+        </li>
+        <li>
+          <a href="#type">Type and figures</a>
+        </li>
+        <li>
+          <a href="#wireframes">Wireframes</a>
+        </li>
+      </ul>
+    </nav>
+
+    <section id="story-cards" aria-labelledby="h-story-cards" class="gallery-section">
+      <h2 id="h-story-cards">Story card</h2>
+      <div class="gallery-grid">
+        <div class="gallery-surface surface-white" data-surface="white">
+          <p class="gallery-label">On white, demo</p>
+          <StoryCard {...card} demo headingLevel={3} surface="white" />
+        </div>
+        <div class="gallery-surface surface-alabaster" data-surface="alabaster">
+          <p class="gallery-label">On alabaster, not demo</p>
+          <StoryCard {...card} format="how-to" level="intermediate" headingLevel={3} surface="alabaster" />
+        </div>
+        <div class="gallery-surface surface-navy" data-surface="navy">
+          <p class="gallery-label">Slate card in a navy band</p>
+          <StoryCard {...card} demo headingLevel={3} surface="slate" />
+        </div>
+        <div class="gallery-surface surface-navy" data-surface="navy" data-testid="light-in-dark">
+          <p class="gallery-label">White card nested in a navy band (gold resets to gold-on-light)</p>
+          <StoryCard {...card} headingLevel={3} surface="white" />
+        </div>
+      </div>
+    </section>
+
+    <section id="article-header" aria-labelledby="h-article-header" class="gallery-section surface-white">
+      <h2 id="h-article-header">Article header</h2>
+      <p class="gallery-label">Full: reviewer, period, non-UK jurisdiction (title shown as h2 here to keep one h1)</p>
+      <ArticleHeader
+        titleLevel={2}
+        title="Placeholder article title"
+        summary="One-sentence placeholder summary."
+        format="briefing"
+        author="Placeholder Author"
+        reviewer="Placeholder Reviewer"
+        firstPublished={day}
+        lastReviewed={day}
+        period="2025 to 2026 tax year"
+        jurisdiction="IE"
+      />
+      <p class="gallery-label">Minimal: UK, no reviewer, no period</p>
+      <ArticleHeader
+        titleLevel={2}
+        title="Placeholder article title"
+        summary="One-sentence placeholder summary."
+        author="Placeholder Author"
+        firstPublished={day}
+      />
+    </section>
+
+    <section id="source-note" aria-labelledby="h-source-note" class="gallery-section surface-alabaster">
+      <h2 id="h-source-note">Source note</h2>
+      <SourceNote
+        name="Example official statistics"
+        publisher="Placeholder publisher"
+        url="https://example.org/statistics"
+        accessed={day}
+      />
+      <p class="gallery-label">Refused URL (http:) renders the name as text, no link</p>
+      <SourceNote name="Refused source" publisher="Placeholder publisher" url="http://example.org/" accessed={day} />
+    </section>
+
+    <section id="callouts" aria-labelledby="h-callouts" class="gallery-section">
+      <h2 id="h-callouts">Callouts</h2>
+      {LIGHT.map((surface) => (
+        <div class={`gallery-surface surface-${surface}`} data-surface={surface}>
+          <p class="gallery-label">On {surface}</p>
+          <Callout type="fact" title="With a title">
+            <p>Placeholder fact text.</p>
+          </Callout>
+          <Callout type="estimate">
+            <p>Placeholder estimate text.</p>
+          </Callout>
+          <Callout type="example" title="Illustrative only">
+            <p>Placeholder example text.</p>
+          </Callout>
+          <Callout type="opinion">
+            <p>Placeholder opinion text.</p>
+          </Callout>
+        </div>
+      ))}
+    </section>
+
+    <section id="chart" aria-labelledby="h-chart" class="gallery-section surface-alabaster">
+      <h2 id="h-chart">Chart wrapper</h2>
+      <ChartWrapper
+        title="Placeholder: profit and cash by quarter"
+        units="pounds (£)"
+        source="Placeholder data, not real figures"
+        categories={["Q1", "Q2", "Q3", "Q4"]}
+        series={[
+          { name: "Profit", values: [12400, 15800, 9100, 17300] },
+          { name: "Cash", values: [8200, 4300, 11600, 13900] },
+        ]}
+      />
+    </section>
+
+    <section id="forms" aria-labelledby="h-forms" class="gallery-section">
+      <h2 id="h-forms">Form controls</h2>
+      {LIGHT.map((surface) => (
+        <form
+          class={`gallery-surface surface-${surface}`}
+          data-surface={surface}
+          aria-label={`Form controls on ${surface}`}
+        >
+          <p class="gallery-label">On {surface}</p>
+          <div class="gallery-form-grid">
+            <TextField id={`${surface}-text`} label="Text input" hint="Default state with a hint." />
+            <TextField id={`${surface}-text-hover`} label="Text input (hover)" demoState="hover" />
+            <TextField id={`${surface}-text-focus`} label="Text input (focus)" demoState="focus" />
+            <TextField
+              id={`${surface}-email`}
+              type="email"
+              label="Email address"
+              required
+              error="Enter an email address in the correct format, like name@example.com"
+              value="not-an-email"
+            />
+            <TextField
+              id={`${surface}-number`}
+              type="number"
+              label="Amount in pounds"
+              hint="Numbers only."
+              value="1250"
+            />
+            <TextField id={`${surface}-disabled`} label="Text input (disabled)" disabled value="Not editable" />
+            <SelectField id={`${surface}-select`} label="Level" options={levels} hint="Choose one." />
+            <SelectField id={`${surface}-select-hover`} label="Level (hover)" options={levels} demoState="hover" />
+            <SelectField id={`${surface}-select-focus`} label="Level (focus)" options={levels} demoState="focus" />
+            <SelectField
+              id={`${surface}-select-error`}
+              label="Level"
+              options={levels}
+              required
+              error="Choose a level"
+            />
+            <SelectField id={`${surface}-select-disabled`} label="Level (disabled)" options={levels} disabled />
+            <CheckboxField
+              id={`${surface}-check`}
+              label="Send me the newsletter"
+              hint="You can unsubscribe at any time."
+            />
+            <CheckboxField id={`${surface}-check-hover`} label="Checkbox (hover)" demoState="hover" />
+            <CheckboxField id={`${surface}-check-focus`} label="Checkbox (focus)" demoState="focus" checked />
+            <CheckboxField
+              id={`${surface}-check-error`}
+              label="I agree to the terms"
+              required
+              error="Tick the box to agree"
+            />
+            <CheckboxField id={`${surface}-check-disabled`} label="Checkbox (disabled)" disabled />
+          </div>
+          <div class="gallery-buttons">
+            <Button type="button">Primary</Button>
+            <Button type="button" demoState="hover">
+              Primary (hover)
+            </Button>
+            <Button type="button" demoState="focus">
+              Primary (focus)
+            </Button>
+            <Button type="button" disabled>
+              Primary (disabled)
+            </Button>
+            <Button type="button" variant="secondary">
+              Secondary
+            </Button>
+            <Button type="button" variant="secondary" demoState="hover">
+              Secondary (hover)
+            </Button>
+            <Button type="button" variant="secondary" demoState="focus">
+              Secondary (focus)
+            </Button>
+            <Button type="button" variant="secondary" disabled>
+              Secondary (disabled)
+            </Button>
+          </div>
+        </form>
+      ))}
+      <p class="gallery-label">
+        Gallery forms have no action attribute and no submit button, so nothing is sent anywhere (CSP form-action
+        'self').
+      </p>
+    </section>
+
+    <section id="status" aria-labelledby="h-status" class="gallery-section">
+      <h2 id="h-status">Status notice</h2>
+      {LIGHT.map((surface) => (
+        <div class={`gallery-surface surface-${surface}`} data-surface={surface}>
+          <p class="gallery-label">On {surface} (static: no live-region role)</p>
+          <StatusNotice variant="info" title="Placeholder title">
+            <p>Placeholder information message.</p>
+          </StatusNotice>
+          <StatusNotice variant="success">
+            <p>Placeholder success message.</p>
+          </StatusNotice>
+          <StatusNotice variant="warning">
+            <p>Placeholder warning message.</p>
+          </StatusNotice>
+          <StatusNotice variant="error" title="There is a problem">
+            <p>
+              Placeholder error message with a <a href="#forms">link to the form</a>.
+            </p>
+          </StatusNotice>
+        </div>
+      ))}
+    </section>
+
+    <section id="notices" aria-labelledby="h-notices" class="gallery-section surface-alabaster">
+      <h2 id="h-notices">Demo banner and not-advice notice</h2>
+      <p class="gallery-label">
+        Restyle only in F2 (wording and behaviour are F10). The not-advice notice is above the page.
+      </p>
+      <DemoBanner />
+    </section>
+
+    <section id="type" aria-labelledby="h-type" class="gallery-section surface-white">
+      <h2 id="h-type">Type and figures</h2>
+      <h3>Heading level 3</h3>
+      <h4>Heading level 4</h4>
+      <p class="prose">
+        Body text in the sans token at 1rem with line-height 1.6, capped at the measure. Links in running prose are
+        underlined: <a href="#type">an inline link</a>.
+      </p>
+      <p class="eyebrow">Eyebrow on a light surface</p>
+      <p>
+        Metric:{" "}
+        <span class="metric" data-numeric>
+          £12,400
+        </span>{" "}
+        and{" "}
+        <span class="numeric" data-numeric>
+          1,234.50
+        </span>
+      </p>
+      <div class="surface-navy gallery-surface" data-surface="navy">
+        <p class="eyebrow">Eyebrow on navy</p>
+        <p>
+          Text on navy with <a href="#type">a gold link</a>.
+        </p>
+      </div>
+      <div class="surface-slate gallery-surface" data-surface="slate">
+        <p>
+          Text on slate with <a href="#type">a gold link</a> and <span class="brand-accent">a gold accent</span>.
+        </p>
+      </div>
+    </section>
+
+    <section id="wireframes" aria-labelledby="h-wireframes" class="gallery-section surface-white">
+      <h2 id="h-wireframes">D12 wireframes</h2>
+      <ul class="gallery-links">
+        {WIREFRAMES.map((w) => (
+          <li>
+            <a href={withBase(`/design/wireframes/${w.slug}/`)}>{w.label}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+</BaseLayout>

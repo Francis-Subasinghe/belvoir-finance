@@ -1,0 +1,4 @@
+/* F2-07 positive: scoped to slate. */
+.surface-slate .card a {
+  color: var(--color-gold);
+}

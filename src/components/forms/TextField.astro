@@ -1,0 +1,63 @@
+---
+/**
+ * F2-27 text, email and number input. Label, hint and error are linked;
+ * the error state sets aria-invalid and prefixes "Error:". "(required)" is
+ * text. `demoState` adds the hover/focus look for the gallery only.
+ */
+interface Props {
+  id: string;
+  label: string;
+  type?: "text" | "email" | "number";
+  name?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  value?: string;
+  demoState?: "hover" | "focus";
+}
+const {
+  id,
+  label,
+  type = "text",
+  name = id,
+  hint,
+  error,
+  required = false,
+  disabled = false,
+  value,
+  demoState,
+} = Astro.props;
+const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+---
+
+<div class:list={["field", { "field-invalid": error, "field-disabled": disabled }]}>
+  <label for={id}>
+    {label}
+    {required && <span class="field-required"> (required)</span>}
+  </label>
+  {hint && (
+    <p id={`${id}-hint`} class="field-hint">
+      {hint}
+    </p>
+  )}
+  {error && (
+    <p id={`${id}-error`} class="field-error">
+      <strong>Error:</strong> {error}
+    </p>
+  )}
+  <input
+    id={id}
+    name={name}
+    type={type}
+    class:list={["input", { numeric: type === "number", [`is-${demoState}`]: demoState }]}
+    data-numeric={type === "number" ? "" : undefined}
+    inputmode={type === "number" ? "decimal" : undefined}
+    value={value}
+    required={required}
+    disabled={disabled}
+    aria-describedby={describedBy}
+    aria-invalid={error ? "true" : undefined}
+    autocomplete={type === "email" ? "email" : "off"}
+  />
+</div>

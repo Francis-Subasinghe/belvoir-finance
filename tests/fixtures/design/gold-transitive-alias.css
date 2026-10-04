@@ -1,0 +1,7 @@
+/* Extra negative: alias of an alias. --x-accent is defined in this fixture only. */
+:root {
+  --x-accent: var(--color-focus-on-dark);
+}
+.card {
+  border-color: var(--x-accent);
+}

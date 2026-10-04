@@ -1,0 +1,4 @@
+/* F2-04 negative: a named colour in a colour property. */
+.c {
+  border-color: red;
+}
