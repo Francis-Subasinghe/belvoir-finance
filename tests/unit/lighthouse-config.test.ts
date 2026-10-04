@@ -3,10 +3,11 @@
  * lighthouserc.cjs). Builds a fixture site in a temp folder and checks the
  * demo classifier, the per-page assertions and the generated assertMatrix.
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createServer, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   HOST,
@@ -323,5 +324,52 @@ describe("generated assertMatrix", () => {
     const blocking = buildAssertMatrix(budgets, listPages(dist), "error");
     expect(blocking.map((m) => m.matchingUrlPattern)).toEqual(matrix.map((m) => m.matchingUrlPattern));
     for (const m of blocking) for (const [level] of Object.values(m.assertions)) expect(level).toBe("error");
+  });
+});
+
+describe("lighthouserc.cjs: LHCI_BLOCKING sets the assertion level", () => {
+  const RC = resolve("tools/lighthouse/lighthouserc.cjs");
+
+  it('has the exact LEVEL line: only the string "true" means error', () => {
+    const lines = readFileSync(RC, "utf8").split("\n");
+    expect(lines.filter((l) => /\bLEVEL\b/.test(l) && l.startsWith("const "))).toEqual([
+      'const LEVEL = process.env.LHCI_BLOCKING === "true" ? "error" : "warn";',
+    ]);
+    expect(lines).toContain("    assert: { assertMatrix: buildAssertMatrix(budgets, pages, LEVEL) },");
+  });
+
+  /** Loads the real config in a child Node (cwd has dist-lhci/ = the fixture) and returns every level. */
+  function levels(blocking: string | undefined): string[] {
+    const cwd = mkdtempSync(join(tmpdir(), "lhci-rc-"));
+    try {
+      symlinkSync(dist, join(cwd, "dist-lhci"), "dir");
+      const env = { ...process.env };
+      delete env.LHCI_BLOCKING;
+      if (blocking !== undefined) env.LHCI_BLOCKING = blocking;
+      const r = spawnSync(
+        process.execPath,
+        [
+          "-e",
+          "const m = require(process.argv[1]).ci.assert.assertMatrix;" +
+            "process.stdout.write(JSON.stringify(m.flatMap((e) => Object.values(e.assertions).map((a) => a[0]))));",
+          RC,
+        ],
+        { cwd, env, encoding: "utf8" },
+      );
+      expect(r.status, r.stderr).toBe(0);
+      return JSON.parse(r.stdout) as string[];
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+
+  it('LHCI_BLOCKING=true makes every assertion "error"', () => {
+    const all = levels("true");
+    expect(all.length).toBeGreaterThan(20);
+    expect(new Set(all)).toEqual(new Set(["error"]));
+  });
+
+  it.each([["false"], [undefined], ["TRUE"], ["1"], [""]])('LHCI_BLOCKING=%s makes every assertion "warn"', (v) => {
+    expect(new Set(levels(v))).toEqual(new Set(["warn"]));
   });
 });

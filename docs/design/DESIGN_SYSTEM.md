@@ -12,7 +12,7 @@ The component gallery (`/design/`) and the D12 wireframes (`/design/wireframes/<
 | `npm run build:gallery` | Gallery test build to `dist-gallery/` (gitignored, never deployed), then `tests/gallery/` assertions |
 | `npm run preview:gallery` | Serves `dist-gallery/` at http://127.0.0.1:4322/belvoir-finance/design/ with the production CSP |
 | `npm run test:e2e` | `build:gallery`, then Playwright and axe on `dist/` (port 4321) and `dist-gallery/` (port 4322) |
-| `npm run test:visual` | Gallery screenshot comparison, report only (F2-38) |
+| `npm run test:visual` | Gallery screenshot comparison, blocking in CI (F2-38) |
 | `npm run wireframes` | Regenerates `docs/design/wireframes/*.png` from the gallery build |
 
 The E2E checks use the gallery **test build**, never `astro dev`, because the dev server injects inline scripts and styles that would break the CSP checks. The gallery runs on port 4322 (with `--ignore-lock`) so it can run alongside `npm run dev`.

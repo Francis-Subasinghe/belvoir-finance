@@ -18,8 +18,8 @@ const { HOST, PORT, buildAssertMatrix, listPages, readBudgets } = require("./ass
 
 const DIST = "dist-lhci";
 
-// Report-only until before F3 merges. Blocking is set by LHCI_BLOCKING in the
-// workflow, which also drives the steps' continue-on-error.
+// Blocking when LHCI_BLOCKING=true (set in .github/workflows/lighthouse.yml, which
+// also drives the steps' continue-on-error); warn-only otherwise, e.g. local runs.
 const LEVEL = process.env.LHCI_BLOCKING === "true" ? "error" : "warn";
 
 // Before collect only: refuse to start if the dedicated port is taken.

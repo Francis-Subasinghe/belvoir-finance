@@ -2,14 +2,17 @@ import { defineConfig, devices } from "@playwright/test";
 import { GALLERY } from "./tests/helpers/e2e-urls";
 
 /**
- * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e`; CI runs
- * it in the "Visual regression" job (ci.yml, ubuntu-24.04, VISUAL_BLOCKING switch).
+ * F2-38 visual regression: BLOCKING in CI. Not part of `npm run test:e2e`; CI runs
+ * it in the "Visual regression" job (ci.yml, ubuntu-24.04, VISUAL_BLOCKING: "true").
  * Baselines must come from that CI image (font rendering), never a local machine:
- * with none committed the job uploads them as the `visual-baselines` artifact. To
- * (re)baseline: download that artifact, copy it into tests/visual/__screenshots__/,
- * `git add -f` the *-linux.png files (the folder is gitignored) and update
- * tests/visual/BASELINES.sha256 (hashes plus run, artifact and commit); the Repo
- * guards step `npm run check:visual-baselines` checks the hashes.
+ * with none committed, or when the comparison fails (a changed or missing snapshot),
+ * the job uploads the full set (`--update-snapshots=all`) as the `visual-baselines`
+ * artifact. To (re)baseline: review the `visual-diff`, download that artifact, replace
+ * tests/visual/__screenshots__/ with it,
+ * `git add -f` the *-linux.png files (the folder is gitignored) and rewrite
+ * tests/visual/BASELINES.sha256 with `npm run visual:manifest -- --run <id>
+ * --artifact <id> --commit <sha>`; the Repo guards step `npm run check:visual-baselines`
+ * checks the hashes and rejects any other file under __screenshots__/.
  *   npm run test:visual -- --update-snapshots   (in the CI image) creates baselines
  *   npm run test:visual                          compares, threshold below
  *   npm run wireframes                           regenerates docs/design/wireframes/*.png (D12)
