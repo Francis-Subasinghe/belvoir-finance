@@ -1,0 +1,49 @@
+---
+/**
+ * F2-22 story card. The heading level is a prop so lists keep a valid
+ * outline. The title link is the card's only interactive element. Format,
+ * level and demo status are always text, never colour alone.
+ * Surfaces: white (default), alabaster, slate.
+ */
+import { formatDateGB, isoDate, labelOf } from "../lib/format";
+
+interface Props {
+  title: string;
+  href: string;
+  summary: string;
+  format: string;
+  level: string;
+  date?: Date | undefined;
+  demo?: boolean;
+  headingLevel?: 2 | 3 | 4;
+  surface?: "white" | "alabaster" | "slate";
+}
+const { title, href, summary, format, level, date, demo = false, headingLevel = 2, surface = "white" } = Astro.props;
+const Heading = `h${headingLevel}` as "h2" | "h3" | "h4";
+---
+
+<article class={`story-card surface-${surface}`} data-testid="story-card">
+  <Heading class="story-card-title">
+    <a href={href}>{title}</a>
+  </Heading>
+  <p class="story-card-summary">{summary}</p>
+  <dl class="story-card-meta">
+    <div>
+      <dt>Format</dt>
+      <dd>{labelOf(format)}</dd>
+    </div>
+    <div>
+      <dt>Level</dt>
+      <dd>{labelOf(level)}</dd>
+    </div>
+    {date && (
+      <div>
+        <dt>Published</dt>
+        <dd>
+          <time datetime={isoDate(date)}>{formatDateGB(date)}</time>
+        </dd>
+      </div>
+    )}
+  </dl>
+  {demo && <p class="story-card-demo">Demo content</p>}
+</article>

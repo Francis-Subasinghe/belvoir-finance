@@ -1,0 +1,30 @@
+---
+/**
+ * F2-24 source note. The link goes through toSafeLink (https only,
+ * rel="noopener noreferrer") and its text is the source name. A refused URL
+ * (http:, javascript:, malformed) renders the name as plain text, no link.
+ */
+import { toSafeLink } from "../lib/links";
+import { formatDateGB, isoDate } from "../lib/format";
+
+interface Props {
+  name: string;
+  publisher: string;
+  url: string;
+  accessed: Date;
+}
+const { name, publisher, url, accessed } = Astro.props;
+const link = toSafeLink(url);
+---
+
+<p class="source-note" data-testid="source-note">
+  <span class="source-note-label">Source:</span>
+  {link.ok && link.external ? (
+    <a href={link.href} rel={link.rel}>
+      {name}
+    </a>
+  ) : (
+    <span class="source-note-name">{name}</span>
+  )}
+  , {publisher}. Accessed <time datetime={isoDate(accessed)}>{formatDateGB(accessed)}</time>.
+</p>

@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import StoryCard from "../../components/StoryCard.astro";
 import { onlyPublished } from "../../lib/stories";
 import { withBase } from "../../lib/paths";
 
@@ -12,9 +13,16 @@ const stories = onlyPublished(await getCollection("stories"));
   <ul class="story-list">
     {stories.map((s) => (
       <li>
-        <a href={withBase(`/stories/${s.id}/`)}>{s.data.title}</a>
-        {s.data.demo && <span> (demo)</span>}
-        <p>{s.data.summary}</p>
+        <StoryCard
+          title={s.data.title}
+          href={withBase(`/stories/${s.id}/`)}
+          summary={s.data.summary}
+          format={s.data.format}
+          level={s.data.level}
+          date={s.data.firstPublished}
+          demo={s.data.demo}
+          headingLevel={2}
+        />
       </li>
     ))}
   </ul>

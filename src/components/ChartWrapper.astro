@@ -1,0 +1,106 @@
+---
+/**
+ * F2-26 chart wrapper: a <figure> with a caption (title, units, source) and a
+ * data table as the text equivalent. The SVG is decorative (aria-hidden)
+ * because the table carries the data. Series are told apart by direct value
+ * labels and a legend with distinct marker shapes (solid vs outlined), not
+ * colour alone; colours come from tokens via classes. No inline styles, no
+ * chart library and no remote resources.
+ */
+interface Series {
+  name: string;
+  values: number[];
+}
+interface Props {
+  title: string;
+  units: string;
+  source: string;
+  categories: string[];
+  series: [Series, Series] | [Series];
+}
+const { title, units, source, categories, series } = Astro.props;
+const nf = new Intl.NumberFormat("en-GB");
+const max = Math.max(1, ...series.flatMap((s) => s.values));
+const W = 320;
+const H = 180;
+const top = 22;
+const bottom = 24;
+const groupW = W / categories.length;
+const barW = Math.min(36, (groupW - 12) / series.length);
+const plotH = H - top - bottom;
+const bars = categories.flatMap((cat, ci) =>
+  series.map((s, si) => {
+    const v = s.values[ci] ?? 0;
+    const h = (v / max) * plotH;
+    const x = ci * groupW + (groupW - barW * series.length) / 2 + si * barW;
+    return { key: `${cat}-${si}`, x, y: top + plotH - h, h, v, si };
+  }),
+);
+---
+
+<figure class="chart surface-white" data-testid="chart">
+  <figcaption class="chart-caption">
+    <span class="chart-title">{title}</span>
+    <span class="chart-units">Units: {units}</span>
+    <span class="chart-source">Source: {source}</span>
+  </figcaption>
+  <ul class="chart-legend" aria-hidden="true">
+    {series.map((s, si) => (
+      <li>
+        <svg class="chart-marker" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false">
+          <rect class={si === 0 ? "chart-series-1" : "chart-series-2-outline"} x="1" y="1" width="10" height="10" />
+        </svg>
+        {s.name}
+      </li>
+    ))}
+  </ul>
+  <svg class="chart-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+    <line class="chart-axis" x1="0" y1={top + plotH} x2={W} y2={top + plotH} />
+    {bars.map((b) => (
+      <g>
+        <rect
+          class={b.si === 0 ? "chart-series-1" : "chart-series-2-outline"}
+          x={b.x + 1}
+          y={b.y}
+          width={barW - 2}
+          height={b.h}
+        />
+        <text class="chart-value numeric" data-numeric x={b.x + barW / 2} y={b.y - 4} text-anchor="middle">
+          {nf.format(b.v)}
+        </text>
+      </g>
+    ))}
+    {categories.map((c, ci) => (
+      <text class="chart-category numeric" data-numeric x={ci * groupW + groupW / 2} y={H - 6} text-anchor="middle">
+        {c}
+      </text>
+    ))}
+  </svg>
+  <div class="table-scroll" tabindex="0" role="region" aria-label={`Data table: ${title}`}>
+    <table class="data-table">
+      <caption class="visually-hidden">
+        {title}({units})
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Category</th>
+          {series.map((s) => (
+            <th scope="col">{s.name}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {categories.map((c, ci) => (
+          <tr>
+            <th scope="row">{c}</th>
+            {series.map((s) => (
+              <td class="numeric" data-numeric>
+                {nf.format(s.values[ci] ?? 0)}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</figure>

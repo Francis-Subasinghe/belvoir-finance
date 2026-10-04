@@ -1,0 +1,32 @@
+---
+/**
+ * F2-28 status notice. The visible label names the status, so the variant
+ * never depends on colour. Static notices have no live-region role; pass
+ * `live` only when the content changes after load (role="status", or
+ * role="alert" for errors). Surfaces: white, alabaster.
+ */
+export type StatusVariant = "info" | "success" | "warning" | "error";
+interface Props {
+  variant: StatusVariant;
+  title?: string;
+  live?: boolean;
+}
+const LABELS: Record<StatusVariant, string> = {
+  info: "Information",
+  success: "Success",
+  warning: "Warning",
+  error: "Error",
+};
+const { variant, title, live = false } = Astro.props;
+const role = live ? (variant === "error" ? "alert" : "status") : undefined;
+---
+
+<div class={`status-notice status-${variant}`} role={role} data-testid="status-notice" data-variant={variant}>
+  <p class="status-label">
+    <span class="status-kind">{LABELS[variant]}</span>
+    {title && <span>: {title}</span>}
+  </p>
+  <div class="status-body">
+    <slot />
+  </div>
+</div>

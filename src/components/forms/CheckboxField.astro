@@ -1,0 +1,56 @@
+---
+/** F2-27 checkbox: a 24 px native checkbox with its label to the right. */
+interface Props {
+  id: string;
+  label: string;
+  name?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  checked?: boolean;
+  demoState?: "hover" | "focus";
+}
+const {
+  id,
+  label,
+  name = id,
+  hint,
+  error,
+  required = false,
+  disabled = false,
+  checked = false,
+  demoState,
+} = Astro.props;
+const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+---
+
+<div class:list={["field", "field-checkbox", { "field-invalid": error, "field-disabled": disabled }]}>
+  {error && (
+    <p id={`${id}-error`} class="field-error">
+      <strong>Error:</strong> {error}
+    </p>
+  )}
+  <div class="checkbox-row">
+    <input
+      id={id}
+      name={name}
+      type="checkbox"
+      class:list={["checkbox", { [`is-${demoState}`]: demoState }]}
+      checked={checked}
+      required={required}
+      disabled={disabled}
+      aria-describedby={describedBy}
+      aria-invalid={error ? "true" : undefined}
+    />
+    <label for={id}>
+      {label}
+      {required && <span class="field-required"> (required)</span>}
+    </label>
+  </div>
+  {hint && (
+    <p id={`${id}-hint`} class="field-hint">
+      {hint}
+    </p>
+  )}
+</div>
