@@ -4,17 +4,23 @@
  * demo classifier, the per-page assertions and the generated assertMatrix.
  */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createServer, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  HOST,
   ORIGIN,
+  PORT,
   buildAssertMatrix,
+  headOf,
   isDemoHtml,
   listPages,
   readBudgets,
   type MatrixEntry,
+  strictlyBelow,
 } from "../../tools/lighthouse/assertions.ts";
+import { portInUse } from "../../tools/lighthouse/preflight.ts";
 
 const budgets = readBudgets("tools/lighthouse/budgets.json");
 const url = (path: string) => `${ORIGIN}/belvoir-finance/${path}`;
@@ -50,6 +56,70 @@ function entryFor(matrix: MatrixEntry[], u: string): MatrixEntry {
   expect(hits, u).toHaveLength(1);
   return hits[0] as MatrixEntry;
 }
+
+describe("demo marker must be in the document head", () => {
+  const body = (b: string) =>
+    `<!doctype html><html><head><meta charset="utf-8"><title>t</title></head><body>${b}</body></html>`;
+
+  it("marker in the head is demo", () => {
+    expect(isDemoHtml(`<html><HEAD lang="x">${DEMO}</Head ><body></body></html>`)).toBe(true);
+  });
+
+  it("marker only in the body is not demo", () => {
+    expect(isDemoHtml(body(DEMO))).toBe(false);
+  });
+
+  it("a fake <head> later in the body does not count (first <head> to first </head> only)", () => {
+    expect(isDemoHtml(body(`<p>Example: <head>${DEMO}</head></p>`))).toBe(false);
+    expect(isDemoHtml(body(`<pre>&lt;head&gt;${DEMO}&lt;/head&gt;</pre>`))).toBe(false);
+    expect(isDemoHtml(body(`<template><head>${DEMO}</head></template>`))).toBe(false);
+  });
+
+  it("no head element, or an unclosed head, is not demo (fail-safe)", () => {
+    expect(isDemoHtml(`<html><body>${DEMO}</body></html>`)).toBe(false);
+    expect(isDemoHtml(`<html><header>${DEMO}</header></html>`)).toBe(false);
+    expect(isDemoHtml(`<html><head>${DEMO}<body></body></html>`)).toBe(false);
+    expect(headOf("<html><header>x</header></html>")).toBeUndefined();
+  });
+});
+
+describe("strict budget limits", () => {
+  it("strictlyBelow(x) is the largest double below x, so v <= strictlyBelow(x) iff v < x", () => {
+    for (const limit of [2500, 0.1, 200]) {
+      const max = strictlyBelow(limit);
+      expect(max).toBeLessThan(limit);
+      expect(limit <= max).toBe(false); // exactly at the limit fails
+      expect(max <= max).toBe(true);
+      // no double lies between max and limit: the midpoint rounds to one of them
+      const mid = max + (limit - max) / 2;
+      expect(mid === max || mid === limit).toBe(true);
+    }
+    expect(2499.9 <= strictlyBelow(2500)).toBe(true);
+    expect(0.0999 <= strictlyBelow(0.1)).toBe(true);
+  });
+
+  it("rejects non-positive or non-finite limits", () => {
+    expect(() => strictlyBelow(0)).toThrow();
+    expect(() => strictlyBelow(Number.POSITIVE_INFINITY)).toThrow();
+  });
+});
+
+describe("preview port", () => {
+  it("uses a dedicated 127.0.0.1 port, not the dev server's 4321", () => {
+    expect(HOST).toBe("127.0.0.1");
+    expect(PORT).toBe(4329);
+    expect(ORIGIN).toBe("http://127.0.0.1:4329");
+  });
+
+  it("preflight detects a port that is already in use, and a free one", async () => {
+    const server = createServer();
+    await new Promise<void>((resolve) => server.listen({ host: "127.0.0.1", port: 0 }, resolve));
+    const { port } = server.address() as AddressInfo;
+    expect(await portInUse("127.0.0.1", port)).toBe(true);
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    expect(await portInUse("127.0.0.1", port)).toBe(false);
+  });
+});
 
 describe("demo marker detection", () => {
   it('matches only <meta name="belvoir-demo" content="true">', () => {
@@ -141,9 +211,19 @@ describe("generated assertMatrix", () => {
     for (const c of ["performance", "accessibility", "best-practices", "seo"]) {
       expect(a[`categories:${c}`]).toEqual(["warn", { minScore: 0.9, aggregationMethod: "median" }]);
     }
-    expect(a["largest-contentful-paint"]).toEqual(["warn", { maxNumericValue: 2500, aggregationMethod: "median" }]);
-    expect(a["cumulative-layout-shift"]).toEqual(["warn", { maxNumericValue: 0.1, aggregationMethod: "median" }]);
-    expect(a["total-blocking-time"]).toEqual(["warn", { maxNumericValue: 200, aggregationMethod: "median" }]);
+    // "< limit" rows are asserted as the largest double below the limit (LHCI checks "<=").
+    expect(a["largest-contentful-paint"]).toEqual([
+      "warn",
+      { maxNumericValue: strictlyBelow(2500), aggregationMethod: "median" },
+    ]);
+    expect(a["cumulative-layout-shift"]).toEqual([
+      "warn",
+      { maxNumericValue: strictlyBelow(0.1), aggregationMethod: "median" },
+    ]);
+    expect(a["total-blocking-time"]).toEqual([
+      "warn",
+      { maxNumericValue: strictlyBelow(200), aggregationMethod: "median" },
+    ]);
     expect(a["resource-summary:script:size"]).toEqual([
       "warn",
       { maxNumericValue: 51200, aggregationMethod: "median" },

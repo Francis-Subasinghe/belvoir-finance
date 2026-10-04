@@ -1,5 +1,5 @@
 {
-  "$comment": "TEST_STRATEGY.md 'Performance budgets' table, row for row. Read by lighthouserc.cjs (assertions) and summary.ts (step summary). Bytes are KiB x 1024.",
+  "$comment": "TEST_STRATEGY.md 'Performance budgets' table, row for row. Read by lighthouserc.cjs (assertions) and summary.ts (step summary). Bytes are KiB x 1024. categories are minimums (>=); audits are strict limits (<), asserted as the largest number below the limit; scriptTransferBytes are maximums (<=, at most).",
   "categories": {
     "performance": 0.9,
     "accessibility": 0.9,

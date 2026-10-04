@@ -5,7 +5,13 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
-export const ORIGIN = "http://127.0.0.1:4321";
+/**
+ * Dedicated Lighthouse preview port, so lhci never audits the dev server (4321) or
+ * someone else's server. preflight.ts checks it is free before collect starts.
+ */
+export const HOST = "127.0.0.1";
+export const PORT = 4329;
+export const ORIGIN = `http://${HOST}:${PORT}`;
 export const BASE = "/belvoir-finance/";
 
 /** The demo marker emitted by the layout on `demo: true` pages (F2, Forge). */
@@ -45,12 +51,29 @@ function metaTags(html: string): Map<string, string>[] {
 }
 
 /**
- * True only for `<meta name="belvoir-demo" content="true">` (attribute order and
- * quoting don't matter; the name compares case-insensitively like any HTML meta
- * name; the content must be exactly "true"). noindex alone never makes a page demo.
+ * The document head: from the first `<head ...>` to the first `</head>` after it
+ * (case-insensitive). `<header>` does not count. Undefined if there is no head
+ * element, or it is not closed.
+ */
+export function headOf(html: string): string | undefined {
+  const open = /<head\b[^>]*>/i.exec(html);
+  if (!open) return undefined;
+  const rest = html.slice(open.index + open[0].length);
+  const close = /<\/head\s*>/i.exec(rest);
+  return close ? rest.slice(0, close.index) : undefined;
+}
+
+/**
+ * True only for `<meta name="belvoir-demo" content="true">` inside the document
+ * head (attribute order and quoting don't matter; the name compares
+ * case-insensitively like any HTML meta name; the content must be exactly "true").
+ * Fail-safe: no head, or the marker only in the body, means not demo, so the page
+ * keeps its SEO assertion. noindex alone never makes a page demo.
  */
 export function isDemoHtml(html: string): boolean {
-  return metaTags(html).some(
+  const head = headOf(html);
+  if (head === undefined) return false;
+  return metaTags(head).some(
     (a) => a.get("name")?.toLowerCase() === DEMO_META_NAME && a.get("content") === DEMO_META_CONTENT,
   );
 }
@@ -96,14 +119,26 @@ export function pageAssertions(budgets: Budgets, page: Page, level: Level): Reco
     if (page.demo && id === "seo") continue;
     out[`categories:${id}`] = [level, { minScore, aggregationMethod }];
   }
-  for (const [id, maxNumericValue] of Object.entries(budgets.audits)) {
-    out[id] = [level, { maxNumericValue, aggregationMethod }];
+  // TEST_STRATEGY says LCP/CLS/TBT must be strictly "<" the limit, but LHCI's
+  // maxNumericValue passes when value <= max. Asserting the largest double below
+  // the limit makes "<= max" exactly equal to "< limit".
+  for (const [id, limit] of Object.entries(budgets.audits)) {
+    out[id] = [level, { maxNumericValue: strictlyBelow(limit), aggregationMethod }];
   }
   out["resource-summary:script:size"] = [
     level,
     { maxNumericValue: scriptBudget(budgets, new URL(page.url).pathname), aggregationMethod },
   ];
   return out;
+}
+
+/** The largest float64 strictly below x (for finite x > 0): `v <= strictlyBelow(x)` iff `v < x`. */
+export function strictlyBelow(x: number): number {
+  if (!Number.isFinite(x) || x <= 0) throw new Error(`strictlyBelow needs a finite positive number, got ${x}`);
+  const f = new Float64Array([x]);
+  const bits = new BigUint64Array(f.buffer);
+  bits[0] = (bits[0] ?? 0n) - 1n;
+  return f[0] ?? NaN;
 }
 
 export const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
