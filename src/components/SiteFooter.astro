@@ -1,0 +1,33 @@
+---
+/**
+ * F2-21 site footer: the single contentinfo landmark, on slate. Gold is used
+ * only inside this surface. No "Work with Belvoir" link (D4) and no
+ * regulatory, certification, testimonial or price claims (AGENTS.md rule 4).
+ */
+import type { NavItem } from "./SiteNav.astro";
+import { NOT_ADVICE_PLACEHOLDER, PREVIEW, SITE_NAME, SITE_TAGLINE } from "../config/site";
+
+interface Props {
+  links: NavItem[];
+}
+const { links } = Astro.props;
+---
+
+<footer class="site-footer surface-slate">
+  <div class="container site-footer-inner">
+    <p class="site-footer-brand">
+      <span class="brand-accent">{SITE_NAME}</span>: {SITE_TAGLINE}
+    </p>
+    <nav aria-label="Footer">
+      <ul class="site-footer-links">
+        {links.map((l) => (
+          <li>
+            <a href={l.href}>{l.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <p data-testid="footer-not-advice">{NOT_ADVICE_PLACEHOLDER}</p>
+    {PREVIEW && <p>Preview build. Not indexed by search engines.</p>}
+  </div>
+</footer>

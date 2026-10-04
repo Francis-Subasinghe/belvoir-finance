@@ -1,0 +1,10 @@
+---
+// F2-07 negative: the gold literal in a component <style> block.
+---
+
+<p class="x">Gold literal</p>
+<style>
+  .x {
+    color: #C5A059;
+  }
+</style>

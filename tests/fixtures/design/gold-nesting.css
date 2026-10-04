@@ -1,0 +1,6 @@
+/* Extra negative: CSS nesting, child of an unscoped parent. */
+.card {
+  & a {
+    color: var(--color-gold);
+  }
+}

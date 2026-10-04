@@ -1,4 +1,5 @@
 dist/
+dist-gallery/
 dist-lhci/
 .lighthouseci/
 .astro/

@@ -1,0 +1,4 @@
+/* Extra negative: :is() list with one unscoped branch. */
+:is(.card, .surface-navy .x) a {
+  color: var(--color-gold);
+}

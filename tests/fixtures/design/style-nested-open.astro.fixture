@@ -1,0 +1,8 @@
+---
+// CodeQL regression: style content is raw text, so the inner "<style>" opens
+// nothing and the block ends at the FIRST "</style>". "x" and everything
+// after it is markup again and must still be scanned.
+const h = "<b>x</b>";
+---
+
+<style><style></style>x<div set:html={h} /><p style="margin: 0">after</p></style>

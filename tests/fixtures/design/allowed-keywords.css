@@ -1,0 +1,7 @@
+/* F2-04 positive: allowed keywords only. */
+.c {
+  color: currentColor;
+  background-color: transparent;
+  border-color: inherit;
+  outline-color: none;
+}

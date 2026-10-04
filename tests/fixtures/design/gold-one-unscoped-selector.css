@@ -1,0 +1,5 @@
+/* F2-07 negative: one selector in the list is not on a dark surface. */
+.btn,
+.surface-navy .btn {
+  border-color: var(--color-gold);
+}

@@ -1,0 +1,2 @@
+// Extra negative: a chart config colour string.
+export const series = { color: "#c5a059" };

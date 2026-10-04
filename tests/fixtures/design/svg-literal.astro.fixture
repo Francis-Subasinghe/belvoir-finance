@@ -1,0 +1,5 @@
+---
+// F2-04 negative: an SVG fill literal.
+---
+
+<svg viewBox="0 0 1 1" aria-hidden="true"><rect fill="#0b132b" width="1" height="1"></rect></svg>

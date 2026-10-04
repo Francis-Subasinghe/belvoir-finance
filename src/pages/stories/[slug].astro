@@ -1,8 +1,10 @@
 ---
-import { getCollection, render } from "astro:content";
+import { getCollection, getEntry, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import DemoBanner from "../../components/DemoBanner.astro";
 import JsonLd from "../../components/JsonLd.astro";
+import ArticleHeader from "../../components/ArticleHeader.astro";
+import SourceNote from "../../components/SourceNote.astro";
 import { onlyPublished } from "../../lib/stories";
 
 export async function getStaticPaths() {
@@ -13,6 +15,18 @@ export async function getStaticPaths() {
 const { story } = Astro.props;
 const { Content } = await render(story);
 const d = story.data;
+// Reference integrity (missing ids failing the build) is F3 (CF-01); until
+// then an unknown id falls back to the slug.
+const personName = async (id: string | undefined) =>
+  id ? ((await getEntry("people", id))?.data.displayName ?? id) : undefined;
+const author = (await personName(d.author)) ?? d.author;
+const reviewer = await personName(d.reviewer);
+const sources = await Promise.all(
+  d.sources.map(async (s) => {
+    const entry = await getEntry("sources", s.source);
+    return { ...s, name: entry?.data.name ?? s.source, publisher: entry?.data.publisher ?? "Unknown publisher" };
+  }),
+);
 // Minimal Article data; full SEO metadata is F7.
 const jsonLd = {
   "@context": "https://schema.org",
@@ -23,13 +37,29 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout title={d.title} description={d.summary} noindex={d.demo}>
+<BaseLayout title={d.title} description={d.summary} noindex={d.demo} demo={d.demo}>
   <JsonLd slot="head" data={jsonLd} />
   {d.demo && <DemoBanner />}
+  <ArticleHeader
+    title={d.title}
+    summary={d.summary}
+    format={d.format}
+    author={author}
+    reviewer={reviewer}
+    firstPublished={d.firstPublished}
+    lastReviewed={d.lastReviewed}
+    period={d.period}
+    jurisdiction={d.jurisdiction}
+  />
   <div class="prose">
-    <p class="eyebrow">{d.format.replace("-", " ")}</p>
-    <h1>{d.title}</h1>
-    <p>{d.summary}</p>
     <Content />
+    {sources.length > 0 && (
+      <section aria-labelledby="sources-heading">
+        <h2 id="sources-heading">Sources</h2>
+        {sources.map((s) => (
+          <SourceNote name={s.name} publisher={s.publisher} url={s.url} accessed={s.accessed} />
+        ))}
+      </section>
+    )}
   </div>
 </BaseLayout>

@@ -1,0 +1,9 @@
+/* Extra positive: CSS nesting under a dark surface, and an :is() list that is fully scoped. */
+.surface-navy {
+  & a {
+    color: var(--color-gold);
+  }
+}
+:is(.surface-navy, .surface-slate) .eyebrow {
+  color: var(--color-gold);
+}

@@ -1,0 +1,4 @@
+/* Extra negative: :not(.surface-navy) is not scoping. */
+.card:not(.surface-navy) a {
+  color: var(--color-gold);
+}
