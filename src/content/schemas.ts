@@ -205,7 +205,7 @@ export const storySchema = z
           ctx.addIssue({
             code: "custom",
             path: ["sources", i, "url"],
-            message: `a demo story may only cite placeholder URLs on example.org, example.com, example.net or a .invalid host (got ${src.url})`,
+            message: `a demo story may only cite placeholder URLs on example.org, example.com, example.net or a .invalid host, over https (got ${src.url})`,
           });
         }
       });
@@ -358,7 +358,7 @@ export const newsletterCtaSchema = z.strictObject({
  * F3-48 (Atlas C-4, Aegis): placeholder URLs use a reserved domain. The host is
  * taken from the PARSED URL, so lookalikes (example.org.evil.test), prefix
  * tricks (notexample.org) and userinfo tricks ("example.org" written before an "@")
- * fail; any URL with a username or password fails outright.
+ * fail; any URL with a username or password, or a scheme other than https:, fails outright.
  */
 export const PLACEHOLDER_DOMAINS = ["example.org", "example.com", "example.net"] as const;
 export function isPlaceholderUrl(url: string): boolean {
@@ -368,6 +368,8 @@ export function isPlaceholderUrl(url: string): boolean {
   } catch {
     return false;
   }
+  // Aegis (Low): only https, so javascript:, data:, http: and other schemes fail even on a placeholder host.
+  if (u.protocol !== "https:") return false;
   if (u.username || u.password) return false;
   const host = u.hostname.toLowerCase().replace(/\.$/, "");
   return PLACEHOLDER_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`)) || host.endsWith(".invalid");
@@ -403,7 +405,7 @@ export const sourceSchema = z
           ctx.addIssue({
             code: "custom",
             path: [key],
-            message: `a placeholder (demo) source may only link to example.org, example.com, example.net or a .invalid host (got ${url})`,
+            message: `a placeholder (demo) source may only link to example.org, example.com, example.net or a .invalid host, over https (got ${url})`,
           });
         }
       }

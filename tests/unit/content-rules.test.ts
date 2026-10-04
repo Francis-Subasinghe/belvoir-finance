@@ -74,6 +74,12 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
     "sources[0].source",
     /demo stories cite only labelled placeholder/,
   ],
+  "demo-story-javascript-url": [
+    "F3-48",
+    "schema",
+    "sources[0].url",
+    /demo story may only cite placeholder URLs .*over https \(got javascript:\/\/example\.org\/%0aalert\(1\)\)/,
+  ],
   "demo-source-registrable": [
     "F3-48",
     "schema",

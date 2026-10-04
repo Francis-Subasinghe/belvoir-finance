@@ -94,7 +94,17 @@ describe("F3-48 placeholder URLs", () => {
     "https://notexample.org/",
     "https://example.org.invalid.com/",
     "not a url",
+    "http://example.org/",
+    "javascript://example.org/%0aalert(1)",
+    "data://example.org/,x",
+    "ftp://example.org/",
   ])("F3-48 %s is not", (u) => expect(isPlaceholderUrl(u)).toBe(false));
+  it("F3-48 javascript://example.org/%0aalert(1) parses to a placeholder host but is rejected for its scheme", () => {
+    const js = "javascript://example.org/%0aalert(1)";
+    expect(new URL(js).hostname).toBe("example.org");
+    expect(new URL(js).protocol).toBe("javascript:");
+    expect(isPlaceholderUrl(js)).toBe(false);
+  });
   it("F3-48 the userinfo trick and userinfo on a placeholder host are not (built from parts, never written joined)", () => {
     const trick = `https://${"example.org"}${at}${"belvoir-demo.com"}/`;
     expect(new URL(trick).hostname).toBe("belvoir-demo.com");
