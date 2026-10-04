@@ -22,7 +22,7 @@ const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
 const astroConfig = readFileSync("astro.config.mjs", "utf8");
 
 function repoFiles(dir = "."): string[] {
-  const skip = new Set(["node_modules", ".git", "dist", ".astro", "coverage", "tests"]);
+  const skip = new Set(["node_modules", ".git", "dist", "dist-gallery", ".astro", "coverage", "tests"]);
   return readdirSync(dir).flatMap((n) => {
     if (skip.has(n)) return [];
     const p = join(dir, n);

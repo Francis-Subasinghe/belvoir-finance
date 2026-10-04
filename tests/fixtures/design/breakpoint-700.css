@@ -1,0 +1,6 @@
+/* F2-17 negative: undocumented breakpoint. */
+@media (min-width: 700px) {
+  .x {
+    display: grid;
+  }
+}

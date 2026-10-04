@@ -1,0 +1,4 @@
+/* Extra negative (reverse rule): #7E6026 on slate is 2.58:1. */
+.surface-slate .card a {
+  color: var(--color-gold-on-light);
+}

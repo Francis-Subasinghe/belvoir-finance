@@ -1,0 +1,10 @@
+---
+// F2-04 negative: a component with a hard-coded colour.
+---
+
+<p class="c">Stray colour</p>
+<style>
+  .c {
+    color: #1c2541;
+  }
+</style>
