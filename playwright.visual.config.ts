@@ -4,8 +4,12 @@ import { GALLERY } from "./tests/helpers/e2e-urls";
 /**
  * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e`; CI runs
  * it in the "Visual regression" job (ci.yml, ubuntu-24.04, VISUAL_BLOCKING switch).
- * Baselines must come from that CI image (font rendering): with none committed the
- * job generates them as the `visual-baselines` artifact. Never commit local ones.
+ * Baselines must come from that CI image (font rendering), never a local machine:
+ * with none committed the job uploads them as the `visual-baselines` artifact. To
+ * (re)baseline: download that artifact, copy it into tests/visual/__screenshots__/,
+ * `git add -f` the *-linux.png files (the folder is gitignored) and update
+ * tests/visual/BASELINES.sha256 (hashes plus run, artifact and commit); the Repo
+ * guards step `npm run check:visual-baselines` checks the hashes.
  *   npm run test:visual -- --update-snapshots   (in the CI image) creates baselines
  *   npm run test:visual                          compares, threshold below
  *   npm run wireframes                           regenerates docs/design/wireframes/*.png (D12)

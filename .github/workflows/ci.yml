@@ -65,6 +65,13 @@ jobs:
             exit 1
           fi
 
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+      - name: "F2-38: visual baselines match BASELINES.sha256"
+        # Pure Node, no install or network; git-tracked *-linux.png only (tests/unit/visual-baselines.test.ts).
+        run: npm run check:visual-baselines
+
       - name: "Aegis M3: no .mdx under content/"
         run: |
           if [ -d content ] && find content -name '*.mdx' | grep -q .; then
@@ -144,6 +151,9 @@ jobs:
     # Baselines come only from this runner image, so font rendering matches.
     # No baselines committed -> generate them and upload the "visual-baselines" artifact.
     # Baselines committed    -> compare; on a difference, upload "visual-diff".
+    # To (re)baseline: gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
+    # `git add -f` the *-linux.png files and update tests/visual/BASELINES.sha256 (hashes, run,
+    # artifact and commit). Repo guards checks the hashes (npm run check:visual-baselines).
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
