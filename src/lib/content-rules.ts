@@ -150,6 +150,8 @@ export const REFERENCES: readonly RefSpec[] = [
   { from: "stories", field: "relatedTools", to: "tools", ids: many("relatedTools") },
   { from: "topics", field: "readingPath", to: "stories", ids: many("readingPath") },
   { from: "topics", field: "featuredTool", to: "tools", ids: one("featuredTool") },
+  { from: "tools", field: "reviewer", to: "people", ids: one("reviewer") },
+  { from: "tools", field: "sourceRecord", to: "sources", ids: one("sourceRecord") },
   { from: "sources", field: "owner", to: "people", ids: one("owner") },
 ];
 

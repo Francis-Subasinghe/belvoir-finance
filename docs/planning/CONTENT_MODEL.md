@@ -37,7 +37,7 @@ Every entry has a stable `id` (a slug, never reused) and, where relevant, `statu
 `id, displayName, role, bio, demo (boolean, required, no default), credentials[] (label, verified: boolean default false, verifiedBy, verifiedOn)`. A verified credential needs `verifiedBy` and `verifiedOn`; credentials appear on the site (Person page and story byline) only when `verified` is true (F3-19). The `placeholder` field is removed: `demo` alone marks a placeholder person (C-5), and a leftover `placeholder` key fails. Credential labels, `role` and `bio` may not contain a protected title or membership from `PROTECTED_CREDENTIAL_TERMS` (whole-word, ignoring case and punctuation, F3-50). While D8 is open every committed Person is `demo: true`, has a `displayName` starting "Placeholder" and no `verified: true` credential. `/people/<id>/` exists for each Person credited on a published Story (F3-43). The repo holds no personal contact details.
 
 ## Tool
-`id, title, summary, assumptions[] (label, default, explanation), limitations, reviewer?, sourceRecord?, usesOfficialValues, demo (boolean, required, no default)` A reviewer and source record are required if the tool uses current tax, legal or official values.
+`id, title, summary, assumptions[] (label, default, explanation), limitations, reviewer?, sourceRecord?, usesOfficialValues, demo (boolean, required, no default)` A reviewer and source record are required if the tool uses current tax, legal or official values. `reviewer` is a reference to a Person and `sourceRecord` a reference to a Source; both are checked at build time like every other reference (F3-15).
 
 ## NewsletterCTA
 `id, heading, valueProp, cadence, placement`

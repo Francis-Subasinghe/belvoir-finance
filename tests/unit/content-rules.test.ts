@@ -32,6 +32,8 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
   "ref-story-related-tool": ["F3-15", "ref-missing", "relatedTools[0]", /no Tool with id "no-such-tool"/],
   "ref-topic-reading-path": ["F3-15", "ref-missing", "readingPath[1]", /no Story with id "no-such-story"/],
   "ref-topic-featured-tool": ["F3-15", "ref-missing", "featuredTool", /no Tool with id "no-such-tool"/],
+  "ref-tool-reviewer": ["F3-15", "ref-missing", "reviewer", /no Person with id "no-such-person"/],
+  "ref-tool-source-record": ["F3-15", "ref-missing", "sourceRecord", /no Source with id "no-such-source"/],
   "ref-source-owner": ["F3-15", "ref-missing", "owner", /no Person with id "no-such-person"/],
   "ref-wrong-collection": ["F3-15", "ref-wrong-collection", "author", /"fx-ie-story" is a Story, not a Person/],
   "factual-no-reviewer": ["F3-17", "schema", "reviewer", /published factual story needs a reviewer/],
@@ -131,8 +133,11 @@ describe("F3-31 content fixtures", () => {
     expect(readdirSync(NEG).sort()).toEqual(Object.keys(CASES).sort());
   });
 
-  it("F3-15 the reference table covers the nine reference types", () => {
-    expect(REFERENCES).toHaveLength(9);
+  it("F3-15 the reference table covers the eleven reference types", () => {
+    expect(REFERENCES).toHaveLength(11);
+    expect(REFERENCES.map((r) => `${r.from}.${r.field}->${r.to}`)).toEqual(
+      expect.arrayContaining(["tools.reviewer->people", "tools.sourceRecord->sources"]),
+    );
   });
 
   it.each(Object.entries(CASES).map(([name, c]) => [`${c[0]} ${name}`, name, c] as const))(

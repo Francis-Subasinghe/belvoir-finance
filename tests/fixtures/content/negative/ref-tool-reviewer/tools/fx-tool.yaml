@@ -5,7 +5,7 @@ assumptions:
     default: 30 days
     explanation: Fixture explanation.
 limitations: Illustrative only.
-reviewer: fx-reviewer
+reviewer: no-such-person
 sourceRecord: fx-active
 usesOfficialValues: false
 demo: false

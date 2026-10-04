@@ -6,6 +6,6 @@ assumptions:
     explanation: Fixture explanation.
 limitations: Illustrative only.
 reviewer: fx-reviewer
-sourceRecord: fx-active
+sourceRecord: no-such-source
 usesOfficialValues: false
 demo: false

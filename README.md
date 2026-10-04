@@ -72,7 +72,7 @@ All dev and preview servers bind to `127.0.0.1`. Never add `--host` or `0.0.0.0`
 One function, `checkContentRules()` in `src/lib/content-rules.ts`, validates all of `content/` with the Zod schemas in `src/content/schemas.ts` and then the cross-entry rules. `astro build` fails on any error (the `belvoir-content-rules` integration in `astro.config.mjs`); `astro dev` only logs them. Field-by-field rules are in `docs/planning/CONTENT_MODEL.md`. In short:
 
 - **Ids** are the file name (lowercase slug), unique ignoring case; no `slug:` key. Retired ids are never reused.
-- **References** (story topics, author, reviewer, sources, related stories and tools; topic reading path and featured tool; source owner) must name an entry in the right collection. A reference to an entry that exists but isn't published is a **warning**; the target is left out of the page.
+- **References** (story topics, author, reviewer, sources, related stories and tools; topic reading path and featured tool; tool reviewer and source record; source owner — 11 reference types) must name an entry in the right collection. A reference to an entry that exists but isn't published is a **warning**; the target is left out of the page.
 - **Required booleans with no default:** `demo` on every Story, Topic, Tool, Person and Source; `factual` and `commercialInterest` on every Story.
 - A published factual story needs a `reviewer`, who isn't the author. `commercialInterest: true` needs a non-blank `disclosure`.
 - **Dates** are real `YYYY-MM-DD` dates. Once published, `firstPublished` and `lastReviewed` are required, `lastReviewed` ≥ `firstPublished`, and `nextReviewDue` > `lastReviewed`. Nothing compares a date with today, so the build is the same on any day and in any time zone.
