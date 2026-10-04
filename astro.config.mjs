@@ -14,6 +14,27 @@ import markdoc from "@astrojs/markdoc";
 const isDev = process.argv.includes("dev");
 const keystaticMode = isDev && process.env.BELVOIR_KEYSTATIC === "1";
 
+/**
+ * F2 component gallery and D12 wireframes: dev and tests only. Added only
+ * when BELVOIR_GALLERY=1, which only scripts/gallery.ts sets (`npm run
+ * dev:gallery`, `npm run build:gallery`). `npm run build` never sets it, so
+ * dist/ has no /design/ route (F2-40, asserted in tests/build/dist.test.ts).
+ * The gallery test build goes to dist-gallery/ (gitignored, never deployed)
+ * and its preview server uses port 4322 so it can't be mistaken for dist/.
+ */
+const galleryMode = process.env.BELVOIR_GALLERY === "1" && !keystaticMode;
+
+/** @type {import("astro").AstroIntegration} */
+const gallery = {
+  name: "belvoir-gallery",
+  hooks: {
+    "astro:config:setup": ({ injectRoute }) => {
+      injectRoute({ pattern: "/design", entrypoint: "./src/gallery/index.astro" });
+      injectRoute({ pattern: "/design/wireframes/[page]", entrypoint: "./src/gallery/wireframes/[page].astro" });
+    },
+  },
+};
+
 /** @type {import("astro").AstroIntegration[]} */
 const devOnlyIntegrations = [];
 if (keystaticMode) {
@@ -28,12 +49,13 @@ export default defineConfig({
   base: keystaticMode ? "/" : "/belvoir-finance/",
   trailingSlash: keystaticMode ? "ignore" : "always",
   output: "static",
+  outDir: galleryMode ? "./dist-gallery" : "./dist",
   // F1-30: local-only dev and preview servers.
-  server: { host: "127.0.0.1", port: 4321 },
+  server: { host: "127.0.0.1", port: galleryMode ? 4322 : 4321 },
   build: {
     // Keep all CSS in external files so the CSP needs no 'unsafe-inline'.
     inlineStylesheets: "never",
   },
   devToolbar: { enabled: false },
-  integrations: [markdoc({ allowHTML: false }), ...devOnlyIntegrations],
+  integrations: [markdoc({ allowHTML: false }), ...devOnlyIntegrations, ...(galleryMode ? [gallery] : [])],
 });

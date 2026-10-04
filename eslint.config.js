@@ -6,7 +6,9 @@ import globals from "globals";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig(
-  { ignores: ["dist/", ".astro/", "node_modules/", "coverage/", "test-results/", "playwright-report/"] },
+  {
+    ignores: ["dist/", "dist-gallery/", ".astro/", "node_modules/", "coverage/", "test-results/", "playwright-report/"],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   ...astro.configs["flat/recommended"],
@@ -16,6 +18,8 @@ export default defineConfig(
     rules: {
       // Inline event handlers and javascript: URLs would break the CSP.
       "no-script-url": "error",
+      // A scrollable region (wide data table) must be focusable so keyboard users can scroll it (F2-18, F2-26).
+      "astro/jsx-a11y/no-noninteractive-tabindex": ["error", { tags: [], roles: ["tabpanel", "region"] }],
       "no-restricted-syntax": [
         "error",
         {
