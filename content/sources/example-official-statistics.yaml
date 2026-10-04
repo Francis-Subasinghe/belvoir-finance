@@ -1,0 +1,16 @@
+name: Example Official Statistics (placeholder)
+publisher: Example Publisher (placeholder)
+category: primary-official
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: https://www.example.org/
+feedType: none
+updateFrequency: Unknown (placeholder)
+rights: unknown
+rightsNotes: Placeholder entry for F1 schema testing. Real registry entries arrive in F5.
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-02
+editorialNotes: Not a real source.
+status: paused

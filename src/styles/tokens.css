@@ -1,0 +1,53 @@
+/*
+ * Design tokens (F1-22, F1-23). The ONLY place brand hex values are defined.
+ * Contrast for every pair the shell uses is asserted in
+ * tests/unit/design-tokens.test.ts and tabulated in docs/design/CONTRAST.md.
+ *
+ * RULE (F1-24): --color-gold (#C5A059) may only sit on navy or slate
+ * surfaces. Gold text on white/alabaster uses --color-gold-on-light.
+ */
+:root {
+  /* Brand */
+  --color-navy: #0b132b;
+  --color-slate: #1c2541;
+  --color-gold: #c5a059;
+  --color-gold-on-light: #7e6026;
+  --color-alabaster: #f8fafc;
+  --color-white: #ffffff;
+
+  /* Text and borders */
+  --color-text: #1c2541; /* slate on light surfaces */
+  --color-text-muted: #4a5568;
+  --color-text-on-dark: #f8fafc;
+  --color-border: #cbd5e1;
+  --color-border-strong: #64748b;
+  --color-link: #7e6026;
+  --color-focus: #7e6026;
+  --color-focus-on-dark: #c5a059;
+
+  /* Status */
+  --color-notice-bg: #fff8e6;
+  --color-notice-text: #5c4511;
+
+  /* Typography (self-hosted via @fontsource; no third-party font origin) */
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --numeric: tabular-nums;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.563rem;
+  --step-3: 1.953rem;
+  --step-4: 2.441rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+
+  --measure: 68ch;
+  --radius: 4px;
+}

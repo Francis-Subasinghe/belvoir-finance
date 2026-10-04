@@ -10,8 +10,10 @@ Roles: **Atlas** (architect/coordinator), **Forge** (developer), **Sentinel** (Q
 4. No claims of regulation, certification, qualifications, testimonials, client results or prices unless verified by the owner.
 5. No purchases, DNS/registrar changes, repo-visibility changes or production deploys without explicit owner authorisation.
 6. Feature branches only; merge to `main` requires green CI + Sentinel PASS + Aegis no open Critical/High.
+   GitHub enforces only the four required checks (no required approvals, because PRs are opened with the owner's token and the owner can't approve their own PR). Sentinel's and Aegis's sign-off is a team rule: Atlas merges only after both have posted PASS in the Belvoir Finance chat.
 7. Never report a check as passed if it did not run.
 8. Push with the fine-grained `belvoir-finance` token (`BELVOIR_GH_TOKEN`), never the owner's admin login. Never interpolate external text into workflow `run:` steps.
+9. Commit as `<Name> (bot) <name@belvoir-finance.invalid>` (e.g. `Forge (bot) <forge@belvoir-finance.invalid>`). Never use `<name>@users.noreply.github.com`, which links to unrelated GitHub accounts.
 
 ## Source of truth
 
