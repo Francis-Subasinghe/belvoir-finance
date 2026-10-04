@@ -1,5 +1,7 @@
 displayName: Placeholder Reviewer
 role: Demo reviewer (placeholder, D8)
 bio: A placeholder person used for layout testing. Not a real person.
-placeholder: true
-credentials: []
+demo: true
+credentials:
+  - label: Placeholder credential (unverified)
+    verified: false

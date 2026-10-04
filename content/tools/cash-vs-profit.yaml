@@ -6,3 +6,4 @@ assumptions:
     explanation: Placeholder assumption for the demo; final values are set in F4.
 limitations: Illustrative only. Uses no current tax values (D10).
 usesOfficialValues: false
+demo: true
