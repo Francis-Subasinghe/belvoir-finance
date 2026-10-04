@@ -75,7 +75,7 @@ Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by L
 | Cumulative Layout Shift | < 0.1 |
 | Total Blocking Time (lab proxy for INP) | < 200 ms |
 | JavaScript per editorial page (compressed) | ≤ 50 KB |
-| JavaScript on `/tools/cash-vs-profit` (compressed) | ≤ 120 KB |
+| JavaScript on `/tools/cash-vs-profit` (compressed) | 0 KB in F3 (static shell, no script); ≤ 120 KB from F4, when the interactive tool lands |
 
 ## Content-correctness checks
 - Required story metadata from `CONTENT_MODEL.md` renders visibly: author, reviewer (for factual finance items), first-published and last-reviewed dates, jurisdiction and period where relevant, and sources with accessed dates.
