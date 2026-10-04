@@ -1,0 +1,80 @@
+name: Lighthouse
+
+# TEST_STRATEGY.md merge-blocking check 6. REPORT-ONLY until before F3 merges.
+#
+# To make it blocking, change one line: LHCI_BLOCKING: "false" -> "true" (under env: below).
+# That turns every lighthouserc.cjs assertion from warn to error and drops
+# continue-on-error from the collect and assert steps. Then add the "Lighthouse"
+# check to the required status checks on main.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LHCI_BLOCKING: "false"
+
+jobs:
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tools/lighthouse/package-lock.json
+      - name: Install site dependencies
+        run: npm ci
+      - name: Install Lighthouse CI (own lockfile, CI only)
+        run: npm ci --prefix tools/lighthouse
+      - name: Install Playwright Chromium (pinned by the site lockfile)
+        run: npx playwright install --with-deps chromium
+      - name: "Build for Lighthouse (PUBLIC_PREVIEW=false, never deployed)"
+        # SEO is measured with the preview noindex off (TEST_STRATEGY.md budgets).
+        # astro build directly, so the postbuild dist/ tests (which require noindex) don't run on it.
+        run: PUBLIC_PREVIEW=false npx astro build --outDir dist-lhci
+      - name: "Aegis M2: no keystatic route in dist-lhci/"
+        run: |
+          if find dist-lhci -ipath '*keystatic*' | grep -q .; then
+            echo "::error::keystatic found in dist-lhci/"
+            find dist-lhci -ipath '*keystatic*'; exit 1
+          fi
+      - name: Lighthouse collect (3 runs per page)
+        continue-on-error: ${{ env.LHCI_BLOCKING != 'true' }}
+        run: |
+          CHROME_PATH="$(node -e "import('@playwright/test').then((m) => console.log(m.chromium.executablePath()))")"
+          export CHROME_PATH
+          tools/lighthouse/node_modules/.bin/lhci collect --config=tools/lighthouse/lighthouserc.cjs
+      - name: Save reports to the filesystem
+        if: always()
+        continue-on-error: ${{ env.LHCI_BLOCKING != 'true' }}
+        run: tools/lighthouse/node_modules/.bin/lhci upload --config=tools/lighthouse/lighthouserc.cjs
+      - name: Lighthouse assert (budgets)
+        continue-on-error: ${{ env.LHCI_BLOCKING != 'true' }}
+        run: tools/lighthouse/node_modules/.bin/lhci assert --config=tools/lighthouse/lighthouserc.cjs
+      - name: Score summary
+        if: always()
+        run: node tools/lighthouse/summary.ts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/report/
+          if-no-files-found: warn
+          retention-days: 14

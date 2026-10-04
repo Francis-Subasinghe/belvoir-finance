@@ -1,0 +1,93 @@
+// Writes a Lighthouse score table to $GITHUB_STEP_SUMMARY, or to stdout when run
+// locally. Each cell is the median across the runs for that URL, matching the
+// "median" aggregation in lighthouserc.cjs. Reads the filesystem upload written by
+// `lhci upload --target=filesystem`.
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+interface ManifestEntry {
+  url: string;
+  jsonPath: string;
+}
+interface Lhr {
+  lighthouseVersion: string;
+  environment: { hostUserAgent: string };
+  configSettings: { formFactor: string };
+  categories: Record<string, { score: number | null }>;
+  audits: Record<
+    string,
+    { numericValue?: number; details?: { items?: { resourceType: string; transferSize: number }[] } }
+  >;
+}
+interface Budgets {
+  categories: Record<string, number>;
+  audits: Record<string, number>;
+  scriptTransferBytes: { editorial: number; tools: { path: string; max: number }[] };
+}
+
+const REPORT_DIR = ".lighthouseci/report";
+const BASE = "/belvoir-finance";
+const budgets = JSON.parse(readFileSync(join(import.meta.dirname, "budgets.json"), "utf8")) as Budgets;
+const mode = process.env.LHCI_BLOCKING === "true" ? "blocking" : "report-only";
+const out: string[] = [`## Lighthouse CI (${mode})`, ""];
+
+const median = (xs: number[]): number => {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? (s[m] ?? NaN) : ((s[m - 1] ?? NaN) + (s[m] ?? NaN)) / 2;
+};
+const scriptBytes = (lhr: Lhr): number =>
+  lhr.audits["resource-summary"]?.details?.items?.find((i) => i.resourceType === "script")?.transferSize ?? 0;
+const scriptBudget = (path: string): number =>
+  budgets.scriptTransferBytes.tools.find((t) => path === BASE + t.path)?.max ?? budgets.scriptTransferBytes.editorial;
+
+const manifestPath = join(REPORT_DIR, "manifest.json");
+if (!existsSync(manifestPath)) {
+  out.push("No Lighthouse reports were produced. See the collect step log.");
+} else {
+  const byUrl = new Map<string, Lhr[]>();
+  for (const e of JSON.parse(readFileSync(manifestPath, "utf8")) as ManifestEntry[]) {
+    byUrl.set(e.url, [...(byUrl.get(e.url) ?? []), JSON.parse(readFileSync(e.jsonPath, "utf8")) as Lhr]);
+  }
+  const cats = Object.keys(budgets.categories);
+  const audits = Object.keys(budgets.audits);
+  const heads = [...cats, "LCP", "CLS", "TBT", "JS (transfer)"];
+  out.push(`| Page | Runs | ${heads.join(" | ")} |`, `| --- | --- |${" --- |".repeat(heads.length)}`);
+  let misses = 0;
+  let meta = "";
+  const mark = (ok: boolean, text: string): string => {
+    if (!ok) misses++;
+    return ok ? text : `❌ ${text}`;
+  };
+  for (const [url, lhrs] of byUrl) {
+    const first = lhrs[0];
+    if (!first) continue;
+    meta ||= `Lighthouse ${first.lighthouseVersion}, ${first.configSettings.formFactor} emulation, ${first.environment.hostUserAgent}`;
+    const path = new URL(url).pathname;
+    const cells = cats.map((c) => {
+      const score = Math.round(median(lhrs.map((l) => l.categories[c]?.score ?? 0)) * 100);
+      return mark(score >= Math.round((budgets.categories[c] ?? 1) * 100), String(score));
+    });
+    for (const a of audits) {
+      const v = median(lhrs.map((l) => l.audits[a]?.numericValue ?? NaN));
+      const shown = a === "cumulative-layout-shift" ? v.toFixed(3) : `${Math.round(v)} ms`;
+      cells.push(mark(v < (budgets.audits[a] ?? 0), shown));
+    }
+    const js = median(lhrs.map(scriptBytes));
+    const max = scriptBudget(path);
+    cells.push(mark(js <= max, `${(js / 1024).toFixed(1)} / ${max / 1024} KB`));
+    out.push(`| ${path} | ${lhrs.length} | ${cells.join(" | ")} |`);
+  }
+  out.push(
+    "",
+    `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page and ≤ 120 KB on /tools/cash-vs-profit/. ${misses} budget miss(es).`,
+    "SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages that set their own `noindex` (demo content, F10) still lose the crawlability points.",
+    "JS is the transfer size of all scripts on the page, gzip-compressed by `astro preview`.",
+    meta,
+    "Full HTML and JSON reports are in the `lighthouse-reports` artifact.",
+  );
+}
+
+const text = out.join("\n") + "\n";
+if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, text);
+else process.stdout.write(text);

@@ -6,7 +6,18 @@ import globals from "globals";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig(
-  { ignores: ["dist/", ".astro/", "node_modules/", "coverage/", "test-results/", "playwright-report/"] },
+  {
+    ignores: [
+      "dist/",
+      "dist-lhci/",
+      ".lighthouseci/",
+      ".astro/",
+      "node_modules/",
+      "coverage/",
+      "test-results/",
+      "playwright-report/",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   ...astro.configs["flat/recommended"],
@@ -29,5 +40,10 @@ export default defineConfig(
     // Tests deliberately contain hostile strings such as "javascript:alert(1)".
     files: ["tests/**"],
     rules: { "no-script-url": "off" },
+  },
+  {
+    // CommonJS config files (tools/lighthouse/lighthouserc.cjs): lhci loads them with require().
+    files: ["**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
 );
