@@ -2,9 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 import { GALLERY } from "./tests/helpers/e2e-urls";
 
 /**
- * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e` or CI.
- * Baselines must be generated in the CI Linux image (font rendering), so none
- * are committed; Launchpad makes this blocking after F2 is approved.
+ * F2-38 visual regression: REPORT ONLY. Not part of `npm run test:e2e`; CI runs
+ * it in the "Visual regression" job (ci.yml, ubuntu-24.04, VISUAL_BLOCKING switch).
+ * Baselines must come from that CI image (font rendering): with none committed the
+ * job generates them as the `visual-baselines` artifact. Never commit local ones.
  *   npm run test:visual -- --update-snapshots   (in the CI image) creates baselines
  *   npm run test:visual                          compares, threshold below
  *   npm run wireframes                           regenerates docs/design/wireframes/*.png (D12)

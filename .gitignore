@@ -10,7 +10,6 @@ coverage/
 test-results/
 playwright-report/
 dist-gallery/
-tests/visual/__screenshots__/
 
 # Lighthouse CI (CI-only build and reports)
 dist-lhci/
