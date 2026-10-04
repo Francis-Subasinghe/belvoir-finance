@@ -6,7 +6,8 @@
  * adds `noindex, nofollow` to every page and makes robots.txt disallow all.
  * Set PUBLIC_PREVIEW=false only when the owner approves a production launch.
  */
-export const PREVIEW: boolean = import.meta.env.PUBLIC_PREVIEW !== "false";
+// `?.` so plain Node and Playwright (no Vite env) can import this file for PLACEHOLDER_PAGES.
+export const PREVIEW: boolean = import.meta.env?.PUBLIC_PREVIEW !== "false";
 
 export const SITE_NAME = "Belvoir Finance";
 export const SITE_TAGLINE = "Business finance, made clear.";

@@ -27,7 +27,7 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
   </p>
 
   {featured && (
-    <section class="page-section" aria-labelledby="featured-heading">
+    <section class="page-section" aria-labelledby="featured-heading" data-testid="featured-story">
       <h2 id="featured-heading">Featured story</h2>
       <StoryCard {...cardProps(featured)} headingLevel={3} />
     </section>
@@ -66,7 +66,7 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
       <h2 id="newsletter-heading">{cta.data.heading}</h2>
       <p>{cta.data.valueProp}</p>
       <p>Cadence: {cta.data.cadence}</p>
-      <p>
+      <p class="page-links">
         <a href={withBase("/newsletter/")}>About the newsletter</a>
       </p>
     </section>

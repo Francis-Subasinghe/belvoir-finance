@@ -159,6 +159,11 @@
 .article-meta dd {
   margin: 0;
 }
+/* F3-36 / F2-19: byline links to Person pages meet the 24 px target size. */
+.article-meta a {
+  display: inline-block;
+  min-height: var(--target-min);
+}
 .story-card-demo,
 .story-card-jurisdiction {
   display: inline-block;
