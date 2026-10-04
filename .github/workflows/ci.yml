@@ -150,10 +150,14 @@ jobs:
     # F2-38: gallery screenshots at 360, 768 and 1280 px (playwright.visual.config.ts).
     # Baselines come only from this runner image, so font rendering matches.
     # No baselines committed -> generate them and upload the "visual-baselines" artifact.
-    # Baselines committed    -> compare; on a difference, upload "visual-diff".
-    # To (re)baseline: gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
+    # Baselines committed    -> compare; on a difference (or a missing snapshot), upload
+    #   "visual-diff", then regenerate the FULL set (--update-snapshots=all, gallery projects
+    #   only) and upload it as "visual-baselines". The job still fails via the compare step.
+    # To (re)baseline: review the diff, then
+    # gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
     # `git add -f` the *-linux.png files, then rewrite tests/visual/BASELINES.sha256 with
-    # `npm run visual:manifest -- --run <run-id> --artifact <artifact-id> --commit <sha>`.
+    # `npm run visual:manifest -- --run <run-id> --artifact <artifact-id> --commit <sha>`
+    # (the step summary prints the exact command).
     # Repo guards checks the hashes and rejects non-*-linux.png files (check:visual-baselines).
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -192,6 +196,7 @@ jobs:
             exit 1
           fi
       - name: Upload generated baselines
+        id: generated-upload
         if: always() && steps.baselines.outputs.present == 'false'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -218,20 +223,63 @@ jobs:
             playwright-report/
           if-no-files-found: warn
           retention-days: 14
+      - name: Regenerate the full baseline set (compare failed)
+        id: regen
+        if: always() && steps.compare.outcome == 'failure'
+        # Never fails the job by itself; in blocking mode the compare step already did.
+        # Clears the folder first so baselines of removed tests are not carried over, then
+        # rewrites every snapshot (changed, missing and unchanged) for the three gallery
+        # projects only (not "wireframes", which rewrites docs/design/wireframes/).
+        continue-on-error: true
+        run: |
+          rm -rf tests/visual/__screenshots__
+          npx playwright test --config playwright.visual.config.ts \
+            --project visual-360 --project visual-768 --project visual-1280 --update-snapshots=all
+      - name: Upload regenerated baselines
+        id: regen-upload
+        # Only a complete set: skipped when the regeneration itself failed.
+        if: always() && steps.compare.outcome == 'failure' && steps.regen.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: visual-baselines
+          path: tests/visual/__screenshots__/**/*-linux.png
+          if-no-files-found: error
+          retention-days: 30
       - name: Visual summary
         if: always()
         env:
           PRESENT: ${{ steps.baselines.outputs.present }}
           COMPARE: ${{ steps.compare.outcome }}
+          REGEN: ${{ steps.regen.outcome }}
+          ARTIFACT_ID: ${{ steps.regen-upload.outputs.artifact-id || steps.generated-upload.outputs.artifact-id }}
+          RUN_ID: ${{ github.run_id }}
+          BUILT_SHA: ${{ github.sha }}
         run: |
           mode=$([ "$VISUAL_BLOCKING" = "true" ] && echo blocking || echo report-only)
           {
             echo "## Visual regression (F2-38, $mode)"
             if [ "$PRESENT" = "false" ]; then
-              echo "No baselines committed. Generated them on this runner: download the \`visual-baselines\` artifact and commit it under \`tests/visual/__screenshots__/\`."
+              echo "No baselines committed. Generated them on this runner."
             elif [ "$COMPARE" = "success" ]; then
               echo "All gallery screenshots match the committed baselines."
             else
-              echo "Screenshots differ from the baselines (or the run failed). See the \`visual-diff\` artifact."
+              echo "Screenshots differ from the baselines, or a snapshot is missing (or the run failed). See the \`visual-diff\` artifact."
+              if [ "$REGEN" != "success" ]; then
+                echo ""
+                echo "Regenerating the full baseline set failed (\`$REGEN\`), so no \`visual-baselines\` artifact was uploaded."
+              fi
+            fi
+            if [ -n "$ARTIFACT_ID" ]; then
+              echo ""
+              echo "### To accept these screenshots as the new baselines"
+              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID, built from commit $BUILT_SHA (on a pull request, GitHub's test merge commit). Review the diff first, then:"
+              echo ""
+              echo '```sh'
+              echo "rm -rf tests/visual/__screenshots__"
+              echo "gh run download $RUN_ID -n visual-baselines -D tests/visual/__screenshots__"
+              echo "git add -f -A tests/visual/__screenshots__"
+              echo "npm run visual:manifest -- --run $RUN_ID --artifact $ARTIFACT_ID --commit $BUILT_SHA"
+              echo "npm run check:visual-baselines"
+              echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY"

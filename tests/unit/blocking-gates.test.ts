@@ -48,6 +48,48 @@ describe("Visual regression gate (ci.yml)", () => {
     expect(visual).toMatch(/^ {4}name: Visual regression$/m);
     expect(step(visual, "Compare with baselines")).toContain("continue-on-error: ${{ env.VISUAL_BLOCKING != 'true' }}");
     expect(step(visual, "Generate baselines")).toMatch(/if \[ "\$VISUAL_BLOCKING" = "true" \]; then[\s\S]*exit 1/);
-    expect(visual).not.toMatch(/continue-on-error: true/);
+    // Only the regeneration step may never fail; the comparison carries the job's result.
+    expect(visual.match(/continue-on-error: true/g)).toHaveLength(1);
+    expect(step(visual, "Regenerate the full baseline set")).toContain("continue-on-error: true");
+  });
+
+  it("on a compare failure regenerates the full gallery set and uploads it as visual-baselines", () => {
+    const visual = job(ci, "visual");
+    const names = [...visual.matchAll(/^ {6}- name: (.+)$/gm)].map((m) => m[1]);
+    const at = (n: string) => names.findIndex((x) => x?.startsWith(n));
+    expect(at("Compare with baselines")).toBeLessThan(at("Upload visual diff"));
+    expect(at("Upload visual diff")).toBeLessThan(at("Regenerate the full baseline set"));
+    expect(at("Regenerate the full baseline set")).toBeLessThan(at("Upload regenerated baselines"));
+    expect(at("Upload regenerated baselines")).toBeLessThan(at("Visual summary"));
+
+    const regen = step(visual, "Regenerate the full baseline set");
+    expect(regen).toContain("if: always() && steps.compare.outcome == 'failure'");
+    expect(regen).toContain("rm -rf tests/visual/__screenshots__");
+    expect(regen).toContain("--project visual-360 --project visual-768 --project visual-1280 --update-snapshots=all");
+    expect(regen).not.toMatch(/--project wireframes/);
+
+    const upload = step(visual, "Upload regenerated baselines");
+    expect(upload).toContain("if: always() && steps.compare.outcome == 'failure' && steps.regen.outcome == 'success'");
+    expect(upload).toMatch(/uses: actions\/upload-artifact@[0-9a-f]{40} /);
+    expect(upload).toContain("name: visual-baselines");
+    expect(upload).toContain("path: tests/visual/__screenshots__/**/*-linux.png");
+    expect(upload).toContain("if-no-files-found: error");
+    expect(upload).toContain("retention-days: 30");
+  });
+
+  it("the summary prints the visual:manifest command from trusted context only", () => {
+    const summary = step(job(ci, "visual"), "Visual summary");
+    expect(summary).toContain("RUN_ID: ${{ github.run_id }}");
+    expect(summary).toContain("BUILT_SHA: ${{ github.sha }}");
+    expect(summary).toContain("steps.regen-upload.outputs.artifact-id");
+    expect(summary).toContain("npm run visual:manifest -- --run $RUN_ID --artifact $ARTIFACT_ID --commit $BUILT_SHA");
+    // No ${{ }} inside the script itself: every value arrives through env.
+    expect(summary.slice(summary.indexOf("run: |"))).not.toContain("${{");
+  });
+
+  it("keeps the workflow read-only", () => {
+    expect(ci).toMatch(/^permissions:\n {2}contents: read$/m);
+    const visual = job(ci, "visual");
+    expect(visual).not.toMatch(/permissions:|git (commit|push)|secrets\./);
   });
 });

@@ -37,7 +37,7 @@ A PR cannot merge unless all of the following pass. Launchpad makes them require
 7. Internal link check.
 8. Dependency review and CodeQL with no new High or Critical alerts.
 9. Sentinel PASS recorded on the PR, and an Aegis verdict with no open Critical or High findings.
-10. Visual regression (F2-38): the gallery screenshots match the committed CI baselines (`Visual regression` job, `VISUAL_BLOCKING: "true"`); the owner adds it to the required status checks on `main`.
+10. Visual regression (F2-38): the gallery screenshots match the committed CI baselines (`Visual regression` job, `VISUAL_BLOCKING: "true"`); the owner adds it to the required status checks on `main`. To rebaseline (a changed template, or new snapshots such as F3-41's), the failing run also uploads the complete regenerated set as the `visual-baselines` artifact; after reviewing the `visual-diff`, replace `tests/visual/__screenshots__/` with it, `git add -f` the files and run `npm run visual:manifest -- --run <run id> --artifact <artifact id> --commit <sha>` (the job summary prints the exact command). Baselines are never generated locally.
 
 **Report only (non-blocking):** the external link check, and the overdue-review warning (F10).
 
