@@ -163,9 +163,9 @@ jobs:
       - name: Look for committed baselines
         id: baselines
         run: |
-          if [ -d tests/visual/__screenshots__ ] && find tests/visual/__screenshots__ -name '*.png' | grep -q .; then
+          if [ -d tests/visual/__screenshots__ ] && find tests/visual/__screenshots__ -name '*-linux.png' | grep -q .; then
             echo "present=true" >> "$GITHUB_OUTPUT"
-            echo "Committed baselines:"; find tests/visual/__screenshots__ -name '*.png' | sort
+            echo "Committed baselines:"; find tests/visual/__screenshots__ -name '*-linux.png' | sort
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "No committed baselines: this run generates them."

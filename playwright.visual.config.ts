@@ -14,7 +14,8 @@ import { GALLERY } from "./tests/helpers/e2e-urls";
 export default defineConfig({
   testDir: "tests/visual",
   reporter: "list",
-  snapshotPathTemplate: "tests/visual/__screenshots__/{projectName}/{arg}{ext}",
+  // {platform} keeps local (darwin/win32) snapshots from overwriting the CI linux baselines.
+  snapshotPathTemplate: "tests/visual/__screenshots__/{projectName}/{arg}-{platform}{ext}",
   expect: {
     // Documented diff threshold: up to 1 % of pixels may differ, per-pixel colour tolerance 0.2.
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, threshold: 0.2, animations: "disabled", caret: "hide" },
