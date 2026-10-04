@@ -206,3 +206,42 @@ describe("F1-24 gold is only used on navy or slate", () => {
     expect(scanGold(readSources("src"))).toEqual([]);
   });
 });
+
+describe("ADR-0002 is the source of the palette and fonts", () => {
+  const adr = readFileSync("docs/decisions/ADR-0002-brand-colour-type.md", "utf8");
+
+  it.each([
+    ["Navy", "color-navy"],
+    ["Slate", "color-slate"],
+    ["Gold", "color-gold"],
+    ["Gold on light", "color-gold-on-light"],
+    ["Alabaster", "color-alabaster"],
+    ["White", "color-white"],
+  ])("palette row %s matches --%s", (row, name) => {
+    const m = new RegExp(`^\\| ${row} \\| \`(#[0-9A-Fa-f]{6})\``, "m").exec(adr);
+    expect(m?.[1], `ADR-0002 row ${row}`).toBeDefined();
+    expect(token(name)).toBe(m?.[1]?.toLowerCase());
+  });
+
+  it("the @fontsource imports are exactly ADR-0002's families and weights", () => {
+    const css = readFileSync("src/styles/global.css", "utf8");
+    const imports = [...css.matchAll(/@import "@fontsource\/([\w-]+)\/latin-(\d+)\.css";/g)].map(
+      (m) => `${m[1]} ${m[2]}`,
+    );
+    expect(imports.sort()).toEqual(
+      ["source-serif-4 600", "source-serif-4 700", "inter 400", "inter 600", "ibm-plex-mono 400"].sort(),
+    );
+    expect(adr).toMatch(/Source Serif 4 \(600, 700\)/);
+    expect(adr).toMatch(/Inter \(400, 600\)/);
+    expect(adr).toMatch(/IBM Plex Mono \(400\)/);
+    expect(tokensCss).toMatch(/--font-serif: "Source Serif 4"/);
+    expect(tokensCss).toMatch(/--font-sans: "Inter"/);
+    expect(tokensCss).toMatch(/--font-mono: "IBM Plex Mono"/);
+  });
+
+  it("the design docs cite ADR-0002 as the source", () => {
+    for (const f of ["src/styles/tokens.css", "docs/design/DESIGN_SYSTEM.md", "docs/design/CONTRAST.md"]) {
+      expect(readFileSync(f, "utf8"), f).toContain("ADR-0002");
+    }
+  });
+});

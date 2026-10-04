@@ -6,7 +6,7 @@ Minimums (WCAG 2.2 AA): **4.5** for text; **3** for large text (at least 24 px, 
 
 Design rules behind the table:
 
-- **Gold rule** (`TASKS.md` F1, `TEST_STRATEGY.md` accessibility thresholds; ADR-0002 to follow): gold `#C5A059` only on navy or slate. Gold text or UI on light surfaces uses `#7E6026`, which is never used on a dark surface.
+- **Gold rule** ([ADR-0002](../decisions/ADR-0002-brand-colour-type.md); thresholds from `TEST_STRATEGY.md`): gold `#C5A059` only on navy or slate. Gold text or UI on light surfaces uses `#7E6026`, which is never used on a dark surface.
 - `--color-border` `#CBD5E1` (1.48:1 on white) is for decorative dividers only (cards, table rows, gallery frames). Boundaries users must perceive use `--color-border-strong`, `--color-error` or the button colour.
 - Callouts always sit on a white box, whatever the surrounding surface, so their accent pairs are measured on white only.
 - The checkbox is the native control (24 × 24 px, `accent-color` navy); its unchecked border comes from the browser's own styles, and axe checks it in the rendered pages.

@@ -1,6 +1,6 @@
 /*
  * Global styles (F1, F2). Every value comes from tokens.css. Gold rule
- * (TASKS.md F1, TEST_STRATEGY.md): --color-gold and its aliases appear only
+ * (ADR-0002): --color-gold and its aliases appear only
  * in rules scoped under .surface-navy or .surface-slate; light surfaces
  * nested inside a dark band are reset to --color-gold-on-light below.
  * Breakpoints: 30rem, 48rem, 64rem (min-width only, see tokens.css).

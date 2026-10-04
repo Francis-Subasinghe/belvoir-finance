@@ -19,7 +19,7 @@ The E2E checks use the gallery **test build**, never `astro dev`, because the de
 
 ## Tokens
 
-All tokens are defined once, in `:root` in `src/styles/tokens.css` (F2-03). No other file declares a custom property, and every `var()` must resolve to a token (F2-05). No colour literal appears anywhere else under `src/` (F2-04).
+The palette and fonts come from [ADR-0002](../decisions/ADR-0002-brand-colour-type.md); a unit test fails if the brand hex values or font weights drift from it. All tokens are defined once, in `:root` in `src/styles/tokens.css` (F2-03). No other file declares a custom property, and every `var()` must resolve to a token (F2-05). No colour literal appears anywhere else under `src/` (F2-04).
 
 | Group | Tokens |
 | --- | --- |
@@ -52,7 +52,7 @@ The grid uses `.container` (`min(100% - 2 × --gutter, --container-max)`) and CS
 
 ## The gold rule
 
-**Source:** `TASKS.md` F1 and the accessibility thresholds in `TEST_STRATEGY.md`. Atlas is writing ADR-0002 (brand colours and the gold rule); once it lands, this section will cite it.
+**Source:** [ADR-0002: Brand colour and typography](../decisions/ADR-0002-brand-colour-type.md), which records the rule first set in `TASKS.md` F1. The contrast thresholds come from `TEST_STRATEGY.md`.
 
 - Brand gold `#C5A059` (`--color-gold` and any alias, such as `--color-focus-on-dark`) is used **only** in rules scoped under `.surface-navy` (7.48:1) or `.surface-slate` (6.15:1).
 - Gold text or UI on light surfaces uses `--color-gold-on-light` `#7E6026` (5.85:1 on white, 5.59:1 on alabaster).
@@ -152,7 +152,7 @@ Restyle only: wording and behaviour stay in F10. The demo banner (`role="note"`,
 
 ## Typography
 
-Headings, card titles and the article title use `--font-serif`. Body, navigation and forms use `--font-sans`. Figures (`.numeric`, `.metric`, chart values, figure tables and number inputs) use `--font-mono` with `font-variant-numeric: var(--numeric)`. The gallery marks figures with `data-numeric`, and E2E checks that each one computes `tabular-nums` (F2-14). Body text is 1rem with line-height 1.6. Fonts are self-hosted through `@fontsource` (the three F1 families and weights only, with `font-display: swap`; F2-15). The favicon is a self-hosted SVG at `/belvoir-finance/favicon.svg`.
+Headings, card titles and the article title use `--font-serif`. Body, navigation and forms use `--font-sans`. Figures (`.numeric`, `.metric`, chart values, figure tables and number inputs) use `--font-mono` with `font-variant-numeric: var(--numeric)`. The gallery marks figures with `data-numeric`, and E2E checks that each one computes `tabular-nums` (F2-14). Body text is 1rem with line-height 1.6. Fonts are self-hosted through `@fontsource`, with exactly the families and weights in ADR-0002 (Source Serif 4 600 and 700, Inter 400 and 600, IBM Plex Mono 400) and `font-display: swap` (F2-15). The favicon is a self-hosted SVG at `/belvoir-finance/favicon.svg`.
 
 ## Focus
 
