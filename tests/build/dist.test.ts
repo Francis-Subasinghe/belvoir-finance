@@ -9,6 +9,7 @@ import { gzipSync } from "node:zlib";
 import { countTags, firstTagIndex, scriptBlocks, tagAttributes } from "../helpers/html";
 import { F1_CSP, compiledGold, cspOf, galleryLeaks } from "../helpers/built-site";
 import { expectedSite } from "../helpers/expected-site";
+import { checkContentRules } from "../../src/lib/content-rules";
 
 const DIST = "dist";
 const BASE = "/belvoir-finance/";
@@ -368,20 +369,35 @@ describe("belvoir-demo marker (Launchpad's Lighthouse runner skips only the SEO 
   const count = (text: string, needle: string) => text.split(needle).length - 1;
   const rel = (f: string) => relative(DIST, f).replace(/\\/g, "/");
 
-  it("F3-33 finds demo pages and non-demo pages (not vacuous)", () => {
-    const { demoPages, pages: all } = expectedSite();
+  it("F3-33 finds demo pages, placeholder pages and other pages (not vacuous)", () => {
+    const { demoPages, placeholderPages, pages: all } = expectedSite();
     expect(demoPages.length).toBeGreaterThan(5);
-    expect(all.length - demoPages.length).toBeGreaterThan(5);
+    expect(placeholderPages).toHaveLength(5);
+    expect(all.length - demoPages.length - placeholderPages.length).toBeGreaterThan(5);
   });
 
-  it("F3-33 each page has the marker in <head> exactly when it is a demo or placeholder page", () => {
-    const demo = new Set(expectedSite().demoPages);
+  it("F3-33 the marker is in <head> exactly on pages whose content entry is demo: true; placeholder pages get the banner only", () => {
+    const { demoPages, placeholderPages } = expectedSite();
+    const demo = new Set(demoPages);
+    const placeholder = new Set(placeholderPages);
     for (const { file, html } of pages) {
       const isDemo = demo.has(rel(file));
       const head = /<head\b[^>]*>([\s\S]*?)<\/head\b[^>]*>/i.exec(html)?.[1] ?? "";
       expect(count(head, MARKER), `${rel(file)} marker in <head>`).toBe(isDemo ? 1 : 0);
       expect(count(html, "belvoir-demo"), `${rel(file)} marker anywhere`).toBe(isDemo ? 1 : 0);
-      expect(count(html, 'data-testid="demo-banner"'), `${rel(file)} banner`).toBe(isDemo ? 1 : 0);
+      expect(count(html, 'data-testid="demo-banner"'), `${rel(file)} banner`).toBe(
+        isDemo || placeholder.has(rel(file)) ? 1 : 0,
+      );
+    }
+  });
+
+  it("F3-33 every page with the marker maps to a demo: true Story, Topic, Tool or Person entry", () => {
+    const report = checkContentRules("content");
+    for (const { file } of pages.filter((p) => p.html.includes(MARKER))) {
+      const m = /^(stories|topics|tools|people)\/([^/]+)\/index\.html$/.exec(rel(file));
+      expect(m, `${rel(file)} is not a content entry page`).not.toBeNull();
+      const entry = report.entries.find((e) => e.collection === m?.[1] && e.id === m?.[2]);
+      expect(entry?.raw.demo, rel(file)).toBe(true);
     }
   });
 

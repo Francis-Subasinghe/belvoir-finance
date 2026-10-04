@@ -5,7 +5,7 @@
  * fixture builds.
  */
 import { checkContentRules } from "../../src/lib/content-rules";
-import { PLACEHOLDER_PAGES } from "../../src/config/site";
+import { PLACEHOLDER_PAGES } from "../../src/config/placeholder-pages";
 
 export const STATIC_PAGES = [
   "index.html",
@@ -27,8 +27,10 @@ const pageOf = (path: string) => `${path.replace(/^\/+/, "")}index.html`;
 
 export interface ExpectedSite {
   pages: string[];
-  /** Pages that must carry the demo banner, noindex and the marker (F3-33, F3-47). */
+  /** Pages whose content entry is `demo: true`: demo banner, noindex and the belvoir-demo marker (F3-33). */
   demoPages: string[];
+  /** The Q-10 placeholder pages (PLACEHOLDER_PAGES): demo banner and noindex, no marker. */
+  placeholderPages: string[];
   publishedStoryIds: string[];
   unpublishedStories: { id: string; title: string }[];
   creditedPeople: string[];
@@ -56,7 +58,11 @@ export function expectedSite(contentDir = "content"): ExpectedSite {
   ];
   return {
     pages: [...STATIC_PAGES, ...entryPages.map((e) => e.page)].sort(),
-    demoPages: [...PLACEHOLDER_PAGES.map(pageOf), ...entryPages.filter((e) => e.demo).map((e) => e.page)].sort(),
+    demoPages: entryPages
+      .filter((e) => e.demo)
+      .map((e) => e.page)
+      .sort(),
+    placeholderPages: PLACEHOLDER_PAGES.map(pageOf).sort(),
     publishedStoryIds: published.map((s) => s.id).sort(),
     unpublishedStories: stories
       .filter((s) => s.raw["status"] !== "published")

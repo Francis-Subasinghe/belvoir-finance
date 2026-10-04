@@ -4,6 +4,7 @@
 // runs it directly (type stripping), including via require() from the .cjs config.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { PLACEHOLDER_PAGES } from "../../src/config/placeholder-pages.ts";
 
 /**
  * Dedicated Lighthouse preview port, so lhci never audits the dev server (4321) or
@@ -119,17 +120,21 @@ function walk(dir: string): string[] {
 }
 
 /**
- * Pages exempt from the SEO category only, as paths relative to BASE. The 404 page
- * carries noindex on purpose (Atlas, PR #14). Every other budget still applies.
+ * Pages exempt from the SEO category only, as exact paths relative to BASE. The 404
+ * page carries noindex on purpose (Atlas, PR #14); the Q-10 placeholder pages
+ * (PLACEHOLDER_PAGES, src/config/placeholder-pages.ts) carry noindex until D8 and D9
+ * but no belvoir-demo marker. Every other budget still applies.
  */
-export const SEO_EXEMPT_PATHS: readonly string[] = ["/404.html"];
+export const SEO_EXEMPT_PATHS: readonly string[] = ["/404.html", ...PLACEHOLDER_PAGES];
 
 /** Why a page skips the SEO category, or undefined if SEO is asserted. */
-export function seoExemption(page: Page): "demo" | "404" | undefined {
+export function seoExemption(page: Page): "demo" | "404" | "placeholder" | undefined {
   if (page.demo) return "demo";
   const pathname = new URL(page.url).pathname;
   const base = BASE.slice(0, -1);
-  return SEO_EXEMPT_PATHS.some((p) => pathname === base + p) ? "404" : undefined;
+  const hit = SEO_EXEMPT_PATHS.find((p) => pathname === base + p);
+  if (hit === undefined) return undefined;
+  return hit === "/404.html" ? "404" : "placeholder";
 }
 
 /** Every built page (each `index.html`, plus the root `404.html`), with its demo flag. */

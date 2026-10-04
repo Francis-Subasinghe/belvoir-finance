@@ -61,12 +61,5 @@ export const FOOTER_NAV: readonly { path: string; label: string }[] = [
   { path: "/terms/", label: "Terms" },
 ];
 
-/**
- * F3-47 (Atlas, Q-10): pages with no content entry whose wording is still a
- * placeholder until D8 and D9 are decided. Each passes `demo` to BaseLayout
- * from this list, so it gets the demo banner, `noindex` and the belvoir-demo
- * marker. Removing a page from this list is an Atlas decision recorded in the PR.
- */
-export const PLACEHOLDER_PAGES = ["/about/", "/contact/", "/privacy/", "/cookies/", "/terms/"] as const;
-export type PlaceholderPage = (typeof PLACEHOLDER_PAGES)[number];
-export const isPlaceholderPage = (path: PlaceholderPage): boolean => PLACEHOLDER_PAGES.includes(path);
+// F3-47: the placeholder-page list lives in its own dependency-free module (also read by Lighthouse).
+export { PLACEHOLDER_PAGES, isPlaceholderPage, type PlaceholderPage } from "./placeholder-pages";

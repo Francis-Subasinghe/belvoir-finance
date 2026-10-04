@@ -23,7 +23,7 @@ interface Lhr {
 
 const REPORT_DIR = ".lighthouseci/report";
 const budgets = readBudgets(join(import.meta.dirname, "budgets.json"));
-/** URL -> why SEO is not asserted ("demo" or "404"); same rule as the assertions. */
+/** URL -> why SEO is not asserted ("demo", "404" or "placeholder"); same rule as the assertions. */
 const seoExempt = new Map(
   (existsSync("dist-lhci") ? listPages("dist-lhci") : []).flatMap((p) => {
     const why = seoExemption(p);
@@ -82,7 +82,7 @@ if (!existsSync(manifestPath)) {
   }
   out.push(
     "",
-    `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page and ≤ 120 KB on /tools/cash-vs-profit/. ${misses} budget miss(es).`,
+    `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page; /tools/cash-vs-profit/ ${budgets.scriptTransferBytes.tools[0]?.max === 0 ? "0 KB (F3 static shell)" : "≤ 120 KB"}. ${misses} budget miss(es).`,
     'SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages marked `<meta name="belvoir-demo" content="true">` and `/belvoir-finance/404.html` are not asserted for SEO (their noindex is deliberate); every other budget still applies to them.',
     "JS is the transfer size of all scripts on the page, gzip-compressed by `astro preview`.",
     meta,

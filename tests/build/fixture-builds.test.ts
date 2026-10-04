@@ -295,15 +295,24 @@ describe("F3-33 demo marking in a PUBLIC_PREVIEW=false build (the one Lighthouse
   }, T);
   afterAll(() => site?.cleanup());
 
-  it("F3-33 demo and placeholder pages stay noindex with the marker and banner; other pages are index, follow", () => {
-    const { pages, demoPages } = expectedSite();
+  it("F3-33 only demo pages, the Q-10 placeholder pages and 404 are noindex; only demo pages carry the marker; every other page is index, follow", () => {
+    const { pages, demoPages, placeholderPages } = expectedSite();
     const demo = new Set(demoPages);
-    for (const page of pages.filter((p) => p !== "404.html")) {
+    const placeholder = new Set(placeholderPages);
+    for (const page of pages) {
       const html = read(site, page);
       const robots = /<meta name="robots" content="([^"]+)"/.exec(html)?.[1];
-      if (demo.has(page)) {
+      if (page === "404.html") {
+        // SEO-exempt by exact path (Atlas, PR #14).
+        expect(robots, page).toBe("noindex, nofollow");
+        expect(html, page).not.toContain("belvoir-demo");
+      } else if (demo.has(page)) {
         expect(robots, page).toBe("noindex, nofollow");
         expect(html.split('<meta name="belvoir-demo" content="true">').length - 1, page).toBe(1);
+        expect(html, page).toContain('data-testid="demo-banner"');
+      } else if (placeholder.has(page)) {
+        expect(robots, page).toBe("noindex, nofollow");
+        expect(html, page).not.toContain("belvoir-demo");
         expect(html, page).toContain('data-testid="demo-banner"');
       } else {
         expect(robots, page).toBe("index, follow");
