@@ -36,7 +36,8 @@ export interface ExpectedSite {
 
 export function expectedSite(contentDir = "content"): ExpectedSite {
   const report = checkContentRules(contentDir);
-  if (report.errors.length > 0) throw new Error(`content has errors: ${report.errors.map((e) => e.message).join("; ")}`);
+  if (report.errors.length > 0)
+    throw new Error(`content has errors: ${report.errors.map((e) => e.message).join("; ")}`);
   const of = (c: string) => report.entries.filter((e) => e.collection === c);
   const stories = of("stories");
   const published = stories.filter((s) => s.raw["status"] === "published");

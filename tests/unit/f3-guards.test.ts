@@ -112,7 +112,7 @@ describe("F3-48 placeholder URLs", () => {
   });
 });
 
-describe("F3-19 / F3-21 committed content guards", () => {
+describe("F3 committed content guards", () => {
   const report = checkContentRules("content");
   it("F3-31 the committed content passes the check with no warnings", () => {
     expect(report.problems).toEqual([]);
@@ -130,9 +130,24 @@ describe("F3-19 / F3-21 committed content guards", () => {
     for (const f of walk("content", [".yaml", ".mdoc", ".json"]))
       expect(readFileSync(f, "utf8"), f).not.toMatch(/verified:\s*true/);
   });
-  it("F3-21 / F3-34 committed content never links to gov.uk, HMRC or ONS", () => {
+  it("F3-34 committed content never links to gov.uk, HMRC or ONS", () => {
     for (const f of walk("content", [".yaml", ".mdoc", ".json"]))
       expect(readFileSync(f, "utf8"), f).not.toMatch(/gov\.uk|hmrc|ons\.gov/i);
+  });
+  it("F3-34 every committed Person is demo with a displayName starting Placeholder, and has no placeholder key", () => {
+    const people = report.entries.filter((e) => e.collection === "people");
+    expect(people.length).toBeGreaterThan(0);
+    for (const p of people) {
+      expect(p.raw.demo, p.file).toBe(true);
+      expect(String(p.raw.displayName), p.file).toMatch(/^Placeholder /);
+      expect("placeholder" in p.raw, p.file).toBe(false);
+    }
+  });
+  it("F3-34 every Source a committed story cites says (placeholder) in its name", () => {
+    const sources = new Map(report.entries.filter((e) => e.collection === "sources").map((e) => [e.id, e.raw]));
+    for (const s of report.entries.filter((e) => e.collection === "stories"))
+      for (const c of (s.raw.sources as { source: string }[] | undefined) ?? [])
+        expect(String(sources.get(c.source)?.name), s.file).toContain("(placeholder)");
   });
   it("F3-20 every committed entry of a demo-bearing collection sets demo explicitly, and all are demo while D8 is open", () => {
     for (const e of report.entries.filter((x) =>

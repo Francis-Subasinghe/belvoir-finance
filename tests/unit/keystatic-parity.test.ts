@@ -4,7 +4,7 @@
  * defaults. `parityProblems` is checked on the real config and on three
  * deliberately broken copies, so the check itself is tested.
  */
-import { collection, fields } from "@keystatic/core";
+import { fields } from "@keystatic/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import ks from "../../keystatic.config";
@@ -165,13 +165,8 @@ describe("F3-27 Keystatic parity", () => {
   });
 
   it("F3-27 negative: a reference left as fields.text fails the check", () => {
-    const broken = collection({
-      label: "Topics",
-      slugField: "title",
-      path: "content/topics/*",
-      schema: { ...collections.topics.schema, featuredTool: fields.text({ label: "Featured tool" }) },
-    });
-    expect(parityProblems("topics", broken.schema, COLLECTIONS.topics.schema)).toContain(
+    const broken = { ...collections.topics.schema, featuredTool: fields.text({ label: "Featured tool" }) };
+    expect(parityProblems("topics", broken, COLLECTIONS.topics.schema)).toContain(
       "topics.featuredTool: should be a relationship to tools (got no picker)",
     );
   });

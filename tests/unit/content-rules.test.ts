@@ -6,7 +6,7 @@
  * two files on it (same relative path wins) and must fail with the expected
  * rule, file, field and message.
  */
-import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -24,23 +24,23 @@ const NEG = `${ROOT}/negative`;
 
 /** case -> [F3 id, rule, field, message pattern] */
 const CASES: Record<string, [string, string, string, RegExp]> = {
-  "ref-story-topics": ["F3-14", "ref-missing", "topics[1]", /no Topic with id "no-such-topic"/],
-  "ref-story-author": ["F3-14", "ref-missing", "author", /no Person with id "no-such-person"/],
-  "ref-story-reviewer": ["F3-14", "ref-missing", "reviewer", /no Person with id "no-such-person"/],
-  "ref-story-source": ["F3-14", "ref-missing", "sources[1].source", /no Source with id "no-such-source"/],
-  "ref-story-related-story": ["F3-14", "ref-missing", "relatedStories[0]", /no Story with id "no-such-story"/],
-  "ref-story-related-tool": ["F3-14", "ref-missing", "relatedTools[0]", /no Tool with id "no-such-tool"/],
-  "ref-topic-reading-path": ["F3-14", "ref-missing", "readingPath[1]", /no Story with id "no-such-story"/],
-  "ref-topic-featured-tool": ["F3-14", "ref-missing", "featuredTool", /no Tool with id "no-such-tool"/],
-  "ref-source-owner": ["F3-14", "ref-missing", "owner", /no Person with id "no-such-person"/],
-  "ref-wrong-collection": ["F3-14", "ref-wrong-collection", "author", /"fx-ie-story" is a Story, not a Person/],
-  "factual-no-reviewer": ["F3-15", "schema", "reviewer", /published factual story needs a reviewer/],
-  "factual-blank-reviewer": ["F3-15", "schema", "reviewer", /published factual story needs a reviewer/],
-  "factual-missing": ["F3-15", "schema", "factual", /factual is required \(true or false\), with no default/],
-  "reviewer-is-author": ["F3-16", "schema", "reviewer", /someone other than the author/],
-  "commercial-no-disclosure": ["F3-17", "schema", "disclosure", /needs a non-blank disclosure/],
-  "commercial-whitespace-disclosure": ["F3-17", "schema", "disclosure", /needs a non-blank disclosure/],
-  "commercial-missing": ["F3-17", "schema", "commercialInterest", /commercialInterest is required/],
+  "ref-story-topics": ["F3-15", "ref-missing", "topics[1]", /no Topic with id "no-such-topic"/],
+  "ref-story-author": ["F3-15", "ref-missing", "author", /no Person with id "no-such-person"/],
+  "ref-story-reviewer": ["F3-15", "ref-missing", "reviewer", /no Person with id "no-such-person"/],
+  "ref-story-source": ["F3-15", "ref-missing", "sources[1].source", /no Source with id "no-such-source"/],
+  "ref-story-related-story": ["F3-15", "ref-missing", "relatedStories[0]", /no Story with id "no-such-story"/],
+  "ref-story-related-tool": ["F3-15", "ref-missing", "relatedTools[0]", /no Tool with id "no-such-tool"/],
+  "ref-topic-reading-path": ["F3-15", "ref-missing", "readingPath[1]", /no Story with id "no-such-story"/],
+  "ref-topic-featured-tool": ["F3-15", "ref-missing", "featuredTool", /no Tool with id "no-such-tool"/],
+  "ref-source-owner": ["F3-15", "ref-missing", "owner", /no Person with id "no-such-person"/],
+  "ref-wrong-collection": ["F3-15", "ref-wrong-collection", "author", /"fx-ie-story" is a Story, not a Person/],
+  "factual-no-reviewer": ["F3-17", "schema", "reviewer", /published factual story needs a reviewer/],
+  "factual-blank-reviewer": ["F3-17", "schema", "reviewer", /published factual story needs a reviewer/],
+  "factual-missing": ["F3-17", "schema", "factual", /factual is required \(true or false\), with no default/],
+  "reviewer-is-author": ["F3-46", "schema", "reviewer", /someone other than the author/],
+  "commercial-no-disclosure": ["F3-18", "schema", "disclosure", /needs a non-blank disclosure/],
+  "commercial-whitespace-disclosure": ["F3-18", "schema", "disclosure", /needs a non-blank disclosure/],
+  "commercial-missing": ["F3-18", "schema", "commercialInterest", /commercialInterest is required/],
   "credential-verified-no-by": ["F3-19", "schema", "credentials[0].verifiedBy", /verified credential needs verifiedBy/],
   "credential-verified-no-on": ["F3-19", "schema", "credentials[0].verifiedOn", /verified credential needs verifiedOn/],
   "protected-acca-unverified": ["F3-50", "schema", "credentials[0].label", /protected title or membership "ACCA"/],
@@ -55,7 +55,7 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
   "demo-missing-person": ["F3-47", "schema", "demo", /demo is required/],
   "demo-missing-source": ["F3-48", "schema", "demo", /demo is required/],
   "non-demo-by-demo-person": [
-    "F3-20",
+    "F3-21",
     "demo-person",
     "author",
     /placeholder \(demo\) person, so this story must set demo: true/,
@@ -67,7 +67,7 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
     /placeholder \(demo\) source, so this story must set demo: true/,
   ],
   "demo-cites-real-source": [
-    "F3-21",
+    "F3-34",
     "demo-source",
     "sources[0].source",
     /demo stories cite only labelled placeholder/,
@@ -117,7 +117,7 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
 };
 
 describe("F3-31 content fixtures", () => {
-  it("F3-31 the positive fixture set passes, with only the two unpublished-reference warnings", () => {
+  it("F3-16 the positive fixture set passes, with only the two unpublished-reference warnings", () => {
     const r = checkContentRules(BASE);
     expect(r.errors.map(formatProblem)).toEqual([]);
     expect(r.warnings.map((w) => `${w.rule} ${w.file} ${w.field}`)).toEqual([
@@ -131,7 +131,7 @@ describe("F3-31 content fixtures", () => {
     expect(readdirSync(NEG).sort()).toEqual(Object.keys(CASES).sort());
   });
 
-  it("F3-14 the reference table covers the nine reference types", () => {
+  it("F3-15 the reference table covers the nine reference types", () => {
     expect(REFERENCES).toHaveLength(9);
   });
 
@@ -160,7 +160,7 @@ describe("F3-31 content fixtures", () => {
     expect(r.errors).toEqual([]);
   });
 
-  it("F3-15 a draft factual story without a reviewer passes; a published non-factual one without a reviewer passes", () => {
+  it("F3-17 a draft factual story without a reviewer passes; a published non-factual one without a reviewer passes", () => {
     const r = checkContentRules(BASE);
     const draft = must(r.entries.find((e) => e.id === "fx-draft"));
     expect(draft.raw.factual).toBe(true);
@@ -205,5 +205,27 @@ describe("F3-48 placeholder URLs carrying userinfo", () => {
     expect([u.hostname, u.username, u.password]).toEqual(["example.org", "user", "pass"]);
     const r = checkContentRules([BASE, overlayWith(withPassword, "password")]);
     expect(r.errors.some((e) => e.field === "website")).toBe(true);
+  });
+});
+
+describe("F3-30 every problem is reported, not just the first", () => {
+  it("F3-30 two broken files in one run give both messages", () => {
+    const r = checkContentRules([BASE, `${NEG}/ref-story-author`, `${NEG}/pillar-unknown-topic`]);
+    expect(r.errors.map((e) => `${e.rule} ${e.field}`).sort()).toEqual(["ref-missing author", "schema pillar"]);
+  });
+  it("F3-17 changing format alone never changes the result", () => {
+    for (const format of ["explainer", "visual-story", "what-changed", "newsletter"]) {
+      for (const [overlay, want] of [
+        [`${NEG}/factual-no-reviewer`, 1],
+        [BASE, 0],
+      ] as const) {
+        const dir = mkdtempSync(join(tmpdir(), "belvoir-fmt-"));
+        mkdirSync(join(dir, "stories"), { recursive: true });
+        const text = readFileSync(`${overlay}/stories/fx-uk-story.mdoc`, "utf8");
+        writeFileSync(join(dir, "stories/fx-uk-story.mdoc"), text.replace(/^format: .*$/m, `format: ${format}`));
+        expect(checkContentRules([BASE, dir]).errors.length, `${format} ${overlay}`).toBe(want);
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
   });
 });

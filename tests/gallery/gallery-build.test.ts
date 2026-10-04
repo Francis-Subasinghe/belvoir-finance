@@ -24,7 +24,6 @@ describe("F2-01 gallery test build", () => {
     const rel = pages.map((p) => p.rel).sort();
     expect(rel).toEqual(
       [
-        "404.html",
         "design/index.html",
         ...["explore", "home", "sources", "story", "tool", "tools", "topic"].map(
           (s) => `design/wireframes/${s}/index.html`,

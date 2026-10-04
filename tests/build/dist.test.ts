@@ -386,7 +386,10 @@ describe("belvoir-demo marker (Launchpad's Lighthouse runner skips only the SEO 
   });
 
   it("F3-33 the marked-page list (for the PR)", () => {
-    const marked = pages.filter((p) => p.html.includes(MARKER)).map((p) => rel(p.file)).sort();
+    const marked = pages
+      .filter((p) => p.html.includes(MARKER))
+      .map((p) => rel(p.file))
+      .sort();
     console.info(`F3-33 demo/placeholder pages: ${marked.join(", ")}`);
     expect(marked).toEqual(expectedSite().demoPages);
   });
