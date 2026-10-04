@@ -22,7 +22,7 @@
     "@keystatic/astro": "6.0.0",
     "@keystatic/core": "0.6.9",
     "@playwright/test": "1.63.0",
-    "@types/node": "24.19.1",
+    "@types/node": "26.6.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "10.11.0",
