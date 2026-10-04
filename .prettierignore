@@ -1,5 +1,7 @@
 dist/
 dist-gallery/
+dist-lhci/
+.lighthouseci/
 .astro/
 node_modules/
 package-lock.json
