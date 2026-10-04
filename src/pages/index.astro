@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE_NAME, SITE_TAGLINE } from "../config/site";
+import { onlyPublished } from "../lib/stories";
+import { withBase } from "../lib/paths";
+
+const stories = onlyPublished(await getCollection("stories"));
+---
+
+<BaseLayout title={SITE_NAME}>
+  <p class="eyebrow">Education-first publication</p>
+  <h1>{SITE_TAGLINE}</h1>
+  <p class="prose">
+    Belvoir Finance explains business finance for UK founders and operators. This is the F1 page shell; the real pages
+    arrive in F3.
+  </p>
+  <h2>Latest stories</h2>
+  <ul class="story-list">
+    {stories.map((s) => (
+      <li>
+        <a href={withBase(`/stories/${s.id}/`)}>{s.data.title}</a>
+        {s.data.demo && <span> (demo)</span>}
+        <p>{s.data.summary}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

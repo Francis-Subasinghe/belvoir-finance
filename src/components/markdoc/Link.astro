@@ -1,0 +1,28 @@
+---
+import { toSafeLink } from "../../lib/links";
+import { withBase } from "../../lib/paths";
+
+interface Props {
+  href?: string;
+  title?: string;
+}
+const { href, title } = Astro.props;
+const link = toSafeLink(href);
+// Root-relative content links ("/stories/") are written without the base path.
+const internalHref =
+  link.ok && !link.external && link.href.startsWith("/") ? withBase(link.href) : link.ok ? link.href : "";
+---
+
+{link.ok && link.external ? (
+  <a href={link.href} title={title} rel={link.rel}>
+    <slot />
+  </a>
+) : link.ok ? (
+  <a href={internalHref} title={title}>
+    <slot />
+  </a>
+) : (
+  <span class="refused-link">
+    <slot />
+  </span>
+)}

@@ -1,0 +1,42 @@
+/**
+ * Site-wide build settings.
+ *
+ * PREVIEW is the single switch for search-engine visibility (F1-27). While the
+ * site is a GitHub Pages preview (no production domain, D1) it stays on, which
+ * adds `noindex, nofollow` to every page and makes robots.txt disallow all.
+ * Set PUBLIC_PREVIEW=false only when the owner approves a production launch.
+ */
+export const PREVIEW: boolean = import.meta.env.PUBLIC_PREVIEW !== "false";
+
+export const SITE_NAME = "Belvoir Finance";
+export const SITE_TAGLINE = "Business finance, made clear.";
+
+/**
+ * Content Security Policy, delivered as a <meta> tag (F1-14). GitHub Pages
+ * cannot send response headers, so frame-ancestors, HSTS and
+ * X-Content-Type-Options are absent on the preview; ADR-0001 accepts this
+ * for the preview only. `frame-ancestors` is ignored in a meta CSP, so it is
+ * not listed here; it belongs in the D5 host's _headers file.
+ */
+export const CSP_DIRECTIVES: Readonly<Record<string, string>> = {
+  "default-src": "'self'",
+  "script-src": "'self'",
+  "style-src": "'self'",
+  // No data: images (Aegis L2). Fonts are self-hosted files and no CSS uses data: URLs.
+  "img-src": "'self'",
+  "font-src": "'self'",
+  "connect-src": "'self'",
+  "object-src": "'none'",
+  "base-uri": "'self'",
+  "form-action": "'self'",
+  "upgrade-insecure-requests": "",
+};
+
+export function cspString(directives: Readonly<Record<string, string>> = CSP_DIRECTIVES): string {
+  return Object.entries(directives)
+    .map(([k, v]) => (v ? `${k} ${v}` : k))
+    .join("; ");
+}
+
+export const NOT_ADVICE_PLACEHOLDER =
+  "Educational information, not financial advice. [Placeholder wording — awaiting editorial sign-off; final notice ships in F10.]";
