@@ -12,3 +12,4 @@ playwright-report/
 
 # Planning and QA docs are owned by Atlas and Sentinel; not reformatted here.
 docs/
+tests/fixtures/content/
