@@ -281,6 +281,25 @@ describe("Style ranges instead of text stripping (CodeQL js/incomplete-multi-cha
     expect(r).toEqual(expect.arrayContaining(["set-html", "style-attr"]));
   });
 
+  it("the frontmatter-divider fixture: set:html is caught, where the old single-pass strip missed it", () => {
+    const f = fixture("style-frontmatter-divider.astro.fixture");
+    expect(rules(scanAstroDirectives([f]))).toContain("set-html");
+    // Prove the OLD logic gets this file wrong, without running a strip: the old frontmatter
+    // pattern ended at the "---" inside the comment, and the old style pattern, applied to what was
+    // left, matched from the frontmatter's "<style>" string to the real </style>, a span that covers
+    // the set:html. (Patterns rebuilt from strings so the single-pass guard below doesn't match.)
+    const oldFrontmatter = new RegExp(["^---", "[\\s\\S]*?", "---"].join(""));
+    const oldStyle = new RegExp(["<style\\b", "[\\s\\S]*?", "<\\/style\\b[^>]*>"].join(""), "i");
+    const fmEnd = oldFrontmatter.exec(f.text)?.[0].length ?? 0;
+    expect(fmEnd).toBeLessThan(f.text.indexOf("const open"));
+    const rest = f.text.slice(fmEnd);
+    const m = oldStyle.exec(rest);
+    const hit = rest.indexOf("<div set:html");
+    expect(m).not.toBeNull();
+    expect(hit).toBeGreaterThan(m?.index ?? Infinity);
+    expect(hit).toBeLessThan((m?.index ?? 0) + (m?.[0].length ?? 0));
+  });
+
   it("text inside a real <style> block is not treated as markup (and the file text is never modified)", () => {
     const f = fixture("style-content-only.astro.fixture");
     const before = f.text;
