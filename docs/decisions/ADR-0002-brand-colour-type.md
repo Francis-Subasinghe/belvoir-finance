@@ -11,7 +11,7 @@ TASKS F1 and `docs/qa/TEST_STRATEGY.md` set out the brand palette and the gold c
 ### Palette
 | Token | Value | Use |
 | --- | --- | --- |
-| Navy | `#0B132B` | Header, footer, feature bands, primary buttons |
+| Navy | `#0B132B` | Headings, header, footer, feature bands, primary buttons |
 | Slate | `#1C2541` | Body text on light surfaces, secondary dark surfaces |
 | Gold | `#C5A059` | Accents **only on navy or slate** (7.48:1 on navy, 6.15:1 on slate) |
 | Gold on light | `#7E6026` | Gold-toned text, links and focus rings on light surfaces (5.85:1 on white, 5.59:1 on alabaster) |
@@ -30,7 +30,7 @@ F2 adds status colours (info, success, warning, error), callout accents (fact, e
 - **Headings:** Source Serif 4 (600, 700).
 - **Body and UI:** Inter (400, 600).
 - **Numerals and data:** IBM Plex Mono (400), plus `tabular-nums` for figures in tables.
-- All fonts are self-hosted from `@fontsource` packages, pinned exactly, as Latin `woff2` subsets with `font-display: swap`. No third-party font CDN is used, which keeps the CSP same-origin and leaves no tracking.
+- All fonts are self-hosted from `@fontsource` packages, pinned exactly, as Latin subsets with `font-display: swap`. Browsers download the `woff2` files. The `@fontsource` CSS also lists `.woff` fallbacks, which ship in `dist/` but are only fetched by browsers without woff2 support. No third-party font CDN is used, which keeps the CSP same-origin and leaves no tracking.
 - All three families are under the SIL Open Font License 1.1.
 
 ## Consequences
