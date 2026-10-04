@@ -1,0 +1,488 @@
+/*
+ * F2 component styles. Tokens only (tokens.css). Gold only under
+ * .surface-navy / .surface-slate. Interactive boundaries use
+ * --color-border-strong (>= 3:1); --color-border is for decorative dividers.
+ * Hover/focus demo classes (.is-hover, .is-focus) exist so the gallery can
+ * show those states statically; they mirror :hover and :focus-visible.
+ */
+
+/* ---------------------------------------------------------------- header + nav (F2-20) */
+.site-header .container {
+  padding-block: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.site-header .brand {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-text-on-dark);
+  display: inline-block;
+  min-height: var(--target-min);
+}
+.site-nav ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding: var(--space-1) var(--space-1);
+  text-decoration: none;
+  border-bottom: var(--border-width-strong) solid transparent;
+}
+.site-nav a:hover {
+  text-decoration: underline;
+}
+/* Current page: a shape cue (underline bar) plus aria-current, not colour alone. */
+.surface-navy .site-nav a[aria-current="page"] {
+  border-bottom-color: var(--color-gold);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- footer (F2-21) */
+.site-footer {
+  font-size: var(--step--1);
+}
+.site-footer-inner {
+  padding-block: var(--space-4);
+}
+.site-footer-links {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+.site-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding-block: var(--space-1);
+}
+
+/* ---------------------------------------------------------------- not-advice notice + demo banner (F2-29) */
+.notice {
+  background: var(--color-notice-bg);
+  color: var(--color-notice-text);
+  border-block: var(--border-width) solid var(--color-border);
+  font-size: var(--step--1);
+}
+.notice p {
+  margin: 0;
+  padding-block: var(--space-2);
+}
+
+.demo-banner {
+  background: var(--color-status-warning-bg);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-left: var(--space-1) solid var(--color-status-warning-accent);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+/* ---------------------------------------------------------------- story card (F2-22) */
+.story-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+@media (min-width: 48rem) {
+  .story-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .story-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.story-card {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  height: 100%;
+}
+.story-card-title {
+  font-size: var(--step-1);
+  margin: 0 0 var(--space-2);
+}
+.story-card-title a {
+  color: inherit;
+  display: inline-block;
+  min-height: var(--target-min);
+}
+.surface-navy .story-card-title a,
+.surface-slate .story-card-title a {
+  color: var(--color-text-on-dark);
+}
+.story-card-summary {
+  margin: 0 0 var(--space-2);
+}
+.story-card-meta,
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--step--1);
+}
+.story-card-meta div,
+.article-meta div {
+  display: flex;
+  gap: var(--space-1);
+}
+.story-card-meta dt,
+.article-meta dt {
+  font-weight: 600;
+}
+.story-card-meta dt::after,
+.article-meta dt::after {
+  content: ":";
+}
+.story-card-meta dd,
+.article-meta dd {
+  margin: 0;
+}
+.story-card-demo {
+  display: inline-block;
+  margin: var(--space-2) 0 0;
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius-pill);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- article header (F2-23) */
+.article-header {
+  max-width: var(--measure);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.article-summary {
+  font-size: var(--step-1);
+  margin: 0 0 var(--space-3);
+}
+.article-jurisdiction {
+  display: inline-block;
+  margin: 0 0 var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- source note (F2-24) */
+.source-note {
+  font-size: var(--step--1);
+  border-top: var(--border-width) solid var(--color-border);
+  padding-top: var(--space-2);
+}
+.source-note-label {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- callouts (F2-25) */
+.callout {
+  border: var(--border-width) solid var(--color-border-strong);
+  border-left: var(--space-1) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-white);
+  color: var(--color-text);
+  padding: var(--space-3);
+  margin-block: var(--space-4);
+}
+.callout > :last-child {
+  margin-bottom: 0;
+}
+.callout-label {
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+}
+.callout-fact {
+  border-left-color: var(--color-callout-fact);
+}
+.callout-fact .callout-type {
+  color: var(--color-callout-fact);
+}
+.callout-estimate {
+  border-left-color: var(--color-callout-estimate);
+}
+.callout-estimate .callout-type {
+  color: var(--color-callout-estimate);
+}
+.callout-example {
+  border-left-color: var(--color-callout-example);
+}
+.callout-example .callout-type {
+  color: var(--color-callout-example);
+}
+.callout-opinion {
+  border-left-color: var(--color-callout-opinion);
+}
+.callout-opinion .callout-type {
+  color: var(--color-callout-opinion);
+}
+.callout-type {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---------------------------------------------------------------- status notice (F2-28) */
+.status-notice {
+  border: var(--border-width) solid var(--color-border-strong);
+  border-left: var(--space-1) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin-block: var(--space-3);
+  color: var(--color-text);
+}
+.status-label {
+  margin: 0 0 var(--space-1);
+  font-weight: 600;
+}
+.status-body > :first-child {
+  margin-top: 0;
+}
+.status-body > :last-child {
+  margin-bottom: 0;
+}
+.status-info {
+  background: var(--color-status-info-bg);
+  border-left-color: var(--color-status-info-accent);
+}
+.status-info .status-kind {
+  color: var(--color-status-info-accent);
+}
+.status-success {
+  background: var(--color-status-success-bg);
+  border-left-color: var(--color-status-success-accent);
+}
+.status-success .status-kind {
+  color: var(--color-status-success-accent);
+}
+.status-warning {
+  background: var(--color-status-warning-bg);
+  border-left-color: var(--color-status-warning-accent);
+}
+.status-warning .status-kind {
+  color: var(--color-status-warning-accent);
+}
+.status-error {
+  background: var(--color-status-error-bg);
+  border-left-color: var(--color-status-error-accent);
+}
+.status-error .status-kind {
+  color: var(--color-status-error-accent);
+}
+
+/* ---------------------------------------------------------------- chart wrapper (F2-26) */
+.chart {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-chart-bg);
+  max-width: var(--measure);
+}
+.chart-caption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--step--1);
+  margin-bottom: var(--space-2);
+}
+.chart-title {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--color-navy);
+}
+.chart-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  font-size: var(--step--1);
+}
+.chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.chart-series-1 {
+  fill: var(--color-chart-series-1);
+}
+.chart-series-2-outline {
+  fill: var(--color-chart-bg);
+  stroke: var(--color-chart-series-2);
+  stroke-width: 2;
+}
+.chart-axis {
+  stroke: var(--color-chart-axis);
+  stroke-width: 1;
+}
+.chart-value,
+.chart-category {
+  fill: var(--color-text);
+  font-family: var(--font-mono);
+  font-variant-numeric: var(--numeric);
+  font-size: 9px;
+}
+.table-scroll {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+}
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--step--1);
+}
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+.data-table td {
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- form controls (F2-27) */
+.field {
+  margin-block: var(--space-3);
+  max-width: 30rem;
+}
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+.field-required {
+  font-weight: 400;
+}
+.field-hint {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--step--1);
+}
+.field-error {
+  margin: 0 0 var(--space-1);
+  color: var(--color-error);
+  font-weight: 600;
+}
+.input {
+  display: block;
+  width: 100%;
+  min-height: calc(var(--target-min) + var(--space-3));
+  padding: var(--space-2);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-white);
+  border: var(--border-width-strong) solid var(--color-border-strong);
+  border-radius: var(--radius);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+.input:hover,
+.input.is-hover {
+  background: var(--color-hover-bg);
+}
+.input.is-focus,
+.checkbox.is-focus,
+.button.is-focus {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+.field-invalid .input,
+.input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+.input:disabled,
+.button:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.field-checkbox label {
+  display: inline;
+  margin: 0;
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.checkbox {
+  width: var(--target-min);
+  height: var(--target-min);
+  margin: 0;
+  flex: none;
+  accent-color: var(--color-navy);
+}
+.checkbox.is-hover {
+  box-shadow: 0 0 0 var(--border-width-strong) var(--color-border-strong);
+}
+.field-checkbox .field-hint {
+  margin-top: var(--space-1);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--target-min) + var(--space-3));
+  min-width: var(--target-min);
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: var(--border-width-strong) solid var(--color-button-primary-bg);
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+.button-primary {
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
+}
+.button-primary:hover,
+.button-primary.is-hover {
+  background: var(--color-button-primary-hover-bg);
+  border-color: var(--color-button-primary-hover-bg);
+}
+.button-secondary {
+  background: var(--color-white);
+  color: var(--color-navy);
+}
+.button-secondary:hover,
+.button-secondary.is-hover {
+  background: var(--color-hover-bg);
+}
+.button-primary:disabled,
+.button-secondary:disabled {
+  border-color: var(--color-border-strong);
+}

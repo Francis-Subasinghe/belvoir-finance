@@ -1,9 +1,17 @@
+/*
+ * Global styles (F1, F2). Every value comes from tokens.css. Gold rule
+ * (TASKS.md F1, TEST_STRATEGY.md): --color-gold and its aliases appear only
+ * in rules scoped under .surface-navy or .surface-slate; light surfaces
+ * nested inside a dark band are reset to --color-gold-on-light below.
+ * Breakpoints: 30rem, 48rem, 64rem (min-width only, see tokens.css).
+ */
 @import "@fontsource/source-serif-4/latin-600.css";
 @import "@fontsource/source-serif-4/latin-700.css";
 @import "@fontsource/inter/latin-400.css";
 @import "@fontsource/inter/latin-600.css";
 @import "@fontsource/ibm-plex-mono/latin-400.css";
 @import "./tokens.css";
+@import "./components.css";
 
 *,
 *::before,
@@ -17,6 +25,7 @@ html {
   line-height: 1.6;
   color: var(--color-text);
   background: var(--color-alabaster);
+  scroll-behavior: auto;
 }
 
 body {
@@ -24,6 +33,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-size: var(--step-0);
 }
 
 h1,
@@ -33,23 +43,35 @@ h4 {
   font-family: var(--font-serif);
   line-height: 1.25;
   color: var(--color-navy);
+  overflow-wrap: break-word;
 }
 
 h1 {
   font-size: var(--step-4);
+  margin-block: var(--space-3);
 }
 h2 {
   font-size: var(--step-3);
 }
+h3 {
+  font-size: var(--step-2);
+}
+h4 {
+  font-size: var(--step-1);
+}
 
 a {
   color: var(--color-link);
+  text-decoration-line: underline;
   text-underline-offset: 0.15em;
+}
+a:hover {
+  text-decoration-thickness: var(--border-width-strong);
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
 }
 
 .numeric,
@@ -58,10 +80,22 @@ a {
   font-variant-numeric: var(--numeric);
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .skip-link {
   position: absolute;
   left: var(--space-3);
-  top: -100px;
+  top: calc(-1 * var(--space-6));
   padding: var(--space-2) var(--space-3);
   background: var(--color-white);
   color: var(--color-navy);
@@ -72,7 +106,7 @@ a {
 }
 
 .container {
-  width: min(100% - 2 * var(--space-3), 72rem);
+  width: min(100% - 2 * var(--gutter), var(--container-max));
   margin-inline: auto;
 }
 
@@ -85,7 +119,15 @@ main {
   max-width: var(--measure);
 }
 
-/* ---- Dark surfaces: the only places --color-gold may be used ---- */
+/* ---- Surfaces ---- */
+.surface-white {
+  background: var(--color-white);
+  color: var(--color-text);
+}
+.surface-alabaster {
+  background: var(--color-alabaster);
+  color: var(--color-text);
+}
 .surface-navy {
   background: var(--color-navy);
   color: var(--color-text-on-dark);
@@ -94,94 +136,46 @@ main {
   background: var(--color-slate);
   color: var(--color-text-on-dark);
 }
+.surface-navy :is(h1, h2, h3, h4),
+.surface-slate :is(h1, h2, h3, h4) {
+  color: var(--color-text-on-dark);
+}
+
+/* Dark surfaces: the only places --color-gold may be used. */
 .surface-navy a,
-.surface-slate a {
-  color: var(--color-gold);
-}
-.surface-navy :focus-visible,
-.surface-slate :focus-visible {
-  outline-color: var(--color-focus-on-dark);
-}
+.surface-slate a,
+.surface-navy .eyebrow,
+.surface-slate .eyebrow,
 .surface-navy .brand-accent,
 .surface-slate .brand-accent {
   color: var(--color-gold);
 }
+.surface-navy :focus-visible,
+.surface-slate :focus-visible,
+.surface-navy .is-focus,
+.surface-slate .is-focus {
+  outline-color: var(--color-focus-on-dark);
+}
 
-/* ---- Light-surface accents use the darker gold ---- */
+/* Light surfaces nested in a dark band go back to the light-surface colours. */
+:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(h1, h2, h3, h4) {
+  color: var(--color-navy);
+}
+:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(a, .eyebrow) {
+  color: var(--color-gold-on-light);
+}
+:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(:focus-visible, .is-focus) {
+  outline-color: var(--color-focus);
+}
+
+/* Light-surface accents use the darker gold. */
 .eyebrow {
   color: var(--color-gold-on-light);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: var(--step--1);
-}
-
-.site-header .container,
-.site-footer .container {
-  padding-block: var(--space-3);
-}
-.site-header .brand {
-  font-family: var(--font-serif);
-  font-size: var(--step-1);
-  font-weight: 700;
-  text-decoration: none;
-  color: var(--color-text-on-dark);
-}
-.site-header nav ul {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin: var(--space-2) 0 0;
-  padding: 0;
-}
-.site-header nav a {
-  display: inline-block;
-  min-height: 24px;
-  padding-block: var(--space-1);
-}
-
-.notice {
-  background: var(--color-notice-bg);
-  color: var(--color-notice-text);
-  border-block: 1px solid var(--color-border);
-  font-size: var(--step--1);
-}
-.notice p {
-  margin: 0;
-  padding-block: var(--space-2);
-}
-
-.demo-banner {
-  background: var(--color-white);
-  border: 2px dashed var(--color-border-strong);
-  padding: var(--space-2) var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
-.callout {
-  border-left: 4px solid var(--color-border-strong);
-  background: var(--color-white);
-  padding: var(--space-3);
-  margin-block: var(--space-4);
-}
-.callout-label {
-  font-weight: 600;
-  color: var(--color-gold-on-light);
-  margin: 0 0 var(--space-1);
-}
-
-.story-list {
-  list-style: none;
-  padding: 0;
-}
-.story-list li {
-  border-bottom: 1px solid var(--color-border);
-  padding-block: var(--space-3);
-}
-
-.site-footer {
-  font-size: var(--step--1);
+  margin-block: 0 var(--space-1);
 }
 
 @media (prefers-reduced-motion: reduce) {
