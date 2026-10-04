@@ -186,13 +186,21 @@ describe("F2-26 chart wrapper", () => {
     expect(countTags(html, "figure")).toBe(1);
     expect(html).toMatch(/<figcaption[\s\S]*Chart[\s\S]*Units: pounds[\s\S]*Source: Placeholder[\s\S]*<\/figcaption>/);
     expect(countTags(html, "table")).toBe(1);
-    expect(html).toMatch(/<td class="numeric" data-numeric[^>]*>\s*2,500\s*<\/td>/);
+    expect(html).toMatch(/<td class="numeric data-table-num" data-numeric[^>]*>\s*2,500\s*<\/td>/);
   });
   it("the SVG is aria-hidden, has no style attribute and no literal colours", async () => {
     const html = await render(ChartWrapper, props);
     for (const attrs of tagAttributes(html, "svg")) expect(attrs).toContain('aria-hidden="true"');
     expect(html).not.toMatch(/\sstyle=/);
     expect(html).not.toMatch(/\s(fill|stroke)="#/);
+  });
+  it("numeric column headers carry the same right-align class as their cells; the category column doesn't", async () => {
+    const html = await render(ChartWrapper, props);
+    const ths = tagAttributes(html, "th").filter((a) => a.includes('scope="col"'));
+    expect(ths).toHaveLength(3);
+    expect(ths[0]).not.toContain("data-table-num");
+    expect(ths.slice(1).every((a) => a.includes('class="data-table-num"'))).toBe(true);
+    for (const td of tagAttributes(html, "td")) expect(td).toContain("data-table-num");
   });
   it("the table is in a focusable, named scroll region", async () => {
     const html = await render(ChartWrapper, props);

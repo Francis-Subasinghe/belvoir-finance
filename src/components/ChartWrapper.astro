@@ -85,7 +85,9 @@ const bars = categories.flatMap((cat, ci) =>
         <tr>
           <th scope="col">Category</th>
           {series.map((s) => (
-            <th scope="col">{s.name}</th>
+            <th scope="col" class="data-table-num">
+              {s.name}
+            </th>
           ))}
         </tr>
       </thead>
@@ -94,7 +96,7 @@ const bars = categories.flatMap((cat, ci) =>
           <tr>
             <th scope="row">{c}</th>
             {series.map((s) => (
-              <td class="numeric" data-numeric>
+              <td class="numeric data-table-num" data-numeric>
                 {nf.format(s.values[ci] ?? 0)}
               </td>
             ))}

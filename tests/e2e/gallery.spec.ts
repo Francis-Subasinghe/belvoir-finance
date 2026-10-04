@@ -185,6 +185,12 @@ test.describe("gallery page", () => {
     await expect(chart.getByRole("region", { name: /^Data table:/ })).toHaveAttribute("tabindex", "0");
     await expect(chart.getByRole("table")).toHaveCount(1);
     expect(await chart.locator("[style]").count()).toBe(0);
+    // Numeric column headers (Profit, Cash) are right-aligned over their right-aligned figures.
+    for (const name of ["Profit", "Cash"]) {
+      await expect(chart.getByRole("columnheader", { name })).toHaveCSS("text-align", "right");
+    }
+    await expect(chart.getByRole("columnheader", { name: "Category" })).toHaveCSS("text-align", "left");
+    for (const cell of await chart.locator("tbody td").all()) await expect(cell).toHaveCSS("text-align", "right");
   });
 
   test("F2-27: labels, describedby, aria-invalid, Error: prefix, required text, button types, no action", async ({

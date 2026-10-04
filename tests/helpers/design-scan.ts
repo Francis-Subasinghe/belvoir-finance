@@ -38,18 +38,82 @@ export function readSources(dir: string, exts = [".css", ".astro", ".ts", ".tsx"
 
 export const isTokensFile = (path: string): boolean => /(^|[\\/])tokens\.css$/.test(path);
 
+// ---------------------------------------------------------------- ranges (no text stripping)
+//
+// Markup and CSS are told apart by OFFSET RANGES, never by deleting text with
+// a replace(): a single-pass strip such as removing <style>...</style> can
+// leave a new tag behind (`<sty<style></style>le>`), which CodeQL flags as
+// js/incomplete-multi-character-sanitization. The text is left untouched and
+// each hit is checked against the ranges instead.
+
+export interface Range {
+  /** Offset of the first character. */
+  start: number;
+  /** Offset just past the last character. */
+  end: number;
+}
+
+export const inRanges = (index: number, ranges: readonly Range[]): boolean =>
+  ranges.some((r) => index >= r.start && index < r.end);
+
+/** The Astro frontmatter fence (`---` ... `---`) at the very start of the file, if any. */
+export function frontmatterRange(text: string): Range | null {
+  const m = /^---\r?\n[\s\S]*?\n---/.exec(text);
+  return m ? { start: 0, end: m[0].length } : null;
+}
+
+export interface StyleBlock extends Range {
+  /** Offsets of the CSS between the opening tag's ">" and the closing tag. */
+  cssStart: number;
+  cssEnd: number;
+}
+
+/**
+ * <style> elements as the HTML tokenizer sees them: from an opening `<style`
+ * tag to the FIRST following `</style ...>` (style content is raw text, so a
+ * nested "<style>" doesn't open anything). An unterminated block runs to the
+ * end of the text. Scanning starts after `from` (e.g. past the frontmatter).
+ */
+export function styleRanges(text: string, from = 0): StyleBlock[] {
+  const blocks: StyleBlock[] = [];
+  const open = /<style\b[^>]*>/gi;
+  const close = /<\/style\b[^>]*>/gi;
+  open.lastIndex = from;
+  for (let m = open.exec(text); m; m = open.exec(text)) {
+    const cssStart = m.index + m[0].length;
+    close.lastIndex = cssStart;
+    const c = close.exec(text);
+    const cssEnd = c ? c.index : text.length;
+    const end = c ? c.index + c[0].length : text.length;
+    blocks.push({ start: m.index, end, cssStart, cssEnd });
+    open.lastIndex = end;
+  }
+  return blocks;
+}
+
+/** Ranges of an .astro file that are not template markup: the frontmatter and every <style> block. */
+export function nonMarkupRanges(text: string): Range[] {
+  const fm = frontmatterRange(text);
+  return [...(fm ? [fm] : []), ...styleRanges(text, fm?.end ?? 0)];
+}
+
+/** Offsets of every match of `pattern` (global) in `text` that lies in template markup. */
+export function markupHits(text: string, pattern: RegExp): number[] {
+  const skip = nonMarkupRanges(text);
+  const flags = pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`;
+  return [...text.matchAll(new RegExp(pattern.source, flags))].map((m) => m.index).filter((i) => !inRanges(i, skip));
+}
+
 /** CSS chunks in a file: whole file for .css, every <style> block for .astro. */
 export function cssChunks(file: SourceFile): { css: string; lineOffset: number }[] {
   if (file.path.endsWith(".css")) return [{ css: file.text, lineOffset: 0 }];
   if (file.path.endsWith(".astro")) {
-    const out: { css: string; lineOffset: number }[] = [];
-    // Blank out the frontmatter (keeping line numbers) so "<style>" in a comment isn't read as CSS.
-    const text = file.text.replace(/^---[\s\S]*?\n---/, (fm) => fm.replace(/[^\n]/g, " "));
-    for (const m of text.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\b[^>]*>/gi)) {
-      const before = text.slice(0, (m.index ?? 0) + m[0].indexOf(">") + 1);
-      out.push({ css: m[1] ?? "", lineOffset: before.split("\n").length - 1 });
-    }
-    return out;
+    // Style blocks are found after the frontmatter, so "<style>" in a frontmatter comment isn't read as CSS.
+    const fm = frontmatterRange(file.text);
+    return styleRanges(file.text, fm?.end ?? 0).map((b) => ({
+      css: file.text.slice(b.cssStart, b.cssEnd),
+      lineOffset: file.text.slice(0, b.cssStart).split("\n").length - 1,
+    }));
   }
   return [];
 }
@@ -314,11 +378,16 @@ export function scanStrayColours(files: SourceFile[]): Problem[] {
     for (const { root, lineOffset } of parseChunks(file)) {
       root.walkDecls((d) => {
         if (!COLOUR_PROP.test(d.prop)) return;
-        const words = d.value
-          .toLowerCase()
-          .replace(/var\([^)]*\)|url\([^)]*\)/g, " ")
-          .split(/[^a-z]+/);
-        const named = words.filter((w) => NAMED_COLOURS.includes(w));
+        // Words outside var(...) and url(...), found by offset rather than by stripping those spans.
+        const value = d.value.toLowerCase();
+        const skip: Range[] = [...value.matchAll(/var\([^)]*\)|url\([^)]*\)/g)].map((m) => ({
+          start: m.index,
+          end: m.index + m[0].length,
+        }));
+        const named = [...value.matchAll(/[a-z]+/g)]
+          .filter((w) => !inRanges(w.index, skip))
+          .map((w) => w[0])
+          .filter((w) => NAMED_COLOURS.includes(w));
         if (named.length) {
           problems.push({
             path: file.path,
@@ -436,8 +505,8 @@ export function scanMotion(files: SourceFile[]): Problem[] {
   for (const file of files) {
     for (const { root, lineOffset } of parseChunks(file)) {
       root.walkDecls(/^(transition|animation)(-duration|-timing-function|-delay|-iteration-count)?$/, (d) => {
-        const v = d.value.replace(/!important/, "").trim();
-        if (/^(none|0s?)$/.test(v)) return;
+        const v = d.value.trim();
+        if (/^(none|0s?)(\s*!important)?$/.test(v)) return;
         if (/infinite/.test(v)) {
           problems.push({
             path: file.path,
@@ -471,19 +540,20 @@ export function scanAstroDirectives(files: SourceFile[]): Problem[] {
   const problems: Problem[] = [];
   for (const file of files) {
     if (!file.path.endsWith(".astro")) continue;
-    const markup = file.text.replace(/^---[\s\S]*?---/, "").replace(/<style\b[\s\S]*?<\/style\b[^>]*>/gi, "");
+    // Hits are located in the untouched text and kept only when they fall in template markup.
+    const inMarkup = (pattern: RegExp) => markupHits(file.text, pattern).length > 0;
     if (/define:vars/.test(file.text))
       problems.push({ path: file.path, rule: "define-vars", message: "define:vars is not allowed" });
-    if (/set:html/.test(markup) && !/[\\/]JsonLd\.astro$/.test(file.path)) {
+    if (inMarkup(/set:html/) && !/[\\/]JsonLd\.astro$/.test(file.path)) {
       problems.push({ path: file.path, rule: "set-html", message: "set:html is only allowed in JsonLd.astro" });
     }
-    if (/\sstyle\s*=/.test(markup))
+    if (inMarkup(/\sstyle\s*=/))
       problems.push({
         path: file.path,
         rule: "style-attr",
         message: "style attribute/prop not allowed (CSP style-src 'self')",
       });
-    if (/<script\b(?![^>]*type="application\/ld\+json")/i.test(markup)) {
+    if (inMarkup(/<script\b(?![^>]*type="application\/ld\+json")/i)) {
       problems.push({ path: file.path, rule: "script", message: "<script> in a component; F2 components are static" });
     }
   }

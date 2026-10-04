@@ -124,7 +124,7 @@ All components are static Astro components with no client script (F2-35), no `st
   - It's a `<figure>`. The `<figcaption>` holds the title, units and source.
   - The SVG is `aria-hidden` because the data table is the text equivalent. The table sits in a focusable (`tabindex="0"`), named scroll region.
   - Series are told apart by shape (solid versus outlined bars, with matching legend markers) and direct value labels, not colour alone.
-  - Fills come from classes using chart tokens, and figures use tabular numerals.
+  - Fills come from classes using chart tokens, and figures use tabular numerals. Numeric columns (header and cells) share `.data-table-num` and are right-aligned.
   - There are no inline styles, no chart library and no remote resources.
 
 ### Form controls (`src/components/forms/`), F2-27

@@ -368,7 +368,8 @@
   padding: var(--space-1) var(--space-2);
   border-bottom: var(--border-width) solid var(--color-border);
 }
-.data-table td {
+/* Numeric columns: header and cells both right-aligned, so figures line up under their heading. */
+.data-table .data-table-num {
   text-align: right;
 }
 

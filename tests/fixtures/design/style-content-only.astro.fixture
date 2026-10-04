@@ -1,0 +1,11 @@
+---
+// Positive: directive-like text inside a real <style> block is CSS, not markup.
+---
+
+<p class="x">Fine</p>
+<style>
+  /* set:html and style= and <script> in a CSS comment are not markup */
+  .x {
+    margin: 0;
+  }
+</style>

@@ -22,7 +22,9 @@ import {
   scanStrayColours,
   scanTokenDeclarations,
   scanVarResolution,
+  styleRanges,
   surfaceOf,
+  walkFiles,
 } from "../helpers/design-scan";
 
 const FIX = "tests/fixtures/design";
@@ -247,5 +249,57 @@ describe("F2-34 no inline styles or scripts in components", () => {
   });
   it('build.inlineStylesheets stays "never"', () => {
     expect(readFileSync("astro.config.mjs", "utf8")).toMatch(/inlineStylesheets:\s*"never"/);
+  });
+});
+
+describe("Style ranges instead of text stripping (CodeQL js/incomplete-multi-character-sanitization)", () => {
+  it("<sty<style></style>le>: the only style block is the inner <style></style>; the rest stays markup", () => {
+    const text = "<sty<style></style>le>";
+    expect(styleRanges(text)).toEqual([{ start: 4, end: 19, cssStart: 11, cssEnd: 11 }]);
+    expect(text.slice(19)).toBe("le>");
+  });
+
+  it("<style><style></style>x</style>: the block ends at the first </style>, like the HTML tokenizer", () => {
+    const text = "<style><style></style>x</style>";
+    const blocks = styleRanges(text);
+    expect(blocks).toHaveLength(1);
+    expect(text.slice(blocks[0]?.cssStart, blocks[0]?.cssEnd)).toBe("<style>");
+    expect(blocks[0]?.end).toBe(22);
+    expect(text.slice(22)).toBe("x</style>");
+  });
+
+  it("an unterminated <style> runs to the end of the text", () => {
+    expect(styleRanges("<p></p><style>.a{}")).toEqual([{ start: 7, end: 18, cssStart: 14, cssEnd: 18 }]);
+  });
+
+  it("the split-tag fixture: the style attribute after it is still caught", () => {
+    expect(rules(scanAstroDirectives([fixture("style-split-tag.astro.fixture")]))).toContain("style-attr");
+  });
+
+  it("the nested-open fixture: set:html and style= after the first </style> are still caught", () => {
+    const r = rules(scanAstroDirectives([fixture("style-nested-open.astro.fixture")]));
+    expect(r).toEqual(expect.arrayContaining(["set-html", "style-attr"]));
+  });
+
+  it("text inside a real <style> block is not treated as markup (and the file text is never modified)", () => {
+    const f = fixture("style-content-only.astro.fixture");
+    const before = f.text;
+    expect(scanAstroDirectives([f])).toEqual([]);
+    expect(f.text).toBe(before);
+  });
+
+  it("no code under src/, scripts/ or tests/ strips tags or fences with a single-pass replace()", () => {
+    // A literal-regex replace with "" whose pattern contains a tag "<" or a "---"/"-->" fence is a
+    // single-pass multi-character strip (CodeQL js/incomplete-multi-character-sanitization); use ranges.
+    // Single-character cleanups (quotes, leading slashes, a ".fixture" suffix) aren't sanitisers and stay.
+    const strip = /\.replace\(\s*\/(?:\\.|[^/\\\n])*(?:<|---|-->)(?:\\.|[^/\\\n])*\/[gimsuy]*\s*,\s*(""|''|``)\s*\)/;
+    const files = ["src", "scripts", "tests"].flatMap((d) => walkFiles(d, [".ts", ".tsx", ".astro", ".mjs", ".js"]));
+    expect(files.length).toBeGreaterThan(20);
+    expect(files.filter((f) => strip.test(readFileSync(f, "utf8")))).toEqual([]);
+    // The pattern does catch the old CodeQL finding (not vacuous).
+    // (Built by concatenation so this file doesn't match itself.)
+    const oldFinding = ["x.rep", "lace(/", "<style\\b[\\s\\S]*?<\\/style\\b[^>]*>", '/gi, "")'].join("");
+    expect(strip.test(oldFinding)).toBe(true);
+    expect(strip.test(["t.rep", "lace(/", "^---[\\s\\S]*?---", '/, "")'].join(""))).toBe(true);
   });
 });
