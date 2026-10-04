@@ -21,7 +21,7 @@
 | End-to-end | Playwright (Chromium, WebKit, Firefox) | Primary journeys, navigation, forms, explorer, at the three breakpoints | CI, every PR touching `src/` or `content/` |
 | Accessibility | `@axe-core/playwright` + manual keyboard and screen-reader pass | WCAG 2.2 AA | Automated in CI; manual before preview (S2) |
 | Visual regression | Playwright screenshots | Layout drift on key templates at the three breakpoints | CI, non-blocking until the design system (F2) is approved |
-| Performance, SEO, best practices | Lighthouse CI against the built site | Budgets below | CI, every PR touching `src/` |
+| Performance, SEO, best practices | Lighthouse against the built site | Budgets below | Locally by Sentinel (scores on the PR) until Launchpad's Lighthouse CI task lands; then CI, every PR touching `src/` |
 | Review freshness | Repo script (F10) | Lists every story whose `nextReviewDue` is in the past | CI, every PR and weekly; **warning only** |
 | Links | lychee | Internal links (blocking) and external links (report only) | CI, every PR; external links also weekly |
 | Dependencies and code scanning | `npm audit` / dependency review, CodeQL (L2) | Known vulnerabilities | CI, every PR (Launchpad) |
@@ -33,7 +33,7 @@ A PR cannot merge unless all of the following pass. Launchpad makes them require
 3. Content-schema check, including the no-`.mdx`-under-`content/` check (L2).
 4. `astro build` plus the `dist/` assertions, including no `keystatic` path (L2).
 5. Playwright e2e and the automated axe scan (zero serious or critical violations).
-6. Lighthouse CI budgets (all four categories, from the PRD quality bar).
+6. Lighthouse budgets (all four categories, from the PRD quality bar). Lighthouse CI is a separate Launchpad task: report only at first, and merge-blocking before F3 merges. Until then, Sentinel runs Lighthouse locally and attaches the scores to the PR.
 7. Internal link check.
 8. Dependency review and CodeQL with no new High or Critical alerts.
 9. Sentinel PASS recorded on the PR, and an Aegis verdict with no open Critical or High findings.
@@ -63,7 +63,7 @@ At each breakpoint: no horizontal scroll at the page level, no clipped or overla
 - Content reflows at 320 px width and at 200 % zoom without loss of content.
 
 ## Performance budgets
-Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
+Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, locally by Sentinel until Lighthouse CI lands (see merge-blocking check 6):
 | Metric | Budget |
 | --- | --- |
 | Lighthouse Performance | ≥ 90 |
@@ -94,7 +94,7 @@ Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
 | L3 Preview workflow | `docs/qa/AC_L3.md` (to write) | Launchpad | Sentinel (smoke test), Aegis (A3) |
 | L4 Feed-intake workflow | `docs/qa/AC_L4.md` (to write) | Aegis | Sentinel |
 | F1 Scaffold | `docs/qa/AC_F1_SCAFFOLD.md` | Sentinel | Aegis, Launchpad |
-| F2 Design system | `docs/qa/AC_F2.md` (to write) | Sentinel | Atlas (design fit, D12 wireframes) |
+| F2 Design system | [`docs/qa/AC_F2_DESIGN_SYSTEM.md`](AC_F2_DESIGN_SYSTEM.md) | Sentinel | Atlas (design fit, D12 wireframes) |
 | F3 Pages | `docs/qa/AC_F3.md` (to write) | Sentinel | Atlas |
 | F4 Cash-vs-profit explorer | `docs/qa/AC_F4.md` + S3 calculation table (to write) | Sentinel | Aegis |
 | F5 Source registry and parser | `docs/qa/AC_F5.md` (to write) | Sentinel (failure modes) | Aegis (hardening fixtures) |
@@ -107,7 +107,7 @@ Measured by Lighthouse CI (mobile preset, median of 3 runs) on the built site:
 | A1–A3 | Aegis's own reports | Aegis | Atlas |
 | X1–X2 | Up-to-date docs and merge log | Atlas | Francis |
 
-`TASKS.md` names AC files as `docs/qa/AC_<task>.md`. F1 keeps its descriptive name because `TASKS.md` links to `AC_F1_SCAFFOLD.md` directly; the others use the bare task ID until a task links a different name.
+`TASKS.md` names AC files as `docs/qa/AC_<task>.md`. F1 keeps its descriptive name because `TASKS.md` links to `AC_F1_SCAFFOLD.md` directly, and F2 uses `AC_F2_DESIGN_SYSTEM.md` as the team asked; the others use the bare task ID until a task links a different name.
 
 ## Definition of done (copied from the brief, §17)
 The MVP is ready for preview when:
