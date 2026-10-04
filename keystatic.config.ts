@@ -15,6 +15,8 @@ import {
   FORMATS,
   JURISDICTIONS,
   LEVELS,
+  PILLARS,
+  PILLAR_LABELS,
   RIGHTS,
   SOURCE_CATEGORIES,
   SOURCE_ITEM_STATUSES,
@@ -27,8 +29,16 @@ import { CALLOUT_TYPES } from "./src/lib/markdoc-allowlist";
 const options = <T extends string>(values: readonly T[]) => values.map((v) => ({ label: v, value: v }));
 const select = <T extends string>(label: string, values: readonly [T, ...T[]], defaultValue: T = values[0]) =>
   fields.select({ label, options: options(values), defaultValue });
+// Reference fields are relationship pickers, so editors can only choose ids that exist (F3-27, Q-12).
+type Target = "stories" | "topics" | "people" | "tools" | "sources";
+const ref = (label: string, collection: Target) => fields.relationship({ label, collection });
+const refs = (label: string, collection: Target) =>
+  fields.array(fields.relationship({ label, collection }), { label, itemLabel: (p) => p.value ?? "" });
 const ids = (label: string) => fields.array(fields.text({ label }), { label, itemLabel: (p) => p.value });
 const optionalDate = (label: string) => fields.date({ label });
+// Pre-ticked fail-safe: Keystatic always writes the value, so an unticked box saves `demo: false` (F3-20).
+const demo = (label = "Demo content (shows banner, sets noindex)") => fields.checkbox({ label, defaultValue: true });
+const pillarOptions = PILLARS.map((value) => ({ label: PILLAR_LABELS[value], value }));
 
 export default config({
   storage: { kind: "local" },
@@ -44,30 +54,33 @@ export default config({
         title: fields.slug({ name: { label: "Title" } }),
         summary: fields.text({ label: "Summary (one sentence)", multiline: true }),
         format: select("Format", FORMATS),
-        pillars: ids("Pillars"),
-        topics: ids("Topics"),
+        pillars: fields.multiselect({ label: "Pillars", options: pillarOptions, defaultValue: [] }),
+        topics: refs("Topics", "topics"),
         reader: fields.text({ label: "Reader" }),
         level: select("Level", LEVELS),
-        author: fields.text({ label: "Author (person id)" }),
-        reviewer: fields.text({ label: "Reviewer (person id; required for factual finance items)" }),
+        author: ref("Author", "people"),
+        reviewer: ref("Reviewer (required for published factual stories; not the author)", "people"),
         firstPublished: optionalDate("First published"),
         lastReviewed: optionalDate("Last reviewed"),
         nextReviewDue: optionalDate("Next review due"),
         timeSensitive: fields.checkbox({ label: "Time-sensitive" }),
         jurisdiction: select("Jurisdiction", JURISDICTIONS, "UK"),
+        jurisdictionNote: fields.text({ label: 'Jurisdiction note (required for "other" only)' }),
         period: fields.text({ label: "Tax year or period" }),
         sources: fields.array(
           fields.object({
-            source: fields.text({ label: "Source id" }),
+            source: ref("Source", "sources"),
             url: fields.url({ label: "URL (https)" }),
             accessed: fields.date({ label: "Accessed" }),
           }),
-          { label: "Sources", itemLabel: (p) => p.fields.source.value },
+          { label: "Sources", itemLabel: (p) => p.fields.source.value ?? "" },
         ),
-        relatedStories: ids("Related stories"),
-        relatedTools: ids("Related tools"),
-        disclosure: fields.text({ label: "Disclosure", multiline: true }),
-        demo: fields.checkbox({ label: "Demo content (shows banner, sets noindex)", defaultValue: true }),
+        relatedStories: refs("Related stories", "stories"),
+        relatedTools: refs("Related tools", "tools"),
+        disclosure: fields.text({ label: "Disclosure (required when there's a commercial interest)", multiline: true }),
+        factual: fields.checkbox({ label: "Factual finance content (needs a reviewer to publish)" }),
+        commercialInterest: fields.checkbox({ label: "Commercial interest (needs a disclosure)" }),
+        demo: demo(),
         status: select("Status", STATUSES),
         body: fields.markdoc({
           label: "Body",
@@ -92,9 +105,10 @@ export default config({
       schema: {
         title: fields.slug({ name: { label: "Title" } }),
         summary: fields.text({ label: "Summary", multiline: true }),
-        pillar: fields.text({ label: "Pillar" }),
-        readingPath: ids("Reading path (story ids, in order)"),
-        featuredTool: fields.text({ label: "Featured tool id" }),
+        pillar: select("Pillar", PILLARS),
+        readingPath: refs("Reading path (in order)", "stories"),
+        featuredTool: ref("Featured tool", "tools"),
+        demo: demo(),
       },
     }),
     people: collection({
@@ -106,7 +120,7 @@ export default config({
         displayName: fields.slug({ name: { label: "Display name" } }),
         role: fields.text({ label: "Role" }),
         bio: fields.text({ label: "Bio", multiline: true }),
-        placeholder: fields.checkbox({ label: "Placeholder person", defaultValue: true }),
+        demo: demo("Placeholder (demo) person: required while D8 is open"),
         credentials: fields.array(
           fields.object({
             label: fields.text({ label: "Credential" }),
@@ -138,6 +152,7 @@ export default config({
         reviewer: fields.text({ label: "Reviewer (person id)" }),
         sourceRecord: fields.text({ label: "Source record id" }),
         usesOfficialValues: fields.checkbox({ label: "Uses current tax, legal or official values" }),
+        demo: demo(),
       },
     }),
     newsletterCtas: collection({
@@ -162,7 +177,8 @@ export default config({
         publisher: fields.text({ label: "Publisher" }),
         category: select("Category", SOURCE_CATEGORIES),
         topics: ids("Topics"),
-        jurisdiction: fields.text({ label: "Jurisdiction", defaultValue: "UK" }),
+        jurisdiction: select("Jurisdiction", JURISDICTIONS, "UK"),
+        jurisdictionNote: fields.text({ label: 'Jurisdiction note (required for "other" only)' }),
         website: fields.url({ label: "Website (https)" }),
         feedUrl: fields.url({ label: "Feed URL (https; the only URL intake may fetch)" }),
         feedType: select("Feed type", FEED_TYPES, "none"),
@@ -170,10 +186,11 @@ export default config({
         rights: select("Rights", RIGHTS, "unknown"),
         rightsNotes: fields.text({ label: "Rights notes", multiline: true }),
         role: select("Role", SOURCE_ROLES),
-        owner: fields.text({ label: "Owner (person id)" }),
+        owner: ref("Owner", "people"),
         lastChecked: fields.date({ label: "Last checked" }),
-        editorialNotes: fields.text({ label: "Editorial notes", multiline: true }),
-        status: select("Status", SOURCE_STATUSES, "paused"),
+        editorialNotes: fields.text({ label: "Editorial notes (never shown on the site)", multiline: true }),
+        demo: demo("Placeholder (demo) source: example.org/.com/.net or .invalid links only"),
+        status: select("Status (only active sources are listed publicly)", SOURCE_STATUSES, "paused"),
       },
     }),
     sourceItems: collection({
