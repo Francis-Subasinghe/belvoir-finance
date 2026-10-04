@@ -1,0 +1,6 @@
+/* F2-07 negative: nested inside @media. */
+@media (min-width: 48rem) {
+  .card {
+    color: var(--color-gold);
+  }
+}

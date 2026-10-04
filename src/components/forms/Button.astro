@@ -1,0 +1,18 @@
+---
+/** F2-27 button. Always a <button> with an explicit type. Surfaces: white, alabaster. */
+interface Props {
+  type: "button" | "submit" | "reset";
+  variant?: "primary" | "secondary";
+  disabled?: boolean;
+  demoState?: "hover" | "focus";
+}
+const { type, variant = "primary", disabled = false, demoState } = Astro.props;
+---
+
+<button
+  type={type}
+  class:list={["button", `button-${variant}`, { [`is-${demoState}`]: demoState }]}
+  disabled={disabled}
+>
+  <slot />
+</button>

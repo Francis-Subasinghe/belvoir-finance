@@ -29,6 +29,8 @@
     "eslint-plugin-astro": "3.2.1",
     "eslint-plugin-jsx-a11y-x": "0.2.0",
     "globals": "17.13.0",
+    "postcss": "8.5.28",
+    "postcss-selector-parser": "7.1.6",
     "prettier": "3.9.9",
     "prettier-plugin-astro": "1.1.0",
     "react": "19.3.0",
@@ -40,8 +42,11 @@
   "scripts": {
     "dev": "astro dev",
     "keystatic": "node scripts/keystatic.ts",
+    "dev:gallery": "node scripts/gallery.ts dev",
     "build": "astro build",
     "preview": "astro preview",
+    "build:gallery": "node scripts/gallery.ts build && vitest run --config vitest.gallery.config.ts",
+    "preview:gallery": "node scripts/gallery.ts preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -51,6 +56,8 @@
     "check:content": "node scripts/check-content.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:content && npm run build",
     "postbuild": "npm run test:build",
-    "test:e2e": "playwright test"
+    "test:e2e": "npm run build:gallery && playwright test",
+    "test:visual": "playwright test --config playwright.visual.config.ts",
+    "wireframes": "playwright test --config playwright.visual.config.ts --project wireframes"
   }
 }

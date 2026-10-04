@@ -1,0 +1,46 @@
+---
+/** F2-27 select. Same label, hint, error and state rules as TextField. */
+interface Props {
+  id: string;
+  label: string;
+  options: { value: string; label: string }[];
+  name?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  demoState?: "hover" | "focus";
+}
+const { id, label, options, name = id, hint, error, required = false, disabled = false, demoState } = Astro.props;
+const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+---
+
+<div class:list={["field", { "field-invalid": error, "field-disabled": disabled }]}>
+  <label for={id}>
+    {label}
+    {required && <span class="field-required"> (required)</span>}
+  </label>
+  {hint && (
+    <p id={`${id}-hint`} class="field-hint">
+      {hint}
+    </p>
+  )}
+  {error && (
+    <p id={`${id}-error`} class="field-error">
+      <strong>Error:</strong> {error}
+    </p>
+  )}
+  <select
+    id={id}
+    name={name}
+    class:list={["input", "select", { [`is-${demoState}`]: demoState }]}
+    required={required}
+    disabled={disabled}
+    aria-describedby={describedBy}
+    aria-invalid={error ? "true" : undefined}
+  >
+    {options.map((o) => (
+      <option value={o.value}>{o.label}</option>
+    ))}
+  </select>
+</div>

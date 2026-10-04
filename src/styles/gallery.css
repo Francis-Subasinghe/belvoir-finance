@@ -1,0 +1,75 @@
+/* Gallery-only layout (dev and tests; never in dist/). Tokens only. */
+.gallery-section {
+  margin-block: var(--space-5);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+}
+.gallery-grid {
+  display: grid;
+  gap: var(--space-3);
+}
+@media (min-width: 48rem) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.gallery-surface {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  margin-block: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+}
+.gallery-label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+.gallery-form-grid {
+  display: grid;
+  gap: 0 var(--space-4);
+}
+@media (min-width: 64rem) {
+  .gallery-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.gallery-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.gallery-toc ul,
+.wireframe-nav {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  padding: 0;
+}
+.gallery-toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+.wireframe-block {
+  border: var(--border-width-strong) dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-block: var(--space-3);
+}
+.wireframe-block-label {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  margin: 0 0 var(--space-2);
+}
+.gallery-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+.wireframe-block p > a:only-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+}

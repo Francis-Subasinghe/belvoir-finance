@@ -1,0 +1,262 @@
+---
+/**
+ * D12 wireframes (F2-02): low-fidelity page shells for the 7 sitemap
+ * templates, built only from F2 components with placeholder content.
+ * Dev and tests only (BELVOIR_GALLERY=1). Screenshots at 360 and 1280 px are
+ * committed under docs/design/wireframes/ (npm run wireframes).
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StoryCard from "../../components/StoryCard.astro";
+import ArticleHeader from "../../components/ArticleHeader.astro";
+import SourceNote from "../../components/SourceNote.astro";
+import Callout from "../../components/markdoc/Callout.astro";
+import ChartWrapper from "../../components/ChartWrapper.astro";
+import StatusNotice from "../../components/StatusNotice.astro";
+import DemoBanner from "../../components/DemoBanner.astro";
+import TextField from "../../components/forms/TextField.astro";
+import SelectField from "../../components/forms/SelectField.astro";
+import CheckboxField from "../../components/forms/CheckboxField.astro";
+import Button from "../../components/forms/Button.astro";
+import { withBase } from "../../lib/paths";
+import { WIREFRAMES, type WireframeSlug } from "./pages";
+import "../../styles/gallery.css";
+
+export function getStaticPaths() {
+  return WIREFRAMES.map((w) => ({ params: { page: w.slug }, props: { wf: w } }));
+}
+interface Props {
+  wf: (typeof WIREFRAMES)[number];
+}
+const { wf } = Astro.props;
+const slug: WireframeSlug = wf.slug;
+const wfHref = (s: WireframeSlug) => withBase(`/design/wireframes/${s}/`);
+// Target navigation for F3 (only Home and Stories exist in the real build today).
+const nav = [
+  { href: wfHref("home"), label: "Home" },
+  { href: wfHref("explore"), label: "Explore" },
+  { href: wfHref("tools"), label: "Tools" },
+  { href: wfHref("sources"), label: "Sources" },
+];
+const day = new Date("2026-10-02T00:00:00Z");
+const card = (n: number, format = "explainer", level = "beginner") => ({
+  title: `Placeholder story ${n}`,
+  href: wfHref("story"),
+  summary: "One-sentence placeholder summary.",
+  format,
+  level,
+  date: day,
+  demo: true,
+});
+const chart = {
+  title: "Placeholder: profit and cash by quarter",
+  units: "pounds (£)",
+  source: "Placeholder data",
+  categories: ["Q1", "Q2", "Q3", "Q4"],
+  series: [
+    { name: "Profit", values: [12400, 15800, 9100, 17300] },
+    { name: "Cash", values: [8200, 4300, 11600, 13900] },
+  ] as [{ name: string; values: number[] }, { name: string; values: number[] }],
+};
+const filters = [
+  { value: "", label: "All" },
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+];
+---
+
+<BaseLayout title={`Wireframe: ${wf.label} (dev only)`} noindex nav={nav}>
+  <div class="design-gallery" data-testid="design-gallery" data-wireframe={slug}>
+    <StatusNotice variant="info" title={`Wireframe (D12): ${wf.label}, ${wf.path}`}>
+      <p>Low fidelity, placeholder content. Dashed boxes are content areas for F3 to F6.</p>
+    </StatusNotice>
+
+    {slug === "home" && (
+      <>
+        <p class="eyebrow">Education-first publication</p>
+        <h1>Placeholder promise headline</h1>
+        <p class="prose">Placeholder one-paragraph promise for UK founders and operators.</p>
+        <h2>Featured story</h2>
+        <StoryCard {...card(1)} headingLevel={3} />
+        <h2>Topic paths</h2>
+        <ul class="story-list">
+          <li>
+            <StoryCard {...card(2, "topic")} headingLevel={3} />
+          </li>
+          <li>
+            <StoryCard {...card(3, "topic")} headingLevel={3} />
+          </li>
+          <li>
+            <StoryCard {...card(4, "topic")} headingLevel={3} />
+          </li>
+        </ul>
+        <div class="surface-navy wireframe-block">
+          <p class="wireframe-block-label">Featured tool (navy band)</p>
+          <h2>Cash versus profit explorer</h2>
+          <p>
+            Placeholder tool pitch. <a href={wfHref("tool")}>Try the explorer</a>
+          </p>
+        </div>
+        <div class="wireframe-block surface-white">
+          <p class="wireframe-block-label">Newsletter (F6)</p>
+          <h2>Placeholder newsletter pitch</h2>
+          <form aria-label="Newsletter signup (wireframe)">
+            <TextField id="wf-home-email" type="email" label="Email address" required />
+            <CheckboxField id="wf-home-consent" label="I agree to receive the newsletter" required />
+            <Button type="button">Sign up (placeholder)</Button>
+          </form>
+        </div>
+      </>
+    )}
+
+    {slug === "explore" && (
+      <>
+        <h1>Explore</h1>
+        <form class="wireframe-block surface-white" aria-label="Filters (wireframe)">
+          <p class="wireframe-block-label">Filters and search (F4, F9)</p>
+          <TextField id="wf-explore-search" label="Search stories" />
+          <SelectField id="wf-explore-topic" label="Topic" options={filters} />
+          <SelectField id="wf-explore-format" label="Format" options={filters} />
+          <SelectField id="wf-explore-level" label="Level" options={filters} />
+          <Button type="button" variant="secondary">
+            Apply filters (placeholder)
+          </Button>
+        </form>
+        <ul class="story-list">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <li>
+              <StoryCard {...card(n, n % 2 ? "explainer" : "briefing")} headingLevel={2} />
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+
+    {slug === "topic" && (
+      <>
+        <p class="eyebrow">Topic</p>
+        <h1>Placeholder topic title</h1>
+        <p class="prose">Placeholder topic summary.</p>
+        <h2>Reading path</h2>
+        <ol class="story-list">
+          {[1, 2, 3].map((n) => (
+            <li>
+              <StoryCard {...card(n)} headingLevel={3} />
+            </li>
+          ))}
+        </ol>
+        <h2>Tools</h2>
+        <StoryCard {...card(4, "tool")} headingLevel={3} />
+        <h2>Source notes</h2>
+        <SourceNote
+          name="Placeholder source"
+          publisher="Placeholder publisher"
+          url="https://example.org/"
+          accessed={day}
+        />
+      </>
+    )}
+
+    {slug === "story" && (
+      <>
+        <DemoBanner />
+        <ArticleHeader
+          title="Placeholder story title"
+          summary="One-sentence placeholder answer."
+          format="explainer"
+          author="Placeholder Author"
+          reviewer="Placeholder Reviewer"
+          firstPublished={day}
+          lastReviewed={day}
+        />
+        <div class="prose">
+          <p>Placeholder body paragraph.</p>
+          <Callout type="fact" title="Placeholder fact">
+            <p>Placeholder fact text.</p>
+          </Callout>
+          <ChartWrapper {...chart} />
+          <Callout type="example">
+            <p>Placeholder worked example.</p>
+          </Callout>
+          <div class="wireframe-block surface-white">
+            <p class="wireframe-block-label">Try it card</p>
+            <p>
+              <a href={wfHref("tool")}>Open the cash versus profit explorer</a>
+            </p>
+          </div>
+          <h2>Sources</h2>
+          <SourceNote
+            name="Placeholder source"
+            publisher="Placeholder publisher"
+            url="https://example.org/"
+            accessed={day}
+          />
+          <h2>Related</h2>
+          <StoryCard {...card(2)} headingLevel={3} />
+        </div>
+      </>
+    )}
+
+    {slug === "tools" && (
+      <>
+        <h1>Tools</h1>
+        <p class="prose">Placeholder introduction to the tools.</p>
+        <ul class="story-list">
+          <li>
+            <StoryCard
+              {...card(1, "tool")}
+              title="Cash versus profit explorer"
+              href={wfHref("tool")}
+              headingLevel={2}
+            />
+          </li>
+          <li>
+            <StoryCard {...card(2, "tool")} title="Placeholder tool" headingLevel={2} />
+          </li>
+        </ul>
+      </>
+    )}
+
+    {slug === "tool" && (
+      <>
+        <DemoBanner />
+        <h1>Cash versus profit explorer</h1>
+        <p class="prose">Placeholder: what the tool shows and what it does not.</p>
+        <form class="wireframe-block surface-white" aria-label="Explorer inputs (wireframe)">
+          <p class="wireframe-block-label">Inputs (F4)</p>
+          <TextField id="wf-tool-sales" type="number" label="Monthly sales (£)" value="20000" />
+          <TextField id="wf-tool-days" type="number" label="Days to get paid" value="60" hint="Placeholder hint." />
+          <Button type="button">Update (placeholder)</Button>
+        </form>
+        <ChartWrapper {...chart} />
+        <StatusNotice variant="warning" title="Assumptions">
+          <p>Placeholder assumptions and limits.</p>
+        </StatusNotice>
+        <SourceNote
+          name="Placeholder source"
+          publisher="Placeholder publisher"
+          url="https://example.org/"
+          accessed={day}
+        />
+      </>
+    )}
+
+    {slug === "sources" && (
+      <>
+        <h1>Source library</h1>
+        <p class="prose">Placeholder: what each source is used for.</p>
+        {[1, 2, 3].map((n) => (
+          <div class="wireframe-block surface-white">
+            <h2>Placeholder source {n}</h2>
+            <p>Placeholder role, rights and update frequency.</p>
+            <SourceNote
+              name={`Placeholder source ${n}`}
+              publisher="Placeholder publisher"
+              url="https://example.org/"
+              accessed={day}
+            />
+          </div>
+        ))}
+      </>
+    )}
+  </div>
+</BaseLayout>

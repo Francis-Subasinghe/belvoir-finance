@@ -1,0 +1,81 @@
+---
+/**
+ * F2-23 article header: the page's one h1, summary, byline, dates (en-GB),
+ * period and a jurisdiction label when the story isn't UK. The data rules
+ * behind these fields (reviewer required, jurisdiction list) are F3.
+ * A <div>, not <header>, so it doesn't create a second banner landmark.
+ */
+import { JURISDICTION_LABELS, formatDateGB, isoDate, labelOf } from "../lib/format";
+
+interface Props {
+  title: string;
+  summary: string;
+  author: string;
+  reviewer?: string | undefined;
+  format?: string | undefined;
+  firstPublished?: Date | undefined;
+  lastReviewed?: Date | undefined;
+  period?: string | undefined;
+  jurisdiction?: string | undefined;
+  /** 1 on real pages. The gallery shows several headers, so it passes 2 to keep one h1. */
+  titleLevel?: 1 | 2;
+}
+const {
+  title,
+  summary,
+  author,
+  reviewer,
+  format,
+  firstPublished,
+  lastReviewed,
+  period,
+  jurisdiction = "UK",
+  titleLevel = 1,
+} = Astro.props;
+const Title = titleLevel === 1 ? "h1" : "h2";
+---
+
+<div class="article-header" data-testid="article-header">
+  {format && <p class="eyebrow">{labelOf(format)}</p>}
+  <Title class="article-title">{title}</Title>
+  <p class="article-summary">{summary}</p>
+  {jurisdiction !== "UK" && (
+    <p class="article-jurisdiction" data-testid="jurisdiction-label">
+      Jurisdiction: {JURISDICTION_LABELS[jurisdiction] ?? jurisdiction}
+    </p>
+  )}
+  <dl class="article-meta">
+    <div>
+      <dt>By</dt>
+      <dd>{author}</dd>
+    </div>
+    {reviewer && (
+      <div data-testid="reviewed-by">
+        <dt>Reviewed by</dt>
+        <dd>{reviewer}</dd>
+      </div>
+    )}
+    {firstPublished && (
+      <div>
+        <dt>First published</dt>
+        <dd>
+          <time datetime={isoDate(firstPublished)}>{formatDateGB(firstPublished)}</time>
+        </dd>
+      </div>
+    )}
+    {lastReviewed && (
+      <div>
+        <dt>Last reviewed</dt>
+        <dd>
+          <time datetime={isoDate(lastReviewed)}>{formatDateGB(lastReviewed)}</time>
+        </dd>
+      </div>
+    )}
+    {period && (
+      <div>
+        <dt>Period</dt>
+        <dd>{period}</dd>
+      </div>
+    )}
+  </dl>
+</div>

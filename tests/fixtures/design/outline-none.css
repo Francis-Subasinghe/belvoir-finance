@@ -1,0 +1,7 @@
+/* F2-30 negative: outline removed with nothing in its place. */
+.x:focus {
+  outline: none;
+}
+.y:focus-visible {
+  outline: 0;
+}

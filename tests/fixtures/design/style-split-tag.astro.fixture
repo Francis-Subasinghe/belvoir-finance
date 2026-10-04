@@ -1,0 +1,8 @@
+---
+// CodeQL regression: a single-pass strip of <style>...</style> would turn
+// "<sty<style></style>le>" into a new "<style>" opening tag. The scanner
+// works on offset ranges instead, so the markup after it is still checked.
+---
+
+<sty<style></style>le>
+<p style="margin: 0">Inline style after the split tag</p>

@@ -9,6 +9,7 @@ export default defineConfig(
   {
     ignores: [
       "dist/",
+      "dist-gallery/",
       "dist-lhci/",
       ".lighthouseci/",
       ".astro/",
@@ -27,6 +28,8 @@ export default defineConfig(
     rules: {
       // Inline event handlers and javascript: URLs would break the CSP.
       "no-script-url": "error",
+      // A scrollable region (wide data table) must be focusable so keyboard users can scroll it (F2-18, F2-26).
+      "astro/jsx-a11y/no-noninteractive-tabindex": ["error", { tags: [], roles: ["tabpanel", "region"] }],
       "no-restricted-syntax": [
         "error",
         {

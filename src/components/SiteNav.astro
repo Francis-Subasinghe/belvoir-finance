@@ -1,0 +1,30 @@
+---
+/**
+ * F2-20 main navigation. A plain list of links: no toggle and no script, so
+ * every link works without JavaScript and wraps at 360 px. Only pages that
+ * exist are linked (F3 adds the rest); never a "Work with Belvoir" link (D4).
+ */
+export interface NavItem {
+  href: string;
+  label: string;
+}
+interface Props {
+  items: NavItem[];
+  /** Current pathname (Astro.url.pathname). */
+  current: string;
+}
+const { items, current } = Astro.props;
+const norm = (p: string) => (p.endsWith("/") ? p : `${p}/`);
+---
+
+<nav class="site-nav" aria-label="Main">
+  <ul>
+    {items.map((item) => (
+      <li>
+        <a href={item.href} aria-current={norm(item.href) === norm(current) ? "page" : undefined}>
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

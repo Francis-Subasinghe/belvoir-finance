@@ -1,0 +1,13 @@
+---
+// F2-34 negatives: style attribute, set:html and define:vars.
+const html = "<b>x</b>";
+const c = "x";
+---
+
+<p style="margin: 0">Inline style</p>
+<div set:html={html} />
+<style define:vars={{ c }}>
+  p {
+    margin: 0;
+  }
+</style>
