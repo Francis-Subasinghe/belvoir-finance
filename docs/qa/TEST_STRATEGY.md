@@ -63,7 +63,7 @@ At each breakpoint: no horizontal scroll at the page level, no clipped or overla
 - Content reflows at 320 px width and at 200 % zoom without loss of content.
 
 ## Performance budgets
-Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by Lighthouse CI (report only for now) and locally by Sentinel (see merge-blocking check 6). CI measures a separate `PUBLIC_PREVIEW=false` build (`dist-lhci/`, never deployed) so SEO is scored with the preview `noindex` off; pages with their own `noindex` (demo content, F10) still lose SEO points:
+Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by Lighthouse CI (report only for now) and locally by Sentinel (see merge-blocking check 6). CI measures a separate `PUBLIC_PREVIEW=false` build (`dist-lhci/`, never deployed) so SEO is scored with the preview `noindex` off; pages marked `<meta name="belvoir-demo" content="true">` (demo content, whose `noindex` is deliberate, F10) are not asserted for SEO, but every other budget still applies to them:
 | Metric | Budget |
 | --- | --- |
 | Lighthouse Performance | ≥ 90 |

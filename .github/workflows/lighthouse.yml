@@ -55,6 +55,8 @@ jobs:
             echo "::error::keystatic found in dist-lhci/"
             find dist-lhci -ipath '*keystatic*'; exit 1
           fi
+      - name: Lighthouse config tests (demo detection, assertMatrix)
+        run: npx vitest run tests/unit/lighthouse-config.test.ts
       - name: Lighthouse collect (3 runs per page)
         continue-on-error: ${{ env.LHCI_BLOCKING != 'true' }}
         run: |

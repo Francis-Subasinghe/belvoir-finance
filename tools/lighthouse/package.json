@@ -10,6 +10,13 @@
   "devDependencies": {
     "@lhci/cli": "0.15.1"
   },
+  "//overrides": [
+    "Overrides clear the high/moderate npm audit findings in @lhci/cli 0.15.1 deps (it pins lighthouse 12.6.1). Re-check each with npm audit when bumping @lhci/cli.",
+    "puppeteer-core 25.12.0: lighthouse 12.6.1 asks for ^24, and every 24.x pulls @puppeteer/browsers 2.x (extract-zip and proxy-agent -> basic-ftp advisories). DROP this override once an @lhci/cli release ships a Lighthouse that accepts puppeteer-core ^25 (Lighthouse 13.5 already asks for ^25.9).",
+    "tmp 0.2.7: GHSA-52f5-9888-hmc6 and GHSA-ph9p-34f9-6g65 (tmp <=0.2.5, via @lhci/cli and inquirer/external-editor).",
+    "uuid 11.1.1: GHSA-w5hq-g745-h8pq (uuid <11.1.1, via @lhci/cli).",
+    "basic-ftp 6.2.2: basic-ftp <=6.2.0 advisories (via proxy-agent -> pac-proxy-agent -> get-uri). FTP is never used here."
+  ],
   "overrides": {
     "puppeteer-core": "25.12.0",
     "tmp": "0.2.7",

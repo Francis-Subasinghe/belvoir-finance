@@ -4,6 +4,7 @@
 // `lhci upload --target=filesystem`.
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { listPages, readBudgets, scriptBudget } from "./assertions.ts";
 
 interface ManifestEntry {
   url: string;
@@ -19,15 +20,16 @@ interface Lhr {
     { numericValue?: number; details?: { items?: { resourceType: string; transferSize: number }[] } }
   >;
 }
-interface Budgets {
-  categories: Record<string, number>;
-  audits: Record<string, number>;
-  scriptTransferBytes: { editorial: number; tools: { path: string; max: number }[] };
-}
 
 const REPORT_DIR = ".lighthouseci/report";
-const BASE = "/belvoir-finance";
-const budgets = JSON.parse(readFileSync(join(import.meta.dirname, "budgets.json"), "utf8")) as Budgets;
+const budgets = readBudgets(join(import.meta.dirname, "budgets.json"));
+const demoUrls = new Set(
+  existsSync("dist-lhci")
+    ? listPages("dist-lhci")
+        .filter((p) => p.demo)
+        .map((p) => p.url)
+    : [],
+);
 const mode = process.env.LHCI_BLOCKING === "true" ? "blocking" : "report-only";
 const out: string[] = [`## Lighthouse CI (${mode})`, ""];
 
@@ -38,8 +40,6 @@ const median = (xs: number[]): number => {
 };
 const scriptBytes = (lhr: Lhr): number =>
   lhr.audits["resource-summary"]?.details?.items?.find((i) => i.resourceType === "script")?.transferSize ?? 0;
-const scriptBudget = (path: string): number =>
-  budgets.scriptTransferBytes.tools.find((t) => path === BASE + t.path)?.max ?? budgets.scriptTransferBytes.editorial;
 
 const manifestPath = join(REPORT_DIR, "manifest.json");
 if (!existsSync(manifestPath)) {
@@ -64,7 +64,9 @@ if (!existsSync(manifestPath)) {
     if (!first) continue;
     meta ||= `Lighthouse ${first.lighthouseVersion}, ${first.configSettings.formFactor} emulation, ${first.environment.hostUserAgent}`;
     const path = new URL(url).pathname;
+    const demo = demoUrls.has(url);
     const cells = cats.map((c) => {
+      if (demo && c === "seo") return "n/a (demo)";
       const score = Math.round(median(lhrs.map((l) => l.categories[c]?.score ?? 0)) * 100);
       return mark(score >= Math.round((budgets.categories[c] ?? 1) * 100), String(score));
     });
@@ -74,14 +76,14 @@ if (!existsSync(manifestPath)) {
       cells.push(mark(v < (budgets.audits[a] ?? 0), shown));
     }
     const js = median(lhrs.map(scriptBytes));
-    const max = scriptBudget(path);
+    const max = scriptBudget(budgets, path);
     cells.push(mark(js <= max, `${(js / 1024).toFixed(1)} / ${max / 1024} KB`));
-    out.push(`| ${path} | ${lhrs.length} | ${cells.join(" | ")} |`);
+    out.push(`| ${path}${demo ? " (demo)" : ""} | ${lhrs.length} | ${cells.join(" | ")} |`);
   }
   out.push(
     "",
     `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page and ≤ 120 KB on /tools/cash-vs-profit/. ${misses} budget miss(es).`,
-    "SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages that set their own `noindex` (demo content, F10) still lose the crawlability points.",
+    'SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages marked `<meta name="belvoir-demo" content="true">` are not asserted for SEO (their noindex is deliberate, F10); every other budget still applies to them.',
     "JS is the transfer size of all scripts on the page, gzip-compressed by `astro preview`.",
     meta,
     "Full HTML and JSON reports are in the `lighthouse-reports` artifact.",
