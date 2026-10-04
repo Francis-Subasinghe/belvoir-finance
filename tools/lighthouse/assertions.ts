@@ -39,28 +39,61 @@ const aggregationMethod = "median";
 
 const ATTR = /([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g;
 
-/** Attributes of every `<meta ...>` tag, with lower-cased attribute names. */
+/** Attributes of every `<meta ...>` tag outside comments, with lower-cased attribute names. */
 function metaTags(html: string): Map<string, string>[] {
-  return [...html.matchAll(/<meta\b([^>]*)>/gi)].map((m) => {
-    const attrs = new Map<string, string>();
-    for (const a of (m[1] ?? "").matchAll(ATTR)) {
-      attrs.set((a[1] ?? "").toLowerCase(), a[2] ?? a[3] ?? a[4] ?? "");
-    }
-    return attrs;
-  });
+  const comments = commentRanges(html);
+  const outside = (at: number) => !comments.some(([s, e]) => at >= s && at < e);
+  return [...html.matchAll(/<meta\b([^>]*)>/gi)]
+    .filter((m) => outside(m.index))
+    .map((m) => {
+      const attrs = new Map<string, string>();
+      for (const a of (m[1] ?? "").matchAll(ATTR)) {
+        attrs.set((a[1] ?? "").toLowerCase(), a[2] ?? a[3] ?? a[4] ?? "");
+      }
+      return attrs;
+    });
+}
+
+/**
+ * `[start, end)` ranges of every `<!-- ... -->` comment, scanning forward with
+ * indexOf. An unclosed comment runs to the end of the document.
+ */
+export function commentRanges(html: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  let i = 0;
+  for (;;) {
+    const start = html.indexOf("<!--", i);
+    if (start === -1) return ranges;
+    const close = html.indexOf("-->", start + 4);
+    const end = close === -1 ? html.length : close + 3;
+    ranges.push([start, end]);
+    i = end;
+  }
+}
+
+/** First match of `re` (global) at or after `from` that does not start inside a comment. */
+function firstOutside(html: string, re: RegExp, from: number, comments: [number, number][]): RegExpExecArray | null {
+  re.lastIndex = from;
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    const at = m.index;
+    if (!comments.some(([s, e]) => at >= s && at < e)) return m;
+  }
+  return null;
 }
 
 /**
  * The document head: from the first `<head ...>` to the first `</head>` after it
- * (case-insensitive). `<header>` does not count. Undefined if there is no head
- * element, or it is not closed.
+ * (case-insensitive), ignoring any match inside an HTML comment. `<header>` does
+ * not count. Undefined if there is no head element or it is not closed, which
+ * callers treat as not demo (fail-safe).
  */
 export function headOf(html: string): string | undefined {
-  const open = /<head\b[^>]*>/i.exec(html);
+  const comments = commentRanges(html);
+  const open = firstOutside(html, /<head\b[^>]*>/gi, 0, comments);
   if (!open) return undefined;
-  const rest = html.slice(open.index + open[0].length);
-  const close = /<\/head\s*>/i.exec(rest);
-  return close ? rest.slice(0, close.index) : undefined;
+  const from = open.index + open[0].length;
+  const close = firstOutside(html, /<\/head\s*>/gi, from, comments);
+  return close ? html.slice(from, close.index) : undefined;
 }
 
 /**
@@ -85,11 +118,25 @@ function walk(dir: string): string[] {
   });
 }
 
-/** Every built page (each `index.html`; 404.html is skipped), with its demo flag. */
+/**
+ * Pages exempt from the SEO category only, as paths relative to BASE. The 404 page
+ * carries noindex on purpose (Atlas, PR #14). Every other budget still applies.
+ */
+export const SEO_EXEMPT_PATHS: readonly string[] = ["/404.html"];
+
+/** Why a page skips the SEO category, or undefined if SEO is asserted. */
+export function seoExemption(page: Page): "demo" | "404" | undefined {
+  if (page.demo) return "demo";
+  const pathname = new URL(page.url).pathname;
+  const base = BASE.slice(0, -1);
+  return SEO_EXEMPT_PATHS.some((p) => pathname === base + p) ? "404" : undefined;
+}
+
+/** Every built page (each `index.html`, plus the root `404.html`), with its demo flag. */
 export function listPages(distDir: string): Page[] {
   const pages = walk(distDir)
     .map((f) => ({ file: f, rel: relative(distDir, f).split(sep).join("/") }))
-    .filter(({ rel }) => rel === "index.html" || rel.endsWith("/index.html"))
+    .filter(({ rel }) => rel === "index.html" || rel.endsWith("/index.html") || rel === "404.html")
     .sort((a, b) => a.rel.localeCompare(b.rel))
     .map(({ file, rel }) => ({
       url: ORIGIN + BASE + rel.replace(/index\.html$/, ""),
@@ -112,11 +159,14 @@ export function scriptBudget(budgets: Budgets, pathname: string): number {
   );
 }
 
-/** Assertions for one page. Demo pages skip only the SEO category (their noindex is deliberate, F10). */
+/**
+ * Assertions for one page. Demo pages (noindex is deliberate, F10) and
+ * SEO_EXEMPT_PATHS skip only the SEO category.
+ */
 export function pageAssertions(budgets: Budgets, page: Page, level: Level): Record<string, Assertion> {
   const out: Record<string, Assertion> = {};
   for (const [id, minScore] of Object.entries(budgets.categories)) {
-    if (page.demo && id === "seo") continue;
+    if (id === "seo" && seoExemption(page) !== undefined) continue;
     out[`categories:${id}`] = [level, { minScore, aggregationMethod }];
   }
   // TEST_STRATEGY says LCP/CLS/TBT must be strictly "<" the limit, but LHCI's

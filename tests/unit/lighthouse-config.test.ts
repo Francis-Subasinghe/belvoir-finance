@@ -12,9 +12,13 @@ import {
   HOST,
   ORIGIN,
   PORT,
+  SEO_EXEMPT_PATHS,
   buildAssertMatrix,
+  commentRanges,
   headOf,
   isDemoHtml,
+  pageAssertions,
+  seoExemption,
   listPages,
   readBudgets,
   type MatrixEntry,
@@ -38,6 +42,8 @@ const FIXTURE: Record<string, string> = {
   "stories/other-meta/index.html": page('<meta name="belvoir-demo-x" content="true"><meta name="x" content="true">'),
   "tools/cash-vs-profit/index.html": page(""),
   "404.html": page(NOINDEX),
+  "404x.html": page(NOINDEX),
+  "foo/404.html": page(NOINDEX),
 };
 
 let dist = "";
@@ -73,6 +79,20 @@ describe("demo marker must be in the document head", () => {
     expect(isDemoHtml(body(`<p>Example: <head>${DEMO}</head></p>`))).toBe(false);
     expect(isDemoHtml(body(`<pre>&lt;head&gt;${DEMO}&lt;/head&gt;</pre>`))).toBe(false);
     expect(isDemoHtml(body(`<template><head>${DEMO}</head></template>`))).toBe(false);
+  });
+
+  it("HTML comments are ignored when finding the head", () => {
+    const fake = "<!-- <head><meta name=belvoir-demo content=true></head> -->";
+    expect(isDemoHtml(`<!doctype html>${fake}<html><head><title>t</title></head><body></body></html>`)).toBe(false);
+    expect(isDemoHtml(`<html><head>${fake}<title>t</title></head></html>`)).toBe(false);
+    // a commented-out </head> does not end the real head early
+    expect(isDemoHtml(`<html><head><!-- </head> --><title>t</title>${DEMO}</head></html>`)).toBe(true);
+    expect(commentRanges("a<!--b-->c<!--d")).toEqual([
+      [1, 9],
+      [10, 15],
+    ]);
+    // an unclosed comment hides the rest of the document
+    expect(isDemoHtml(`<html><!-- <head>${DEMO}</head></html>`)).toBe(false);
   });
 
   it("no head element, or an unclosed head, is not demo (fail-safe)", () => {
@@ -139,8 +159,9 @@ describe("demo marker detection", () => {
 });
 
 describe("listPages", () => {
-  it("lists every index.html under the base path with its demo flag, skipping 404.html", () => {
+  it("lists every index.html plus the root 404.html, with its demo flag", () => {
     expect(listPages(dist)).toEqual([
+      { url: url("404.html"), demo: false },
       { url: url(""), demo: false },
       { url: url("noindex-only/"), demo: false },
       { url: url("stories/demo-reordered/"), demo: true },
@@ -161,6 +182,54 @@ describe("listPages", () => {
   });
 });
 
+describe("SEO exemption for the 404 page", () => {
+  const ALL = [
+    "categories:performance",
+    "categories:accessibility",
+    "categories:best-practices",
+    "categories:seo",
+    "largest-contentful-paint",
+    "cumulative-layout-shift",
+    "total-blocking-time",
+    "resource-summary:script:size",
+  ].sort();
+  const keys = (u: string, demo = false) => Object.keys(pageAssertions(budgets, { url: u, demo }, "warn")).sort();
+
+  it("is an explicit, single named path", () => {
+    expect(SEO_EXEMPT_PATHS).toEqual(["/404.html"]);
+  });
+
+  it("/belvoir-finance/404.html skips SEO only, and keeps the editorial JS budget", () => {
+    const u = url("404.html");
+    expect(seoExemption({ url: u, demo: false })).toBe("404");
+    expect(keys(u)).toEqual(ALL.filter((k) => k !== "categories:seo"));
+    expect(pageAssertions(budgets, { url: u, demo: false }, "warn")["resource-summary:script:size"]?.[1]).toEqual({
+      maxNumericValue: 51200,
+      aggregationMethod: "median",
+    });
+  });
+
+  it.each([
+    ["the home page", url("")],
+    ["a non-demo noindex page", url("noindex-only/")],
+    ["/404x.html", url("404x.html")],
+    ["/foo/404.html", url("foo/404.html")],
+    ["/404.html/", url("404.html/")],
+    ["/404.html outside the base path", `${ORIGIN}/404.html`],
+  ])("%s is still asserted for SEO", (_name, u) => {
+    expect(seoExemption({ url: u, demo: false })).toBeUndefined();
+    expect(keys(u)).toEqual(ALL);
+  });
+
+  it("the built 404 page lands in an anchored matrix entry without SEO", () => {
+    const matrix = buildAssertMatrix(budgets, listPages(dist), "warn");
+    const a = entryFor(matrix, url("404.html")).assertions;
+    expect(a["categories:seo"]).toBeUndefined();
+    expect(Object.keys(a)).toHaveLength(ALL.length - 1);
+    expect(entryFor(matrix, url("noindex-only/")).assertions["categories:seo"]).toBeDefined();
+  });
+});
+
 describe("generated assertMatrix", () => {
   const ALL_BUT_SEO = [
     "categories:performance",
@@ -178,7 +247,14 @@ describe("generated assertMatrix", () => {
 
   it("every listed URL matches exactly one entry, and nothing else matches", () => {
     for (const p of listPages(dist)) entryFor(matrix, p.url);
-    for (const u of [url("stories/demo-story/extra/"), url("stories/demo-story"), `x${url("")}`, url("404.html")]) {
+    for (const u of [
+      url("stories/demo-story/extra/"),
+      url("stories/demo-story"),
+      `x${url("")}`,
+      url("404x.html"),
+      url("foo/404.html"),
+      url("404.html/"),
+    ]) {
       expect(
         matrix.filter((m) => new RegExp(m.matchingUrlPattern).test(u)),
         u,

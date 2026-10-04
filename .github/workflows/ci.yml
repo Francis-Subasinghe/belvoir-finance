@@ -18,7 +18,7 @@ concurrency:
 jobs:
   guards:
     name: Repo guards
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -37,6 +37,15 @@ jobs:
           bad=$(grep -rhE '^\s*-?\s*uses:' .github/workflows | grep -vE 'uses:\s*\./' | grep -vE '@[0-9a-f]{40}(\s|$)' || true)
           if [ -n "$bad" ]; then
             echo "::error::Unpinned actions:"; echo "$bad"; exit 1
+          fi
+
+      - name: "Runner pin: no -latest runner images"
+        # Jobs run on a named image (ubuntu-24.04) so a GitHub image switch can't change CI silently.
+        # tests/unit/repo-guards.test.ts runs this exact step against fixtures.
+        run: |
+          if grep -rnE 'runs-on:.*-lates[t]' .github/workflows; then
+            echo "::error::Pin runs-on to a named runner image, not -latest"
+            exit 1
           fi
 
       - name: "F1-30: dev and preview servers bind to localhost only"
@@ -58,7 +67,7 @@ jobs:
 
   build:
     name: Install, check, test, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -96,7 +105,7 @@ jobs:
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -108,7 +117,7 @@ jobs:
 
   codeql:
     name: CodeQL
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read

@@ -2,11 +2,11 @@
 // Run from the repo root by .github/workflows/lighthouse.yml:
 //   tools/lighthouse/node_modules/.bin/lhci collect --config=tools/lighthouse/lighthouserc.cjs
 //
-// Audits every built page in dist-lhci/ (except 404.html), mobile preset (the
+// Audits every built page in dist-lhci/ (including 404.html), mobile preset (the
 // Lighthouse default), median of 3 runs. dist-lhci/ is a CI-only build with
 // PUBLIC_PREVIEW=false so SEO is measured with the preview noindex off; it is
 // never deployed. Pages carrying <meta name="belvoir-demo" content="true"> skip
-// only the SEO category. Reports go to the local filesystem only, never to
+// only the SEO category, and so does /404.html (SEO_EXEMPT_PATHS in assertions.ts). Reports go to the local filesystem only, never to
 // temporary-public-storage or an LHCI server. URL and assertion logic lives in
 // assertions.ts (tested by tests/unit/lighthouse-config.test.ts).
 "use strict";
@@ -22,9 +22,14 @@ const DIST = "dist-lhci";
 // workflow, which also drives the steps' continue-on-error.
 const LEVEL = process.env.LHCI_BLOCKING === "true" ? "error" : "warn";
 
-// Before collect only: refuse to start if the dedicated port is taken (throws on exit 1).
+// Before collect only: refuse to start if the dedicated port is taken.
 if (process.argv.includes("collect")) {
-  execFileSync(process.execPath, [join(__dirname, "preflight.ts")], { stdio: "inherit" });
+  try {
+    execFileSync(process.execPath, [join(__dirname, "preflight.ts")], { stdio: "inherit" });
+  } catch {
+    // preflight.ts already printed the reason; exit before lhci adds its usage text.
+    process.exit(1);
+  }
 }
 
 const pages = listPages(DIST);

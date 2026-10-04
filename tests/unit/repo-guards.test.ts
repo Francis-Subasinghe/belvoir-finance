@@ -129,6 +129,43 @@ describe("F1-30 dev and preview servers bind to localhost only", () => {
   });
 });
 
+describe("Runner pin: no -latest runner images", () => {
+  it("every workflow job runs on ubuntu-24.04", () => {
+    const files = readdirSync(".github/workflows").filter((f) => /\.ya?ml$/.test(f));
+    expect(files.length).toBeGreaterThan(0);
+    for (const f of files) {
+      const runsOn = [...readFileSync(join(".github/workflows", f), "utf8").matchAll(/^\s*runs-on:\s*(.+)$/gm)];
+      expect(runsOn.length, f).toBeGreaterThan(0);
+      for (const m of runsOn) expect(m[1]?.trim(), f).toBe("ubuntu-24.04");
+    }
+  });
+
+  describe.skipIf(process.platform === "win32")("the CI guard step itself", () => {
+    const guard = ciStepScript("Runner pin");
+    const runGuard = (workflow: string) => {
+      const dir = mkdtempSync(join(tmpdir(), "belvoir-runner-"));
+      try {
+        mkdirSync(join(dir, ".github/workflows"), { recursive: true });
+        writeFileSync(join(dir, ".github/workflows/x.yml"), workflow);
+        return spawnSync("bash", ["-e", "-c", guard], { cwd: dir, encoding: "utf8" }).status;
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    it("passes a pinned image", () => {
+      expect(runGuard("jobs:\n  a:\n    runs-on: ubuntu-24.04\n")).toBe(0);
+    });
+
+    it.each(["runs-on: ubuntu-latest", "runs-on: [ubuntu-latest]", "runs-on: windows-latest", "runs-on: macos-latest"])(
+      "fails on %s",
+      (line) => {
+        expect(runGuard(`jobs:\n  a:\n    ${line}\n`)).toBe(1);
+      },
+    );
+  });
+});
+
 describe("F1-07 Keystatic is local-mode only", () => {
   const ks = readFileSync("keystatic.config.ts", "utf8");
 
