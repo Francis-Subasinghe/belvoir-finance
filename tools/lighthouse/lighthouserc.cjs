@@ -2,24 +2,35 @@
 // Run from the repo root by .github/workflows/lighthouse.yml:
 //   tools/lighthouse/node_modules/.bin/lhci collect --config=tools/lighthouse/lighthouserc.cjs
 //
-// Audits every built page in dist-lhci/ (except 404.html), mobile preset (the
+// Audits every built page in dist-lhci/ (including 404.html), mobile preset (the
 // Lighthouse default), median of 3 runs. dist-lhci/ is a CI-only build with
 // PUBLIC_PREVIEW=false so SEO is measured with the preview noindex off; it is
 // never deployed. Pages carrying <meta name="belvoir-demo" content="true"> skip
-// only the SEO category. Reports go to the local filesystem only, never to
+// only the SEO category, and so does /404.html (SEO_EXEMPT_PATHS in assertions.ts). Reports go to the local filesystem only, never to
 // temporary-public-storage or an LHCI server. URL and assertion logic lives in
 // assertions.ts (tested by tests/unit/lighthouse-config.test.ts).
 "use strict";
 
+const { execFileSync } = require("node:child_process");
 const { join } = require("node:path");
 // Node 24 loads this erasable-TypeScript ES module synchronously (require(esm) + type stripping).
-const { buildAssertMatrix, listPages, readBudgets } = require("./assertions.ts");
+const { HOST, PORT, buildAssertMatrix, listPages, readBudgets } = require("./assertions.ts");
 
 const DIST = "dist-lhci";
 
 // Report-only until before F3 merges. Blocking is set by LHCI_BLOCKING in the
 // workflow, which also drives the steps' continue-on-error.
 const LEVEL = process.env.LHCI_BLOCKING === "true" ? "error" : "warn";
+
+// Before collect only: refuse to start if the dedicated port is taken.
+if (process.argv.includes("collect")) {
+  try {
+    execFileSync(process.execPath, [join(__dirname, "preflight.ts")], { stdio: "inherit" });
+  } catch {
+    // preflight.ts already printed the reason; exit before lhci adds its usage text.
+    process.exit(1);
+  }
+}
 
 const pages = listPages(DIST);
 const budgets = readBudgets(join(__dirname, "budgets.json"));
@@ -29,9 +40,11 @@ module.exports = {
     collect: {
       url: pages.map((p) => p.url),
       numberOfRuns: 3,
-      // astro preview takes host and port from astro.config.mjs (127.0.0.1:4321, F1-30).
-      startServerCommand: `npx astro preview --outDir ${DIST}`,
-      startServerReadyPattern: "127\\.0\\.0\\.1:4321",
+      // Host 127.0.0.1 comes from astro.config.mjs (F1-30); a dedicated port keeps
+      // clear of the dev server. The ready pattern needs astro's own "Local" line for
+      // this exact URL, so a server that moved to another port never counts as ready.
+      startServerCommand: `npx astro preview --outDir ${DIST} --port ${PORT}`,
+      startServerReadyPattern: `http://${HOST.replaceAll(".", "\\.")}:${PORT}/belvoir-finance/`,
       startServerReadyTimeout: 60000,
       settings: {
         // No preset: Lighthouse's default mobile emulation and throttling (TEST_STRATEGY "mobile preset").

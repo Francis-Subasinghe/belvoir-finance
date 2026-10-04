@@ -4,7 +4,7 @@
 // `lhci upload --target=filesystem`.
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { listPages, readBudgets, scriptBudget } from "./assertions.ts";
+import { listPages, readBudgets, scriptBudget, seoExemption } from "./assertions.ts";
 
 interface ManifestEntry {
   url: string;
@@ -23,12 +23,12 @@ interface Lhr {
 
 const REPORT_DIR = ".lighthouseci/report";
 const budgets = readBudgets(join(import.meta.dirname, "budgets.json"));
-const demoUrls = new Set(
-  existsSync("dist-lhci")
-    ? listPages("dist-lhci")
-        .filter((p) => p.demo)
-        .map((p) => p.url)
-    : [],
+/** URL -> why SEO is not asserted ("demo" or "404"); same rule as the assertions. */
+const seoExempt = new Map(
+  (existsSync("dist-lhci") ? listPages("dist-lhci") : []).flatMap((p) => {
+    const why = seoExemption(p);
+    return why ? [[p.url, why] as const] : [];
+  }),
 );
 const mode = process.env.LHCI_BLOCKING === "true" ? "blocking" : "report-only";
 const out: string[] = [`## Lighthouse CI (${mode})`, ""];
@@ -64,9 +64,9 @@ if (!existsSync(manifestPath)) {
     if (!first) continue;
     meta ||= `Lighthouse ${first.lighthouseVersion}, ${first.configSettings.formFactor} emulation, ${first.environment.hostUserAgent}`;
     const path = new URL(url).pathname;
-    const demo = demoUrls.has(url);
+    const exempt = seoExempt.get(url);
     const cells = cats.map((c) => {
-      if (demo && c === "seo") return "n/a (demo)";
+      if (exempt && c === "seo") return `n/a (${exempt})`;
       const score = Math.round(median(lhrs.map((l) => l.categories[c]?.score ?? 0)) * 100);
       return mark(score >= Math.round((budgets.categories[c] ?? 1) * 100), String(score));
     });
@@ -78,12 +78,12 @@ if (!existsSync(manifestPath)) {
     const js = median(lhrs.map(scriptBytes));
     const max = scriptBudget(budgets, path);
     cells.push(mark(js <= max, `${(js / 1024).toFixed(1)} / ${max / 1024} KB`));
-    out.push(`| ${path}${demo ? " (demo)" : ""} | ${lhrs.length} | ${cells.join(" | ")} |`);
+    out.push(`| ${path}${exempt === "demo" ? " (demo)" : ""} | ${lhrs.length} | ${cells.join(" | ")} |`);
   }
   out.push(
     "",
     `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page and ≤ 120 KB on /tools/cash-vs-profit/. ${misses} budget miss(es).`,
-    'SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages marked `<meta name="belvoir-demo" content="true">` are not asserted for SEO (their noindex is deliberate, F10); every other budget still applies to them.',
+    'SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages marked `<meta name="belvoir-demo" content="true">` and `/belvoir-finance/404.html` are not asserted for SEO (their noindex is deliberate); every other budget still applies to them.',
     "JS is the transfer size of all scripts on the page, gzip-compressed by `astro preview`.",
     meta,
     "Full HTML and JSON reports are in the `lighthouse-reports` artifact.",
