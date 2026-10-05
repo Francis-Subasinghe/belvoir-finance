@@ -6,6 +6,13 @@
  * labels and a legend with distinct marker shapes (solid vs outlined), not
  * colour alone; colours come from tokens via classes. No inline styles, no
  * chart library and no remote resources.
+ *
+ * V1: the Markdoc `chart` tag renders through this same component
+ * (markdoc/Chart.astro is a thin adapter), with `note` set to "Illustrative
+ * demo data". Bars carry `chart-bar` for the draw-in (V1-31); values and the
+ * table are static text from the first frame. Labels are plain Astro
+ * expressions, so they are always escaped (V1-55). The SVG has width and
+ * height attributes so its box is reserved before CSS loads (V1-11).
  */
 interface Series {
   name: string;
@@ -17,8 +24,10 @@ interface Props {
   source: string;
   categories: string[];
   series: [Series, Series] | [Series];
+  /** Extra caption line, e.g. "Illustrative demo data" (V1-44). */
+  note?: string | undefined;
 }
-const { title, units, source, categories, series } = Astro.props;
+const { title, units, source, categories, series, note } = Astro.props;
 const nf = new Intl.NumberFormat("en-GB");
 const max = Math.max(1, ...series.flatMap((s) => s.values));
 const W = 320;
@@ -43,6 +52,7 @@ const bars = categories.flatMap((cat, ci) =>
     <span class="chart-title">{title}</span>
     <span class="chart-units">Units: {units}</span>
     <span class="chart-source">Source: {source}</span>
+    {note && <span class="chart-note">{note}</span>}
   </figcaption>
   <ul class="chart-legend" aria-hidden="true">
     {series.map((s, si) => (
@@ -54,24 +64,30 @@ const bars = categories.flatMap((cat, ci) =>
       </li>
     ))}
   </ul>
-  <svg class="chart-svg" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+  <svg class="chart-svg" viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden="true" focusable="false">
     <line class="chart-axis" x1="0" y1={top + plotH} x2={W} y2={top + plotH} />
     {bars.map((b) => (
       <g>
         <rect
-          class={b.si === 0 ? "chart-series-1" : "chart-series-2-outline"}
+          class={`chart-bar ${b.si === 0 ? "chart-series-1" : "chart-series-2-outline"}`}
           x={b.x + 1}
           y={b.y}
           width={barW - 2}
           height={b.h}
         />
-        <text class="chart-value numeric" data-numeric x={b.x + barW / 2} y={b.y - 4} text-anchor="middle">
+        <text class="chart-value numeric" data-numeric="true" x={b.x + barW / 2} y={b.y - 4} text-anchor="middle">
           {nf.format(b.v)}
         </text>
       </g>
     ))}
     {categories.map((c, ci) => (
-      <text class="chart-category numeric" data-numeric x={ci * groupW + groupW / 2} y={H - 6} text-anchor="middle">
+      <text
+        class="chart-category numeric"
+        data-numeric="true"
+        x={ci * groupW + groupW / 2}
+        y={H - 6}
+        text-anchor="middle"
+      >
         {c}
       </text>
     ))}
@@ -96,7 +112,7 @@ const bars = categories.flatMap((cat, ci) =>
           <tr>
             <th scope="row">{c}</th>
             {series.map((s) => (
-              <td class="numeric data-table-num" data-numeric>
+              <td class="numeric data-table-num" data-numeric="true">
                 {nf.format(s.values[ci] ?? 0)}
               </td>
             ))}

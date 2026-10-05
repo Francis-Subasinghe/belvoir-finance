@@ -1,0 +1,33 @@
+---
+/**
+ * V1-44 / V1-54: the Markdoc `chart` tag. A thin adapter to the F2-26
+ * ChartWrapper (no second chart component): it resolves the Source id to its
+ * name and publisher and marks the data as illustrative. The content rules
+ * have already checked every attribute (src/lib/markdoc-allowlist.ts) and
+ * that the Source is a labelled placeholder, so nothing here re-validates.
+ */
+import { getEntry } from "astro:content";
+import ChartWrapper from "../ChartWrapper.astro";
+import type { ChartSeries } from "../../lib/markdoc-allowlist";
+
+interface Props {
+  title: string;
+  units: string;
+  source: string;
+  categories: string[];
+  series: ChartSeries[];
+}
+const { title, units, source, categories, series } = Astro.props;
+const entry = await getEntry("sources", source);
+if (!entry) throw new Error(`chart: no Source with id "${source}"`);
+const pair = (series.length === 2 ? [series[0], series[1]] : [series[0]]) as [ChartSeries, ChartSeries] | [ChartSeries];
+---
+
+<ChartWrapper
+  title={title}
+  units={units}
+  source={`${entry.data.name}, ${entry.data.publisher}`}
+  categories={categories}
+  series={pair}
+  note="Illustrative demo data"
+/>
