@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { expectedSite } from "../helpers/expected-site";
 import { parse } from "yaml";
 import { checkContentRules } from "../../src/lib/content-rules";
+import { isJsonLdScriptAttrs, nonJsonLdScriptTags } from "../helpers/html";
 
 const DIST = "dist";
 const BASE = "/belvoir-finance/";
@@ -217,8 +218,23 @@ describe("F3-14 / F3-11 / F3-19 / F3-34 nothing that mustn't render does", () =>
   });
   it("F3-38 dist has no .js file and no script other than JSON-LD", () => {
     expect(files.filter((f) => /\.m?js$/.test(f)).map(rel)).toEqual([]);
-    for (const { page, html: h } of pages)
-      for (const m of h.matchAll(/<script\b([^>]*)>/g)) expect(m[1], page).toMatch(/type="application\/ld\+json"/);
+    for (const { page, html: h } of pages) expect(nonJsonLdScriptTags(h), page).toEqual([]);
+  });
+  it("F3-38 the same check catches an upper-case <SCRIPT> (CodeQL js/bad-tag-filter)", () => {
+    const fixture = readFileSync("tests/fixtures/html/script-uppercase.html", "utf8");
+    expect(nonJsonLdScriptTags(fixture)).toEqual(["<SCRIPT>"]);
+  });
+  it("F3-38 the same check catches a JSON-LD type that is only text inside another attribute", () => {
+    const fixture = readFileSync("tests/fixtures/html/script-type-in-other-attribute.html", "utf8");
+    expect(nonJsonLdScriptTags(fixture)).toEqual([`<script data-x='type="application/ld+json"'>`]);
+  });
+  it("F3-38 the real JSON-LD script on a story page passes the same check", () => {
+    const story = pages.find((p) => p.page.startsWith("stories/") && p.page !== "stories/index.html");
+    expect(story).toBeDefined();
+    const blocks = [...(story?.html ?? "").matchAll(/<script\b([^>]*)>/gi)];
+    expect(blocks.length).toBeGreaterThan(0);
+    expect(blocks.every((m) => isJsonLdScriptAttrs(m[1] ?? ""))).toBe(true);
+    expect(nonJsonLdScriptTags(story?.html ?? "")).toEqual([]);
   });
   it("F3-49 the real build lists its active source and doesn't show the empty state", () => {
     const page = html("sources/index.html");

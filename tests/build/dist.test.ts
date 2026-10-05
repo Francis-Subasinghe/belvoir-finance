@@ -6,7 +6,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { gzipSync } from "node:zlib";
-import { countTags, firstTagIndex, scriptBlocks, tagAttributes } from "../helpers/html";
+import { countTags, firstTagIndex, isJsonLdScriptAttrs, scriptBlocks, tagAttributes } from "../helpers/html";
 import { F1_CSP, compiledGold, cspOf, galleryLeaks } from "../helpers/built-site";
 import { expectedSite } from "../helpers/expected-site";
 import { checkContentRules } from "../../src/lib/content-rules";
@@ -129,7 +129,7 @@ describe("F1-15 no inline script or event handlers", () => {
       expect(blocks.length, file).toBe(countTags(html, "script"));
       for (const { attrs } of blocks) {
         if (/\bsrc\s*=/i.test(attrs)) continue;
-        expect(attrs, file).toMatch(/type="application\/ld\+json"/i);
+        expect(isJsonLdScriptAttrs(attrs), `${file}: <script${attrs}>`).toBe(true);
       }
       expect(countTags(html, "style"), file).toBe(0);
       expect(html, file).not.toMatch(/\sstyle="/i);
