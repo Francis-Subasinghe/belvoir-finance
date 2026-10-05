@@ -67,6 +67,29 @@ All dev and preview servers bind to `127.0.0.1`. Never add `--host` or `0.0.0.0`
 - All JSON-LD goes through `src/lib/jsonld.ts` (`<JsonLd>`), which escapes `<`, `>` and `&`.
 - People in the repo are placeholders until D8. No real names, emails or credentials.
 
+### F3 content rules (checked by `astro build` and `npm run check:content`)
+
+One function, `checkContentRules()` in `src/lib/content-rules.ts`, validates all of `content/` with the Zod schemas in `src/content/schemas.ts` and then the cross-entry rules. `astro build` fails on any error (the `belvoir-content-rules` integration in `astro.config.mjs`); `astro dev` only logs them. Field-by-field rules are in `docs/planning/CONTENT_MODEL.md`. In short:
+
+- **Ids** are the file name (lowercase slug), unique ignoring case; no `slug:` key. Retired ids are never reused.
+- **References** (story topics, author, reviewer, sources, related stories and tools; topic reading path and featured tool; tool reviewer and source record; source owner — 11 reference types) must name an entry in the right collection. A reference to an entry that exists but isn't published is a **warning**; the target is left out of the page.
+- **Required booleans with no default:** `demo` on every Story, Topic, Tool, Person and Source; `factual` and `commercialInterest` on every Story.
+- A published factual story needs a `reviewer`, who isn't the author. `commercialInterest: true` needs a non-blank `disclosure`.
+- **Dates** are real `YYYY-MM-DD` dates. Once published, `firstPublished` and `lastReviewed` are required, `lastReviewed` ≥ `firstPublished`, and `nextReviewDue` > `lastReviewed`. Nothing compares a date with today, so the build is the same on any day and in any time zone.
+- **Pillars** are the fixed list in `PILLARS`. **Jurisdiction** is UK, IE, EU, US or `other`; `other` needs a `jurisdictionNote`, and any other value must not have one.
+- **Demo:** a story by a demo person, or citing a demo source, must be demo; a demo story cites only demo sources on placeholder URLs. A demo source says "(placeholder)" in its name and links only to example.org, example.com, example.net or a `.invalid` host.
+- **People:** credentials render only when `verified: true` (which needs `verifiedBy` and `verifiedOn`; none is committed while D8 is open). Labels, `role` and `bio` must not contain a protected title or membership (`PROTECTED_CREDENTIAL_TERMS`); reword a false positive, don't add an exception.
+
+**Reading a failure.** Every problem is printed, one per line, as `file: field: message [rule]`, for example
+
+```
+content/stories/x.mdoc: reviewer: a published factual story needs a reviewer [schema]
+content/stories/x.mdoc: sources[1].source: no Source with id "hmrc" (content/sources/hmrc.yaml) [ref-missing]
+warning: content/topics/y.yaml: readingPath[2]: "z" is not published (status: draft), so it is left out of the page [ref-unpublished]
+```
+
+The field path points at the exact value (`sources[1].source` is the second source's id). Fix the file and run `npm run check:content` again. Fixtures for every rule live in `tests/fixtures/content/` (`base/` is a full valid set; each `negative/<case>/` overrides one file) and are never copied into `content/`.
+
 ## Preview, search engines and security headers
 
 - **Preview setting:** `PUBLIC_PREVIEW` (default: on). While on, every page has `<meta name="robots" content="noindex, nofollow">` and `robots.txt` disallows all crawling. Set `PUBLIC_PREVIEW=false` only when the owner approves a launch (D1).

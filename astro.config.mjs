@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import markdoc from "@astrojs/markdoc";
+import { checkContentRules, formatProblem } from "./src/lib/content-rules.ts";
 
 /**
  * Keystatic (local mode) is a development-only tool. It is added only by
@@ -35,6 +36,29 @@ const gallery = {
   },
 };
 
+/**
+ * F3 content rules (CF-01 to CF-05, F3-14 to F3-26, F3-43 to F3-50): the same
+ * check `npm run check:content` and the tests run (src/lib/content-rules.ts).
+ * Every problem is printed with its file, field and rule; any error stops
+ * `astro build` (and `astro sync`/`astro check`) before a page is rendered.
+ * In `astro dev` the problems are only logged, so an editor saving a broken
+ * entry in Keystatic sees the message without the server dying.
+ */
+/** @type {import("astro").AstroIntegration} */
+const contentRules = {
+  name: "belvoir-content-rules",
+  hooks: {
+    "astro:config:setup": ({ command, logger }) => {
+      const report = checkContentRules("content");
+      for (const w of report.warnings) logger.warn(formatProblem(w));
+      for (const e of report.errors) logger.error(formatProblem(e));
+      if (report.errors.length > 0 && command !== "dev") {
+        throw new Error(`content check failed: ${report.errors.length} problem(s); see the messages above`);
+      }
+    },
+  },
+};
+
 /** @type {import("astro").AstroIntegration[]} */
 const devOnlyIntegrations = [];
 if (keystaticMode) {
@@ -57,5 +81,10 @@ export default defineConfig({
     inlineStylesheets: "never",
   },
   devToolbar: { enabled: false },
-  integrations: [markdoc({ allowHTML: false }), ...devOnlyIntegrations, ...(galleryMode ? [gallery] : [])],
+  integrations: [
+    contentRules,
+    markdoc({ allowHTML: false }),
+    ...devOnlyIntegrations,
+    ...(galleryMode ? [gallery] : []),
+  ],
 });

@@ -1,0 +1,17 @@
+name: PAUSED-SOURCE-MARKER
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - fx-topic-a
+jurisdiction: UK
+website: "https://www.example.com/"
+feedType: none
+updateFrequency: Monthly
+rights: titles-only
+rightsNotes: ""
+role: primary
+owner: fx-reviewer
+lastChecked: 02/10/2026
+editorialNotes: ""
+demo: false
+status: paused

@@ -1,11 +1,25 @@
 ---
-import { getCollection, getEntry, render } from "astro:content";
+import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import DemoBanner from "../../components/DemoBanner.astro";
 import JsonLd from "../../components/JsonLd.astro";
 import ArticleHeader from "../../components/ArticleHeader.astro";
 import SourceNote from "../../components/SourceNote.astro";
-import { onlyPublished } from "../../lib/stories";
+import StoryCard from "../../components/StoryCard.astro";
+import { onlyPublished, publishedByIds } from "../../lib/stories";
+import {
+  byline,
+  cardProps,
+  person,
+  publishedStories,
+  source,
+  storyHref,
+  tool,
+  toolHref,
+  topic,
+  topicHref,
+  topics,
+} from "../../lib/site-content";
+import { isoDate } from "../../lib/format";
 
 export async function getStaticPaths() {
   const stories = onlyPublished(await getCollection("stories"));
@@ -15,31 +29,38 @@ export async function getStaticPaths() {
 const { story } = Astro.props;
 const { Content } = await render(story);
 const d = story.data;
-// Reference integrity (missing ids failing the build) is F3 (CF-01); until
-// then an unknown id falls back to the slug.
-const personName = async (id: string | undefined) =>
-  id ? ((await getEntry("people", id))?.data.displayName ?? id) : undefined;
-const author = (await personName(d.author)) ?? d.author;
-const reviewer = await personName(d.reviewer);
+// F3-15: every reference is checked before rendering, so lookups never fall back to a raw id.
+const author = byline(await person(d.author));
+const reviewer = d.reviewer ? byline(await person(d.reviewer)) : undefined;
 const sources = await Promise.all(
   d.sources.map(async (s) => {
-    const entry = await getEntry("sources", s.source);
-    return { ...s, name: entry?.data.name ?? s.source, publisher: entry?.data.publisher ?? "Unknown publisher" };
+    const entry = await source(s.source);
+    return { ...s, name: entry.data.name, publisher: entry.data.publisher };
   }),
 );
-// Minimal Article data; full SEO metadata is F7.
+const tools = await Promise.all(d.relatedTools.map((id) => tool(id)));
+const published = await publishedStories();
+// F3-16: unpublished related stories are left out (the content check warns).
+const related = publishedByIds(d.relatedStories, published);
+const firstTopic = d.topics[0] ? await topic(d.topics[0]) : undefined;
+// The next published story in the first reading path that contains this story.
+const pathTopic = (await topics()).find((t) =>
+  publishedByIds(t.data.readingPath, published).some((s) => s.id === story.id),
+);
+const pathStories = pathTopic ? publishedByIds(pathTopic.data.readingPath, published) : [];
+const next = pathStories[pathStories.findIndex((s) => s.id === story.id) + 1];
+// Minimal Article data, escaped by the F1-31 helper; full SEO metadata is F7.
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: d.title,
   description: d.summary,
-  datePublished: d.firstPublished?.toISOString().slice(0, 10),
+  datePublished: d.firstPublished ? isoDate(d.firstPublished) : undefined,
 };
 ---
 
-<BaseLayout title={d.title} description={d.summary} noindex={d.demo} demo={d.demo}>
+<BaseLayout title={d.title} description={d.summary} demo={d.demo}>
   <JsonLd slot="head" data={jsonLd} />
-  {d.demo && <DemoBanner />}
   <ArticleHeader
     title={d.title}
     summary={d.summary}
@@ -50,9 +71,24 @@ const jsonLd = {
     lastReviewed={d.lastReviewed}
     period={d.period}
     jurisdiction={d.jurisdiction}
+    jurisdictionNote={d.jurisdictionNote}
   />
+  {d.disclosure && (
+    <p class="disclosure" data-testid="disclosure">
+      <span class="disclosure-label">Disclosure:</span> {d.disclosure}
+    </p>
+  )}
   <div class="prose">
     <Content />
+    {tools.map((t) => (
+      <aside class="story-card surface-white" aria-labelledby={`try-${t.id}`} data-testid="try-it">
+        <p class="eyebrow">Try it</p>
+        <h2 id={`try-${t.id}`} class="story-card-title">
+          <a href={toolHref(t.id)}>{t.data.title}</a>
+        </h2>
+        <p class="story-card-summary">{t.data.summary}</p>
+      </aside>
+    ))}
     {sources.length > 0 && (
       <section aria-labelledby="sources-heading">
         <h2 id="sources-heading">Sources</h2>
@@ -62,4 +98,32 @@ const jsonLd = {
       </section>
     )}
   </div>
+  {related.length > 0 && (
+    <section class="page-section" aria-labelledby="related-heading">
+      <h2 id="related-heading">Related stories</h2>
+      <ul class="story-list">
+        {related.map((s) => (
+          <li>
+            <StoryCard {...cardProps(s)} headingLevel={3} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+  {(firstTopic || next) && (
+    <nav class="page-section" aria-label="Keep reading" data-testid="keep-reading">
+      <ul class="page-links">
+        {next && (
+          <li>
+            Next in the reading path: <a href={storyHref(next.id)}>{next.data.title}</a>
+          </li>
+        )}
+        {firstTopic && (
+          <li>
+            More on this topic: <a href={topicHref(firstTopic.id)}>{firstTopic.data.title}</a>
+          </li>
+        )}
+      </ul>
+    </nav>
+  )}
 </BaseLayout>

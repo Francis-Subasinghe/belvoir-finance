@@ -6,6 +6,7 @@ import { relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { F1_CSP, compiledGold, cspOf, galleryLeaks, requireBuild } from "../helpers/built-site";
 import { countTags, scriptBlocks } from "../helpers/html";
+import { expectedSite } from "../helpers/expected-site";
 
 const DIR = "dist-gallery";
 let files: string[] = [];
@@ -23,14 +24,11 @@ describe("F2-01 gallery test build", () => {
     const rel = pages.map((p) => p.rel).sort();
     expect(rel).toEqual(
       [
-        "404.html",
         "design/index.html",
         ...["explore", "home", "sources", "story", "tool", "tools", "topic"].map(
           (s) => `design/wireframes/${s}/index.html`,
         ),
-        "index.html",
-        "stories/index.html",
-        "stories/why-profit-isnt-cash/index.html",
+        ...expectedSite().pages,
       ].sort(),
     );
   });

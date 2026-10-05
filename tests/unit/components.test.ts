@@ -60,6 +60,47 @@ describe("F2-22 story card", () => {
   });
 });
 
+describe("F3-22 / F3-52 story card jurisdiction label", () => {
+  it("F3-22 a UK story card shows no label; IE, EU and US show the text label", async () => {
+    expect(await render(StoryCard, { ...card, jurisdiction: "UK" })).not.toContain("jurisdiction-label");
+    expect(await render(StoryCard, card)).not.toContain("jurisdiction-label");
+    for (const [code, name] of [
+      ["IE", "Ireland"],
+      ["EU", "European Union"],
+      ["US", "United States"],
+    ]) {
+      expect(await render(StoryCard, { ...card, jurisdiction: code })).toMatch(
+        new RegExp(`data-testid="jurisdiction-label">\\s*Jurisdiction: ${name}\\s*<`),
+      );
+    }
+  });
+  it("F3-22 an 'other' card shows the note in text", async () => {
+    const html = await render(StoryCard, { ...card, jurisdiction: "other", jurisdictionNote: "Isle of Man" });
+    expect(html).toContain("Jurisdiction: Other jurisdiction (Isle of Man)");
+  });
+});
+
+describe("F3-09 / F3-52 article header byline", () => {
+  const base = { title: "Title", summary: "Summary.", firstPublished: day };
+  it("F3-52 links each person, shows the placeholder flag in text and verified credentials only", async () => {
+    const html = await render(ArticleHeader, {
+      ...base,
+      author: { name: "Placeholder Author", href: "/belvoir-finance/people/a/", demo: true },
+      reviewer: { name: "Placeholder Reviewer", href: "/belvoir-finance/people/r/", credentials: ["Cred X"] },
+    });
+    expect(html).toMatch(/<a href="\/belvoir-finance\/people\/a\/">Placeholder Author<\/a>/);
+    expect(html).toMatch(/<a href="\/belvoir-finance\/people\/r\/">Placeholder Reviewer<\/a>/);
+    expect(html.match(/data-testid="placeholder-flag"/g)).toHaveLength(1);
+    expect(html).toContain("placeholder person, not a real person");
+    expect(html).toContain("Cred X");
+  });
+  it("F3-52 a plain string still renders as a name with no link or flag (gallery and F2 use)", async () => {
+    const html = await render(ArticleHeader, { ...base, author: "Placeholder Author" });
+    expect(countTags(html, "a")).toBe(0);
+    expect(html).not.toContain("placeholder-flag");
+  });
+});
+
 describe("F2-23 article header", () => {
   const base = { title: "Title", summary: "Summary.", author: "Placeholder Author", firstPublished: day };
 

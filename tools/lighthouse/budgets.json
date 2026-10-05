@@ -13,6 +13,12 @@
   },
   "scriptTransferBytes": {
     "editorial": 51200,
-    "tools": [{ "path": "/tools/cash-vs-profit/", "max": 122880 }]
+    "tools": [
+      {
+        "path": "/tools/cash-vs-profit/",
+        "max": 0,
+        "$comment": "F3: the tool page is a static shell with no JavaScript (F3-10, F3-38), so 0 bytes. F4 raises this to the TEST_STRATEGY ceiling of 122880 (120 KB)."
+      }
+    ]
   }
 }

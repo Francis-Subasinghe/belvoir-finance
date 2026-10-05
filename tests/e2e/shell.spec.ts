@@ -1,8 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { fontProblems, overflowProblems, renderedGoldProblems, targetSizeProblems } from "../helpers/e2e-checks";
+import { sitePaths } from "../helpers/e2e-pages";
 
-const PAGES = ["./", "stories/", "stories/why-profit-isnt-cash/", "this-page-does-not-exist/"];
+// F3-35 / F3-36 / F3-37: every built page (derived from the content), plus the 404.
+const PAGES = sitePaths();
 
 for (const path of PAGES) {
   test.describe(`page shell: /${path}`, () => {
@@ -74,10 +76,12 @@ for (const path of PAGES) {
   });
 }
 
-test.describe("F2-20 navigation", () => {
+test.describe("F2-20 / F3-03 navigation", () => {
   for (const [path, label] of [
     ["./", "Home"],
-    ["stories/", "Stories"],
+    ["explore/", "Explore"],
+    ["tools/", "Tools"],
+    ["sources/", "Sources"],
   ] as const) {
     test(`aria-current="page" on ${label} at /${path}`, async ({ page }) => {
       await page.goto(path);
@@ -96,7 +100,28 @@ test.describe("F2-20 navigation", () => {
       await page.keyboard.press("Tab");
       order.push((await page.evaluate(() => document.activeElement?.textContent?.trim())) ?? "");
     }
-    expect(order).toEqual(["Skip to main content", "Belvoir Finance", "Home", "Stories"]);
+    expect(order).toEqual(["Skip to main content", "Belvoir Finance", "Home", "Explore"]);
+  });
+
+  test("F3-03 the main nav is Home, Explore, Tools, Sources; aria-current only on those four pages", async ({
+    page,
+  }) => {
+    const navPages = new Set(["./", "explore/", "tools/", "sources/"]);
+    for (const path of PAGES) {
+      await page.goto(path);
+      const nav = page.getByRole("navigation", { name: "Main" });
+      await expect(nav.getByRole("link")).toHaveText(["Home", "Explore", "Tools", "Sources"]);
+      await expect(nav.locator('[aria-current="page"]'), path).toHaveCount(navPages.has(path) ? 1 : 0);
+      await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link")).toHaveText([
+        "About",
+        "Editorial standards",
+        "Newsletter",
+        "Contact",
+        "Privacy",
+        "Cookies",
+        "Terms",
+      ]);
+    }
   });
 });
 

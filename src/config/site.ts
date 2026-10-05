@@ -6,7 +6,8 @@
  * adds `noindex, nofollow` to every page and makes robots.txt disallow all.
  * Set PUBLIC_PREVIEW=false only when the owner approves a production launch.
  */
-export const PREVIEW: boolean = import.meta.env.PUBLIC_PREVIEW !== "false";
+// `?.` so plain Node and Playwright (no Vite env) can import this file for PLACEHOLDER_PAGES.
+export const PREVIEW: boolean = import.meta.env?.PUBLIC_PREVIEW !== "false";
 
 export const SITE_NAME = "Belvoir Finance";
 export const SITE_TAGLINE = "Business finance, made clear.";
@@ -40,3 +41,25 @@ export function cspString(directives: Readonly<Record<string, string>> = CSP_DIR
 
 export const NOT_ADVICE_PLACEHOLDER =
   "Educational information, not financial advice. [Placeholder wording — awaiting editorial sign-off; final notice ships in F10.]";
+
+/** F3-03: the main navigation (the D12 target nav). Paths are base-relative. */
+export const MAIN_NAV: readonly { path: string; label: string }[] = [
+  { path: "/", label: "Home" },
+  { path: "/explore/", label: "Explore" },
+  { path: "/tools/", label: "Tools" },
+  { path: "/sources/", label: "Sources" },
+];
+
+/** F3-03: footer links. Never a "Work with Belvoir" link (D4). */
+export const FOOTER_NAV: readonly { path: string; label: string }[] = [
+  { path: "/about/", label: "About" },
+  { path: "/editorial-standards/", label: "Editorial standards" },
+  { path: "/newsletter/", label: "Newsletter" },
+  { path: "/contact/", label: "Contact" },
+  { path: "/privacy/", label: "Privacy" },
+  { path: "/cookies/", label: "Cookies" },
+  { path: "/terms/", label: "Terms" },
+];
+
+// F3-47: the placeholder-page list lives in its own dependency-free module (also read by Lighthouse).
+export { PLACEHOLDER_PAGES, isPlaceholderPage, type PlaceholderPage } from "./placeholder-pages";

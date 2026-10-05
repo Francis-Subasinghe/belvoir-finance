@@ -32,17 +32,17 @@ export default defineConfig({
   projects: [
     {
       name: "visual-360",
-      testMatch: /gallery\.visual\.ts/,
+      testMatch: /(gallery|pages)\.visual\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 800 } },
     },
     {
       name: "visual-768",
-      testMatch: /gallery\.visual\.ts/,
+      testMatch: /(gallery|pages)\.visual\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 } },
     },
     {
       name: "visual-1280",
-      testMatch: /gallery\.visual\.ts/,
+      testMatch: /(gallery|pages)\.visual\.ts/,
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
     { name: "wireframes", testMatch: /wireframes\.capture\.ts/, use: { ...devices["Desktop Chrome"] } },

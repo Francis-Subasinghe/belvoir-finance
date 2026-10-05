@@ -4,8 +4,11 @@
 ```
 /                      Home: promise, featured story, topic paths, featured tool, newsletter
 /explore               All content, filters (topic, format, level) + search
+                       (F3: one section per topic, no JavaScript; filters and search arrive in F9)
 /topics/<slug>         Topic landing: explainers, tools, source notes, reading path
+/stories               All published stories, newest first (kept, C-2)
 /stories/<slug>        Story/briefing template
+/people/<slug>         Person page for each author or reviewer credited on a published story (F3-43)
 /tools                 Tool directory
 /tools/cash-vs-profit  Cash-versus-profit explorer (MVP tool)
 /sources               Source library (what each source is used for)

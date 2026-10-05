@@ -45,3 +45,29 @@ export function tagAttributes(html: string, name: string): string[] {
   if (!/^[a-z][a-z0-9-]*$/i.test(name)) throw new Error(`bad tag name: ${name}`);
   return [...html.matchAll(new RegExp(`<${name}\\b([^>]*)>`, "gi"))].map((m) => m[1] ?? "");
 }
+
+const ATTR = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+/** Aegis's attribute pattern, applied to a whole attribute string as a cheap first check. */
+const JSONLD_TYPE = /(?:^|\s)type\s*=\s*["']?application\/ld\+json["']?(?=\s|\/?$)/i;
+
+/** Attributes of an opening tag as [lower-cased name, value]; quoted values stay inside their attribute. */
+export function parseAttributes(attrs: string): [string, string][] {
+  return [...attrs.matchAll(new RegExp(ATTR.source, "g"))].map((m) => [
+    (m[1] ?? "").toLowerCase(),
+    m[2] ?? m[3] ?? m[4] ?? "",
+  ]);
+}
+
+/** True when the opening tag's own `type` attribute is application/ld+json (not text inside another attribute). */
+export function isJsonLdScriptAttrs(attrs: string): boolean {
+  if (!JSONLD_TYPE.test(attrs.trim())) return false;
+  const types = parseAttributes(attrs).filter(([name]) => name === "type");
+  return types.length === 1 && types[0]?.[1].trim().toLowerCase() === "application/ld+json";
+}
+
+/** F3-38 / F1-15: every <script> opening tag (any case) that isn't a JSON-LD block. */
+export function nonJsonLdScriptTags(html: string): string[] {
+  return [...html.matchAll(new RegExp("<script\\b([^>]*)>", "gi"))]
+    .filter((m) => !isJsonLdScriptAttrs(m[1] ?? ""))
+    .map((m) => m[0]);
+}
