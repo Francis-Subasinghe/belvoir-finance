@@ -1,0 +1,5 @@
+@font-face {
+  font-family: "Inter Fallback";
+  font-weight: 400;
+  src: url(/fonts/arial.woff2) format("woff2");
+}
