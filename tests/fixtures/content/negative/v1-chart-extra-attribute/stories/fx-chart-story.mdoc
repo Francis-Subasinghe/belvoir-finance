@@ -1,0 +1,27 @@
+---
+title: Fixture chart story
+summary: "Demo story with two Markdoc charts, one with script-like labels (V1-55)."
+format: explainer
+pillars:
+  - finance-in-context
+topics: []
+reader: Fixture readers
+level: beginner
+author: fx-placeholder
+firstPublished: 2026-08-20
+lastReviewed: 2026-08-20
+sources:
+  - source: fx-demo-source
+    url: "https://example.org/chart-data"
+    accessed: 2026-09-01
+factual: false
+commercialInterest: false
+demo: true
+status: published
+---
+
+Fixture body text before the charts.
+
+{% chart title="<script>alert(1)</script> CHART-TITLE-MARKER" units="£ thousand" source="fx-demo-source" categories=["<script>alert(1)</script>", "Q2"] series=[{name: "<script>alert(1)</script>", values: [4, 7]}] /%}
+
+{% chart title="Two-series fixture chart" units="%" colour="#ff0000" source="fx-demo-source" categories=["A", "B", "C"] series=[{name: "In", values: [1, 2.5, 3]}, {name: "Out", values: [3, 2, 1]}] /%}

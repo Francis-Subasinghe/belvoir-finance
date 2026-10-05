@@ -24,6 +24,26 @@ const NEG = `${ROOT}/negative`;
 
 /** case -> [F3 id, rule, field, message pattern] */
 const CASES: Record<string, [string, string, string, RegExp]> = {
+  "v1-chart-real-source": [
+    "V1-44",
+    "chart-source",
+    "body chart 2 (line 27): source",
+    /"fx-active" is not a labelled placeholder Source/,
+  ],
+  "v1-chart-non-demo-story": [
+    "V1-44",
+    "chart-demo-only",
+    "body chart 1 (line 37)",
+    /charts appear only in demo stories/,
+  ],
+  "v1-chart-extra-attribute": [
+    "V1-54",
+    "chart-unknown-attribute",
+    "body chart 2 (line 27): colour",
+    /unknown attribute/,
+  ],
+  "v1-chart-13-points": ["V1-54", "chart-points", "body chart 2 (line 27): categories[12]", /13 points; at most 12/],
+  "v1-svg-content-value": ["V1-12", "svg-content", "sources[0].url", /is an SVG; content may not supply SVG files/],
   "ref-story-topics": ["F3-15", "ref-missing", "topics[1]", /no Topic with id "no-such-topic"/],
   "ref-story-author": ["F3-15", "ref-missing", "author", /no Person with id "no-such-person"/],
   "ref-story-reviewer": ["F3-15", "ref-missing", "reviewer", /no Person with id "no-such-person"/],

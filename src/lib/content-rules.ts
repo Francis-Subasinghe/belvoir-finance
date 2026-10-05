@@ -17,8 +17,10 @@
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
+import Markdoc from "@markdoc/markdoc";
 import { parseDocument } from "yaml";
-import { COLLECTIONS, type CollectionName, SLUG_PATTERN } from "../content/schemas.ts";
+import { COLLECTIONS, type CollectionName, isPlaceholderUrl, SLUG_PATTERN } from "../content/schemas.ts";
+import { chartProblems } from "./markdoc-allowlist.ts";
 
 export type Severity = "error" | "warning";
 
@@ -37,6 +39,8 @@ export interface LoadedEntry {
   collection: CollectionName;
   id: string;
   file: string;
+  /** Markdoc body (stories only). */
+  body?: string | undefined;
   /** Raw data as written (strings for dates). */
   raw: Record<string, unknown>;
   /** Parsed data, when the schema accepted it. */
@@ -66,6 +70,30 @@ function parseYaml(text: string): { data?: unknown; error?: string } {
   const doc = parseDocument(text, { version: "1.2", schema: "core", uniqueKeys: true });
   if (doc.errors.length > 0) return { error: doc.errors.map((e) => e.message.split("\n")[0]).join("; ") };
   return { data: doc.toJS() };
+}
+
+/** The Markdoc body after the frontmatter (empty for data files). */
+function readBody(file: string, ext: string): string {
+  if (ext !== ".mdoc") return "";
+  const text = readFileSync(file, "utf8");
+  const fm = FRONTMATTER.exec(text);
+  // Blank lines stand in for the frontmatter, so chart line numbers are file line numbers.
+  return fm ? "\n".repeat(fm[0].split("\n").length - 1) + text.slice(fm[0].length) : "";
+}
+
+/** V1-54 / V1-44: every `chart` tag in a Markdoc body, with its attributes and child count. */
+export function chartTags(body: string): { attributes: Record<string, unknown>; children: number; line: number }[] {
+  return [...Markdoc.parse(body).walk()]
+    .filter((n) => n.type === "tag" && n.tag === "chart")
+    .map((n) => ({ attributes: n.attributes, children: n.children.length, line: (n.lines[0] ?? 0) + 1 }));
+}
+
+/** V1-12: every string value (at any depth) that names an .svg file. */
+function svgValues(v: unknown, path: (string | number)[] = []): { path: string; value: string }[] {
+  if (typeof v === "string") return /\.svg(?:[?#]|$)/i.test(v.trim()) ? [{ path: fieldPath(path), value: v }] : [];
+  if (Array.isArray(v)) return v.flatMap((x, i) => svgValues(x, [...path, i]));
+  if (v && typeof v === "object") return Object.entries(v).flatMap(([k, x]) => svgValues(x, [...path, k]));
+  return [];
 }
 
 function readEntryData(file: string, ext: string): { data?: unknown; error?: string } {
@@ -216,10 +244,14 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
         add("error", file, fieldPath(issue.path), "schema", issueMessage(issue as never));
       }
     }
+    // V1-12 (rule 7): SVGs never come from content; a value naming an .svg file fails.
+    for (const hit of svgValues(raw))
+      add("error", file, hit.path, "svg-content", `"${hit.value}" is an SVG; content may not supply SVG files`);
     entries.push({
       collection,
       id,
       file,
+      body: collection === "stories" ? readBody(abs, ext) : undefined,
       raw,
       data: parsed.success ? (parsed.data as Record<string, unknown>) : undefined,
     });
@@ -307,6 +339,34 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
           `until F5, demo stories cite only labelled placeholder (demo) sources; "${cite.source}" is not one`,
         );
       }
+    });
+  }
+
+  // V1-54 / V1-44: chart tags are strictly validated, only appear in demo stories and cite a placeholder Source.
+  for (const s of entries.filter((x) => x.collection === "stories")) {
+    chartTags(s.body ?? "").forEach((chart, ci) => {
+      const at = (attr: string) => `body chart ${ci + 1} (line ${chart.line})${attr ? `: ${attr}` : ""}`;
+      for (const p of chartProblems(chart.attributes, chart.children))
+        add("error", s.file, at(p.attr), p.rule, p.message);
+      if (s.raw["demo"] !== true)
+        add("error", s.file, at(""), "chart-demo-only", "charts appear only in demo stories until F5 (V1-44)");
+      const id = chart.attributes["source"];
+      if (typeof id !== "string") return;
+      const src = get("sources", id);
+      if (!src) {
+        add("error", s.file, at("source"), "ref-missing", `no Source with id "${id}" (content/sources/${id}.yaml)`);
+        return;
+      }
+      const name = String(src.raw["name"] ?? "");
+      const website = String(src.raw["website"] ?? "");
+      if (src.raw["demo"] !== true || !name.includes("(placeholder)") || !isPlaceholderUrl(website))
+        add(
+          "error",
+          s.file,
+          at("source"),
+          "chart-source",
+          `"${id}" is not a labelled placeholder Source (demo: true, "(placeholder)" in the name, a placeholder https URL); demo charts cite only those`,
+        );
     });
   }
 

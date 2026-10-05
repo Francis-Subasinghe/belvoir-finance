@@ -105,6 +105,20 @@ describe("F3 rich fixture build (tests/fixtures/content/base)", () => {
     expect(JSON.parse(scriptBlocks(story)[0]?.body ?? "{}").headline).toContain("</script><script>alert(1)</script>");
   });
 
+  it("V1-55 chart labels like <script>alert(1)</script> render as literal text in the SVG and the table", () => {
+    const html = read(site, "stories/fx-chart-story/index.html");
+    const chart = html.split('data-testid="chart"')[1]?.split("</figure>")[0] ?? "";
+    expect(chart).toContain("CHART-TITLE-MARKER");
+    const svg = chart.split('class="chart-svg"')[1]?.split("</svg>")[0] ?? "";
+    expect(svg).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    const table = chart.split("<table")[1] ?? "";
+    expect(table).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(scriptBlocks(html).every((b) => /application\/ld\+json/.test(b.attrs))).toBe(true);
+    expect(html.split('data-testid="chart"').length - 1).toBe(2);
+    expect(html).toContain("Illustrative demo data");
+    expect(html).toContain("Source: Fixture Demo Source (placeholder), Fixture publisher");
+  });
+
   it("F3-06 the featured story is the newest; a date tie goes to the alphabetically first id", () => {
     const home = read(site, "index.html");
     const featured = home.split('data-testid="featured-story"')[1]?.split("</section>")[0] ?? "";
@@ -190,6 +204,31 @@ describe("F3-49 empty Source library (no active sources)", () => {
 
 /** One failing build per rule family, through the real astro build (F3-31). */
 const FAILING: [string, string, RegExp][] = [
+  [
+    "V1-44 a demo chart citing a non-placeholder Source",
+    "v1-chart-real-source",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): source: "fx-active" is not a labelled placeholder Source.*\[chart-source\]/,
+  ],
+  [
+    "V1-44 a chart in a non-demo story",
+    "v1-chart-non-demo-story",
+    /fx-uk-story\.mdoc: body chart 1 \(line \d+\): charts appear only in demo stories.*\[chart-demo-only\]/,
+  ],
+  [
+    "V1-54 a chart with an unknown attribute",
+    "v1-chart-extra-attribute",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): colour: unknown attribute.*\[chart-unknown-attribute\]/,
+  ],
+  [
+    "V1-54 a chart with a 13th point",
+    "v1-chart-13-points",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): categories\[12\]: 13 points; at most 12 \[chart-points\]/,
+  ],
+  [
+    "V1-12 a content value naming an .svg file (the Keystatic .svg upload case)",
+    "v1-svg-content-value",
+    /fx-uk-story\.mdoc: sources\[0\]\.url: .*cover\.svg" is an SVG; content may not supply SVG files \[svg-content\]/,
+  ],
   ["F3-15 references", "ref-story-author", /stories\/fx-uk-story\.mdoc: author: no Person with id "no-such-person"/],
   [
     "F3-17 CF-02 factual needs a reviewer",
