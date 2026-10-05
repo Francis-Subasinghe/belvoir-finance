@@ -196,8 +196,16 @@ describe("SEO exemption for the 404 page", () => {
   ].sort();
   const keys = (u: string, demo = false) => Object.keys(pageAssertions(budgets, { url: u, demo }, "warn")).sort();
 
-  it("is an explicit, single named path", () => {
-    expect(SEO_EXEMPT_PATHS).toEqual(["/404.html"]);
+  it("is the 404 plus exactly the Q-10 placeholder pages, by exact path", () => {
+    expect(SEO_EXEMPT_PATHS).toEqual(["/404.html", "/about/", "/contact/", "/privacy/", "/cookies/", "/terms/"]);
+  });
+
+  it("F3-47 a placeholder page skips SEO only (no marker needed); a near-miss path does not", () => {
+    const u = url("about/");
+    expect(seoExemption({ url: u, demo: false })).toBe("placeholder");
+    expect(keys(u)).toEqual(ALL.filter((k) => k !== "categories:seo"));
+    for (const near of [url("about"), url("about/team/"), url("explore/"), url("sources/"), `${ORIGIN}/about/`])
+      expect(seoExemption({ url: near, demo: false }), near).toBeUndefined();
   });
 
   it("/belvoir-finance/404.html skips SEO only, and keeps the editorial JS budget", () => {
@@ -307,9 +315,9 @@ describe("generated assertMatrix", () => {
     ]);
   });
 
-  it("the tool page gets the 120 KB JS budget; editorial pages get 50 KB", () => {
+  it("the tool page gets a 0 KB JS budget in F3 (static shell; F4 raises it to 120 KB); editorial pages get 50 KB", () => {
     const tool = entryFor(matrix, url("tools/cash-vs-profit/")).assertions;
-    expect(tool["resource-summary:script:size"]?.[1].maxNumericValue).toBe(122880);
+    expect(tool["resource-summary:script:size"]?.[1].maxNumericValue).toBe(0);
     const story = entryFor(matrix, url("stories/demo-story/")).assertions;
     expect(story["resource-summary:script:size"]?.[1].maxNumericValue).toBe(51200);
   });

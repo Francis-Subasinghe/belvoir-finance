@@ -171,7 +171,9 @@ describe("the committed baselines", () => {
     const tracked = spawnSync("git", ["ls-files", "-z", "--", "tests/visual/__screenshots__/"], { encoding: "utf8" })
       .stdout.split("\0")
       .filter(Boolean);
-    expect(tracked.filter((f) => f.endsWith("-linux.png"))).toHaveLength(3);
+    const listed = parseManifest(readFileSync(MANIFEST, "utf8")).entries;
+    expect(listed.length).toBeGreaterThan(0);
+    expect(tracked.filter((f) => f.endsWith("-linux.png"))).toHaveLength(listed.length);
     expect(checkBaselines(".", tracked)).toEqual([]);
   });
 });
@@ -245,8 +247,15 @@ describe("buildManifest", () => {
     const tracked = spawnSync("git", ["ls-files", "-z", "--", "tests/visual/__screenshots__/"], { encoding: "utf8" })
       .stdout.split("\0")
       .filter(Boolean);
-    const text = buildManifest(".", tracked, { run: RUN, artifact: ARTIFACT, commit: COMMIT });
-    expect(text).toBe(readFileSync(MANIFEST, "utf8"));
+    // The run, artifact and commit come from the committed header, so a rebaseline needs no test edit.
+    const committed = readFileSync(MANIFEST, "utf8");
+    const m =
+      /^# Source: GitHub Actions run (\d+), artifact "visual-baselines" \(id (\d+)\),\n# built from commit ([0-9a-f]{40}) /m.exec(
+        committed,
+      );
+    expect(m, "manifest header").not.toBeNull();
+    const [, run = "", artifact = "", commit = ""] = m ?? [];
+    expect(buildManifest(".", tracked, { run, artifact, commit })).toBe(committed);
   });
 });
 

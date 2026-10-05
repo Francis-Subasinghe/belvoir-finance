@@ -1,0 +1,45 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StatusNotice from "../../components/StatusNotice.astro";
+
+// F3-10 (Q-7): a static shell. No form controls and no script until the F4 explorer.
+export async function getStaticPaths() {
+  return (await getCollection("tools")).map((tool) => ({ params: { slug: tool.id }, props: { tool } }));
+}
+const { tool } = Astro.props;
+const d = tool.data;
+---
+
+<BaseLayout title={d.title} description={`${d.summary} Illustrative only.`} demo={d.demo}>
+  <p class="eyebrow">Tool</p>
+  <h1>{d.title}</h1>
+  <p class="page-intro prose">{d.summary}</p>
+  <StatusNotice variant="info" title="Illustrative only">
+    <p data-testid="illustrative-only">
+      Illustrative only. This tool uses no current tax values and is not advice. The interactive explorer arrives in a
+      later release.
+    </p>
+  </StatusNotice>
+  {d.assumptions.length > 0 && (
+    <section class="page-section" aria-labelledby="assumptions-heading">
+      <h2 id="assumptions-heading">Assumptions</h2>
+      <dl class="definition-list" data-testid="assumptions">
+        {d.assumptions.map((a) => (
+          <>
+            <dt>{a.label}</dt>
+            <dd>
+              Default: {a.default}. {a.explanation}
+            </dd>
+          </>
+        ))}
+      </dl>
+    </section>
+  )}
+  {d.limitations && (
+    <section class="page-section" aria-labelledby="limitations-heading">
+      <h2 id="limitations-heading">Limitations</h2>
+      <p data-testid="limitations">{d.limitations}</p>
+    </section>
+  )}
+</BaseLayout>

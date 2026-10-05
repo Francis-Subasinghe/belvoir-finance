@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { isPlaceholderPage } from "../config/site";
+import { withBase } from "../lib/paths";
+---
+
+<BaseLayout
+  title="About"
+  description="What Belvoir Finance is for, who it is for, and who publishes it."
+  placeholder={isPlaceholderPage("/about/")}
+>
+  <h1>About Belvoir Finance</h1>
+  <div class="prose">
+    <p>
+      <strong>Placeholder wording, awaiting editorial sign-off.</strong>
+    </p>
+    <h2>Purpose</h2>
+    <p>
+      Belvoir Finance explains business finance, accounting and financial decision-making in plain English, so a reader
+      can understand one idea well enough to ask a better question.
+    </p>
+    <h2>Remit</h2>
+    <p>
+      We write for UK founders and operators of growing businesses who make finance decisions without a finance
+      background. We publish education, not advice: nothing here is a recommendation for your business.
+    </p>
+    <h2>Who publishes this</h2>
+    <p>
+      Belvoir Finance is the publisher of this site. That relationship is stated here and in our{" "}
+      <a href={withBase("/editorial-standards/")}>editorial standards</a>, so readers can weigh it.
+    </p>
+  </div>
+</BaseLayout>

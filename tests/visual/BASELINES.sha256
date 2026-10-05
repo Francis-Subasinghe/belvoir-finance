@@ -1,9 +1,36 @@
 # F2-38 visual baselines (sha256sum format; check with `npm run check:visual-baselines`).
-# Source: GitHub Actions run 37241177888, artifact "visual-baselines" (id 11317806928),
-# built from commit 747e4d846bfd494c0762051a7124fdc2d9661e79 on runner ubuntu-24.04.
+# Source: GitHub Actions run 37250633221, artifact "visual-baselines" (id 11321046945),
+# built from commit aa588a79601306b09cab72d2a9c23fd35a35ac74 on runner ubuntu-24.04.
 # Written by `npm run visual:manifest`. To update: download the artifact from a new CI
 # run, copy the files into tests/visual/__screenshots__/<project>/, `git add -f` them,
 # then run `npm run visual:manifest -- --run <run id> --artifact <artifact id> --commit <sha>`.
-a86f2d4cb67edf5176dc422a768244e96e4035670106c3d2e38acd402eda4ea1  tests/visual/__screenshots__/visual-1280/gallery-linux.png
-ecaa9a1246b970d5c21015dbfb62393abd6cbb2490bf7284f225aceb8c8af1bd  tests/visual/__screenshots__/visual-360/gallery-linux.png
-1ff4809641de13f0a594ae31b8703e75a3512333f9bcc03d62ebf92bac45b794  tests/visual/__screenshots__/visual-768/gallery-linux.png
+4bf10d6f22dea532e129116c8a0a385a72322838a955b39b00cc7760de545945  tests/visual/__screenshots__/visual-1280/gallery-linux.png
+3d6fd0bc84f3a6cbea4c4109ead7844a87564053269e78439198e0e608df2dd8  tests/visual/__screenshots__/visual-1280/page-explore-linux.png
+49f06b761b349a6e681de86e1b104b505315ed628ff0cd07cc50b495f40ad31e  tests/visual/__screenshots__/visual-1280/page-home-linux.png
+3978a157805827aee869e60e82362eb0d709c83b2769c800b26fe02aa3eff5ac  tests/visual/__screenshots__/visual-1280/page-person-linux.png
+ae6d9912f3464ef5772d5b2f4dfef76fa4ca6c62757bc875dafef8abedd9ebec  tests/visual/__screenshots__/visual-1280/page-sources-linux.png
+a1542e3a18b9ca79801ec5cafc767b19f19bc13a892d363cd49809e9001b3ad5  tests/visual/__screenshots__/visual-1280/page-stories-linux.png
+147f5515a81b5cb0dfd3e5a27aca4db86aa5fd4c176100f8ea51295fdaa5a007  tests/visual/__screenshots__/visual-1280/page-story-linux.png
+e64ce1bcaa227f979f0f2639d48192b38685820884e0dfcfb9989aabf2b633d1  tests/visual/__screenshots__/visual-1280/page-tool-linux.png
+627f65a8ec8b54c61ab9edb7539f53c7217dc40f5953a8fb2041f649b8828072  tests/visual/__screenshots__/visual-1280/page-tools-linux.png
+84053e707ef9f1b931602859cb1aaf452dd15f1210b9a15940f896270c066e6f  tests/visual/__screenshots__/visual-1280/page-topic-linux.png
+2fe85a574d119815abba1d230dff8a4882dfd8d58cf19661a5134171c1837e58  tests/visual/__screenshots__/visual-360/gallery-linux.png
+d6b76ac305a686770b7a1808f27f58373e589cf87e10065a9e136826fe39f75c  tests/visual/__screenshots__/visual-360/page-explore-linux.png
+67d26e2179d3343209b8aa454599b652997c5c9681a64925c98c73f01ca70424  tests/visual/__screenshots__/visual-360/page-home-linux.png
+5c347514b2401503f47c021e838308c6b68a9aaf8eff67f1f9ed4f4eb1bae6c2  tests/visual/__screenshots__/visual-360/page-person-linux.png
+a8c688a8404b4dd428ddf46a8f1f505fa29026663e4780dcb2bca569bb2ad69d  tests/visual/__screenshots__/visual-360/page-sources-linux.png
+61fe14983e75f42cba31e5fb25e05006b278a055914baf795a9e06781e0365a0  tests/visual/__screenshots__/visual-360/page-stories-linux.png
+686add9eb7409ed898ecac6f4b1cade55cf614539d1341501c98780564391e1b  tests/visual/__screenshots__/visual-360/page-story-linux.png
+7c4fdd2e281abf6e66515596973337a6df1bdb4a240aa16ccec2a2a22206410a  tests/visual/__screenshots__/visual-360/page-tool-linux.png
+3c719dd13161230fc29f57463f279eaf15eb5b0f97799201da0d3362aaa91312  tests/visual/__screenshots__/visual-360/page-tools-linux.png
+f3ad81e558af91e243fa754fd85d976664430d30c5e6be9b93dc5d5d0e954f66  tests/visual/__screenshots__/visual-360/page-topic-linux.png
+96433a5a0c65e6cd2fb5aeaca30a9adc75683da2d933c58c7d4e8196de0dd099  tests/visual/__screenshots__/visual-768/gallery-linux.png
+e2b58b74294bc22a509a5f537fd996a4d55ee182103f0debc2e97c2e73396120  tests/visual/__screenshots__/visual-768/page-explore-linux.png
+60aa43a8bf312972ad7574f8909e5f65d4315eb1b0c13fa075a997f7636c3fd6  tests/visual/__screenshots__/visual-768/page-home-linux.png
+2c5d33008f83d124333f62e6590eaacc401abe3671899cf57d03c2c6aacee447  tests/visual/__screenshots__/visual-768/page-person-linux.png
+74960647ef69720c9d878b18beb1cd8d97b820d156bad7647955c646ec05ee1a  tests/visual/__screenshots__/visual-768/page-sources-linux.png
+11874e7c76af8a02fc1ceecd97b23458161c32c085d565097e5098678dd00aa9  tests/visual/__screenshots__/visual-768/page-stories-linux.png
+519dcba167c3408039e8e5e2a1144493f770bf0cd2bd736473ffa798868c411d  tests/visual/__screenshots__/visual-768/page-story-linux.png
+6c017cf16835b3cc1124bcb5a8f3759fe34f64bfb4765157b3cbd4f927d04c70  tests/visual/__screenshots__/visual-768/page-tool-linux.png
+b020f8e3509eadef3c7af835bebf2d881c2e69c3e9abfd9ca1fced9afdb899a9  tests/visual/__screenshots__/visual-768/page-tools-linux.png
+648375a4a13d5fb8ab185be04700ac6f24e76f5b89d7eb17e87fce94429487be  tests/visual/__screenshots__/visual-768/page-topic-linux.png

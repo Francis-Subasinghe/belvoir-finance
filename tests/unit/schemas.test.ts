@@ -16,6 +16,9 @@ const validStory = {
   level: "beginner",
   author: "placeholder-author",
   firstPublished: "2026-10-02",
+  lastReviewed: "2026-10-02",
+  factual: false,
+  commercialInterest: false,
   demo: true,
   status: "published",
 };
@@ -43,9 +46,9 @@ describe("F1-09 story schema", () => {
     expect(storySchema.safeParse({ ...validStory, status: "live" }).success).toBe(false);
   });
 
-  it("F1-29: demo is a boolean", () => {
+  it("F1-29 / F3-20: demo is a boolean with no default", () => {
     expect(storySchema.safeParse({ ...validStory, demo: "yes" }).success).toBe(false);
-    expect(storySchema.parse({ ...validStory, demo: undefined }).demo).toBe(false);
+    expect(storySchema.safeParse({ ...validStory, demo: undefined }).success).toBe(false);
   });
 
   it("requires nextReviewDue for time-sensitive stories", () => {
@@ -82,6 +85,7 @@ describe("F1-09 other collections", () => {
     role: "primary",
     owner: "placeholder-reviewer",
     lastChecked: "2026-10-02",
+    demo: false,
     status: "paused",
   };
 

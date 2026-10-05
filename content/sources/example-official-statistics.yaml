@@ -13,4 +13,5 @@ role: primary
 owner: placeholder-reviewer
 lastChecked: 2026-10-02
 editorialNotes: Not a real source.
+demo: true
 status: paused

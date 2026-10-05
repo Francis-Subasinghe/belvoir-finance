@@ -1,0 +1,17 @@
+name: Fixture Demo Source (placeholder)
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - fx-topic-a
+jurisdiction: other
+website: "https://example.org/"
+feedType: none
+updateFrequency: Monthly
+rights: titles-only
+rightsNotes: ""
+role: commentary
+owner: fx-reviewer
+lastChecked: 2026-09-01
+editorialNotes: ""
+demo: true
+status: active

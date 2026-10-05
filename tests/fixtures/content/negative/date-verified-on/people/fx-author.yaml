@@ -1,0 +1,11 @@
+displayName: Fixture Author
+role: Fixture writer
+bio: Fixture bio.
+demo: false
+credentials:
+  - label: VERIFIED-CREDENTIAL-MARKER
+    verified: true
+    verifiedBy: Fixture verifier
+    verifiedOn: 2026-13-01
+  - label: UNVERIFIED-CREDENTIAL-MARKER
+    verified: false

@@ -6,7 +6,8 @@
 // Lighthouse default), median of 3 runs. dist-lhci/ is a CI-only build with
 // PUBLIC_PREVIEW=false so SEO is measured with the preview noindex off; it is
 // never deployed. Pages carrying <meta name="belvoir-demo" content="true"> skip
-// only the SEO category, and so does /404.html (SEO_EXEMPT_PATHS in assertions.ts). Reports go to the local filesystem only, never to
+// only the SEO category, and so do /404.html and the Q-10 placeholder pages (SEO_EXEMPT_PATHS in assertions.ts,
+// from PLACEHOLDER_PAGES). Reports go to the local filesystem only, never to
 // temporary-public-storage or an LHCI server. URL and assertion logic lives in
 // assertions.ts (tested by tests/unit/lighthouse-config.test.ts).
 "use strict";

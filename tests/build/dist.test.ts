@@ -6,8 +6,10 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { gzipSync } from "node:zlib";
-import { countTags, firstTagIndex, scriptBlocks, tagAttributes } from "../helpers/html";
+import { countTags, firstTagIndex, isJsonLdScriptAttrs, scriptBlocks, tagAttributes } from "../helpers/html";
 import { F1_CSP, compiledGold, cspOf, galleryLeaks } from "../helpers/built-site";
+import { expectedSite } from "../helpers/expected-site";
+import { checkContentRules } from "../../src/lib/content-rules";
 
 const DIST = "dist";
 const BASE = "/belvoir-finance/";
@@ -30,9 +32,11 @@ beforeAll(() => {
 });
 
 describe("F1-02 static output", () => {
-  it("builds the expected pages under the Pages base path", () => {
-    const rel = pages.map((p) => relative(DIST, p.file)).sort();
-    expect(rel).toEqual(["404.html", "index.html", "stories/index.html", "stories/why-profit-isnt-cash/index.html"]);
+  it("F3-01 builds exactly the sitemap pages, derived from the content collections", () => {
+    const rel = pages.map((p) => relative(DIST, p.file).replace(/\\/g, "/")).sort();
+    const want = expectedSite().pages;
+    expect(want.length).toBeGreaterThan(15);
+    expect(rel).toEqual(want);
   });
 
   it("has no server output", () => {
@@ -125,7 +129,7 @@ describe("F1-15 no inline script or event handlers", () => {
       expect(blocks.length, file).toBe(countTags(html, "script"));
       for (const { attrs } of blocks) {
         if (/\bsrc\s*=/i.test(attrs)) continue;
-        expect(attrs, file).toMatch(/type="application\/ld\+json"/i);
+        expect(isJsonLdScriptAttrs(attrs), `${file}: <script${attrs}>`).toBe(true);
       }
       expect(countTags(html, "style"), file).toBe(0);
       expect(html, file).not.toMatch(/\sstyle="/i);
@@ -247,25 +251,41 @@ describe("F2-15 fonts stay self-hosted", () => {
     }
     expect(faces).toBeGreaterThan(0);
   });
+  const fam = (face: string) => /font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim() ?? "";
+  const faces = () => css().flatMap((c) => c.match(/@font-face\s*\{[^}]*\}/g) ?? []);
   it("only the three F1 families and F1 weights are shipped", () => {
-    const families = new Set<string>();
-    const weights = new Set<string>();
-    for (const c of css()) {
-      for (const face of c.match(/@font-face\s*\{[^}]*\}/g) ?? []) {
-        families.add(/font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim() ?? "");
-        weights.add(
-          `${/font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim()} ${/font-weight:\s*(\d+)/.exec(face)?.[1]}`,
-        );
-      }
-    }
-    expect([...families].sort()).toEqual(["IBM Plex Mono", "Inter", "Source Serif 4"]);
-    expect([...weights].sort()).toEqual([
+    // A shipped face downloads a file (url()); metric-matched fallback faces are local()-only (next test).
+    const shipped = faces().filter((f) => /url\(/.test(f));
+    expect([...new Set(shipped.map(fam))].sort()).toEqual(["IBM Plex Mono", "Inter", "Source Serif 4"]);
+    expect([...new Set(shipped.map((f) => `${fam(f)} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`))].sort()).toEqual([
       "IBM Plex Mono 400",
       "Inter 400",
       "Inter 600",
       "Source Serif 4 600",
       "Source Serif 4 700",
     ]);
+  });
+  it("PR #22 CLS fix: fallback faces only rescale local fonts: no url(), named '<F1 family> Fallback', F1 weights only", () => {
+    const fallback = faces().filter((f) => !/url\(/.test(f));
+    expect(fallback.length).toBeGreaterThan(0);
+    const weights = new Set([
+      "IBM Plex Mono 400",
+      "Inter 400",
+      "Inter 600",
+      "Source Serif 4 600",
+      "Source Serif 4 700",
+    ]);
+    for (const f of fallback) {
+      const name = fam(f);
+      expect(name, f).toMatch(/^(Inter|Source Serif 4|IBM Plex Mono) Fallback$/);
+      expect(weights.has(`${name.replace(/ Fallback$/, "")} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`), f).toBe(true);
+      const src = /src:\s*([^;]+)/.exec(f)?.[1] ?? "";
+      expect(
+        src.split(",").every((part) => /^\s*local\(\s*["']?[^"'()]+["']?\s*\)\s*$/.test(part)),
+        f,
+      ).toBe(true);
+      expect(f).toMatch(/size-adjust:/);
+    }
   });
   it("no built file references a font CDN", () => {
     for (const f of files.filter((x) => /\.(html|css|js)$/.test(x))) {
@@ -361,81 +381,48 @@ describe("Favicon (Launchpad: Lighthouse Best Practices, no root /favicon.ico re
 });
 
 describe("belvoir-demo marker (Launchpad's Lighthouse runner skips only the SEO budget on demo pages)", () => {
-  // Content collections that render pages, and where each entry's page lands. Only stories render
-  // pages today (src/pages/stories/[slug].astro); the guard test below fails if a new dynamic route
-  // appears without being added here.
-  const PAGE_COLLECTIONS: Record<string, { dir: string; ext: string; page: (id: string) => string }> = {
-    stories: { dir: "content/stories", ext: ".mdoc", page: (id) => `stories/${id}/index.html` },
-  };
   const MARKER = '<meta name="belvoir-demo" content="true">';
   const count = (text: string, needle: string) => text.split(needle).length - 1;
+  const rel = (f: string) => relative(DIST, f).replace(/\\/g, "/");
 
-  /** Top-level scalar from the YAML frontmatter; throws on anything but a plain true/false or word. */
-  function frontmatterField(file: string, key: string): string | undefined {
-    const text = readFileSync(file, "utf8");
-    const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1];
-    if (fm === undefined) throw new Error(`${file}: no frontmatter`);
-    const m = new RegExp(`^${key}:[ \\t]*(.*)$`, "m").exec(fm);
-    return m?.[1]?.trim();
-  }
-
-  function entries() {
-    return Object.entries(PAGE_COLLECTIONS).flatMap(([collection, c]) =>
-      readdirSync(c.dir)
-        .filter((n) => n.endsWith(c.ext))
-        .map((n) => {
-          const file = join(c.dir, n);
-          const id = n.slice(0, -c.ext.length);
-          const demoRaw = frontmatterField(file, "demo");
-          if (demoRaw !== undefined && demoRaw !== "true" && demoRaw !== "false") {
-            throw new Error(`${file}: demo must be true or false, got ${demoRaw}`);
-          }
-          // The schema defaults demo to false (CONTENT_MODEL); only published entries get a page.
-          return {
-            collection,
-            file,
-            page: c.page(id),
-            demo: demoRaw === "true",
-            published: frontmatterField(file, "status") === "published",
-          };
-        }),
-    );
-  }
-
-  it("every dynamic page route is covered by PAGE_COLLECTIONS (so no content type is skipped)", () => {
-    const dynamic = walk("src/pages")
-      .filter((f) => /\[[^\]]+\]/.test(f))
-      .map((f) => relative("src/pages", f).replace(/\\/g, "/"));
-    expect(dynamic).toEqual(["stories/[slug].astro"]);
+  it("F3-33 finds demo pages, placeholder pages and other pages (not vacuous)", () => {
+    const { demoPages, placeholderPages, pages: all } = expectedSite();
+    expect(demoPages.length).toBeGreaterThan(5);
+    expect(placeholderPages).toHaveLength(5);
+    expect(all.length - demoPages.length - placeholderPages.length).toBeGreaterThan(5);
   });
 
-  it("finds content entries, including at least one demo and one published page (not vacuous)", () => {
-    const all = entries();
-    expect(all.some((e) => e.published && e.demo)).toBe(true);
-    expect(all.some((e) => !e.published)).toBe(true);
-  });
-
-  it("each published entry's page has the marker in <head> exactly when demo: true", () => {
-    for (const e of entries().filter((x) => x.published)) {
-      const page = pages.find((p) => relative(DIST, p.file).replace(/\\/g, "/") === e.page);
-      expect(page, `${e.file} -> ${e.page}`).toBeDefined();
-      const html = page?.html ?? "";
+  it("F3-33 the marker is in <head> exactly on pages whose content entry is demo: true; placeholder pages get the banner only", () => {
+    const { demoPages, placeholderPages } = expectedSite();
+    const demo = new Set(demoPages);
+    const placeholder = new Set(placeholderPages);
+    for (const { file, html } of pages) {
+      const isDemo = demo.has(rel(file));
       const head = /<head\b[^>]*>([\s\S]*?)<\/head\b[^>]*>/i.exec(html)?.[1] ?? "";
-      expect(count(head, MARKER), `${e.page} marker in <head>`).toBe(e.demo ? 1 : 0);
-      expect(count(html, "belvoir-demo"), `${e.page} marker anywhere`).toBe(e.demo ? 1 : 0);
+      expect(count(head, MARKER), `${rel(file)} marker in <head>`).toBe(isDemo ? 1 : 0);
+      expect(count(html, "belvoir-demo"), `${rel(file)} marker anywhere`).toBe(isDemo ? 1 : 0);
+      expect(count(html, 'data-testid="demo-banner"'), `${rel(file)} banner`).toBe(
+        isDemo || placeholder.has(rel(file)) ? 1 : 0,
+      );
     }
   });
 
-  it("no other built page (home, lists, 404, unpublished entries) carries the marker", () => {
-    const demoPages = new Set(
-      entries()
-        .filter((e) => e.published && e.demo)
-        .map((e) => e.page),
-    );
-    const others = pages.filter((p) => !demoPages.has(relative(DIST, p.file).replace(/\\/g, "/")));
-    expect(others.map((p) => relative(DIST, p.file).replace(/\\/g, "/"))).toEqual(
-      expect.arrayContaining(["index.html", "404.html", "stories/index.html"]),
-    );
-    for (const { file, html } of others) expect(html, file).not.toContain("belvoir-demo");
+  it("F3-33 every page with the marker maps to a demo: true Story, Topic, Tool or Person entry", () => {
+    const report = checkContentRules("content");
+    for (const { file } of pages.filter((p) => p.html.includes(MARKER))) {
+      const m = /^(stories|topics|tools|people)\/([^/]+)\/index\.html$/.exec(rel(file));
+      expect(m, `${rel(file)} is not a content entry page`).not.toBeNull();
+      const entry = report.entries.find((e) => e.collection === m?.[1] && e.id === m?.[2]);
+      expect(entry?.raw.demo, rel(file)).toBe(true);
+    }
+  });
+
+  it("F3-33 the marked-page list (for the PR)", () => {
+    const marked = pages
+      .filter((p) => p.html.includes(MARKER))
+      .map((p) => rel(p.file))
+      .sort();
+    console.info(`F3-33 demo/placeholder pages: ${marked.join(", ")}`);
+    expect(marked).toEqual(expectedSite().demoPages);
   });
 });

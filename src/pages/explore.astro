@@ -1,0 +1,68 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StoryCard from "../components/StoryCard.astro";
+import { cardProps, publishedStories, topics } from "../lib/site-content";
+import { withBase } from "../lib/paths";
+
+// F3-07 (Q-5): no JavaScript. One section per Topic; a story with several topics
+// appears in each; stories with no topic go in a final "Other stories" section.
+const stories = await publishedStories();
+const groups = (await topics())
+  .map((t) => ({
+    id: t.id,
+    title: t.data.title,
+    summary: t.data.summary,
+    stories: stories.filter((s) => s.data.topics.includes(t.id)),
+  }))
+  .filter((g) => g.stories.length > 0);
+const other = stories.filter((s) => s.data.topics.length === 0);
+if (other.length > 0) {
+  groups.push({
+    id: "other-stories",
+    title: "Other stories",
+    summary: "Stories not yet filed under a topic.",
+    stories: other,
+  });
+}
+const anchor = (id: string) => `topic-${id}`;
+---
+
+<BaseLayout
+  title="Explore"
+  description="Explore every Belvoir Finance story, grouped by topic, with format and level on each card."
+>
+  <h1>Explore</h1>
+  <p class="page-intro prose">
+    Every published story, grouped by topic. Each card shows its format and level. Search arrives later.
+  </p>
+  <nav aria-label="Topics on this page">
+    <ul class="link-list">
+      {groups.map((g) => (
+        <li>
+          <a href={`#${anchor(g.id)}`}>{g.title}</a>
+        </li>
+      ))}
+      <li>
+        <a href={withBase("/stories/")}>All stories, newest first</a>
+      </li>
+    </ul>
+  </nav>
+  {groups.map((g) => (
+    <section
+      class="page-section"
+      id={anchor(g.id)}
+      aria-labelledby={`${anchor(g.id)}-heading`}
+      data-testid="explore-group"
+    >
+      <h2 id={`${anchor(g.id)}-heading`}>{g.title}</h2>
+      <p>{g.summary}</p>
+      <ul class="story-list">
+        {g.stories.map((s) => (
+          <li>
+            <StoryCard {...cardProps(s)} headingLevel={3} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

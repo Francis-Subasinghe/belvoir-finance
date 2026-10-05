@@ -1,0 +1,20 @@
+---
+// --- helpers ---
+// Regression for the OLD single-pass scanner (Sentinel, F2 note 1). The old
+// code stripped the frontmatter up to the first triple dash, which is the one
+// in the comment above, and then stripped style blocks in one pass. The style
+// opening tag in the string below then paired with the real closing tag at the
+// end of the file, so the set:html in the markup was deleted unseen. The
+// range-based scanner ends the frontmatter at the fence on its own line and
+// only looks for style blocks after it, so the set:html is still caught.
+const open = "<style>";
+const h = "<b>x</b>";
+---
+
+<div set:html={h} />
+<p>{open}</p>
+<style>
+  .a {
+    margin: 0;
+  }
+</style>

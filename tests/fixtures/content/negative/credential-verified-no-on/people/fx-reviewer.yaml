@@ -1,0 +1,8 @@
+displayName: Fixture Reviewer
+role: Factual reviewer
+bio: Fixture reviewer bio.
+demo: false
+credentials:
+  - label: Fixture credential
+    verified: true
+    verifiedBy: Fixture verifier

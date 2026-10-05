@@ -1,0 +1,8 @@
+title: Fixture topic A
+summary: Topic A summary.
+pillar: understand-the-numbers
+readingPath:
+  - fx-uk-story
+  - no-such-story
+featuredTool: fx-tool
+demo: false
