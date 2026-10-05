@@ -251,25 +251,41 @@ describe("F2-15 fonts stay self-hosted", () => {
     }
     expect(faces).toBeGreaterThan(0);
   });
+  const fam = (face: string) => /font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim() ?? "";
+  const faces = () => css().flatMap((c) => c.match(/@font-face\s*\{[^}]*\}/g) ?? []);
   it("only the three F1 families and F1 weights are shipped", () => {
-    const families = new Set<string>();
-    const weights = new Set<string>();
-    for (const c of css()) {
-      for (const face of c.match(/@font-face\s*\{[^}]*\}/g) ?? []) {
-        families.add(/font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim() ?? "");
-        weights.add(
-          `${/font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim()} ${/font-weight:\s*(\d+)/.exec(face)?.[1]}`,
-        );
-      }
-    }
-    expect([...families].sort()).toEqual(["IBM Plex Mono", "Inter", "Source Serif 4"]);
-    expect([...weights].sort()).toEqual([
+    // A shipped face downloads a file (url()); metric-matched fallback faces are local()-only (next test).
+    const shipped = faces().filter((f) => /url\(/.test(f));
+    expect([...new Set(shipped.map(fam))].sort()).toEqual(["IBM Plex Mono", "Inter", "Source Serif 4"]);
+    expect([...new Set(shipped.map((f) => `${fam(f)} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`))].sort()).toEqual([
       "IBM Plex Mono 400",
       "Inter 400",
       "Inter 600",
       "Source Serif 4 600",
       "Source Serif 4 700",
     ]);
+  });
+  it("PR #22 CLS fix: fallback faces only rescale local fonts: no url(), named '<F1 family> Fallback', F1 weights only", () => {
+    const fallback = faces().filter((f) => !/url\(/.test(f));
+    expect(fallback.length).toBeGreaterThan(0);
+    const weights = new Set([
+      "IBM Plex Mono 400",
+      "Inter 400",
+      "Inter 600",
+      "Source Serif 4 600",
+      "Source Serif 4 700",
+    ]);
+    for (const f of fallback) {
+      const name = fam(f);
+      expect(name, f).toMatch(/^(Inter|Source Serif 4|IBM Plex Mono) Fallback$/);
+      expect(weights.has(`${name.replace(/ Fallback$/, "")} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`), f).toBe(true);
+      const src = /src:\s*([^;]+)/.exec(f)?.[1] ?? "";
+      expect(
+        src.split(",").every((part) => /^\s*local\(\s*["']?[^"'()]+["']?\s*\)\s*$/.test(part)),
+        f,
+      ).toBe(true);
+      expect(f).toMatch(/size-adjust:/);
+    }
   });
   it("no built file references a font CDN", () => {
     for (const f of files.filter((x) => /\.(html|css|js)$/.test(x))) {
