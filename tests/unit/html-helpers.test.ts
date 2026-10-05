@@ -31,12 +31,7 @@ describe("test HTML helpers (CodeQL js/bad-tag-filter)", () => {
   });
 
   it("F3-38 a JSON-LD script is recognised only by its own type attribute", () => {
-    for (const ok of [
-      ' type="application/ld+json"',
-      " TYPE='application/ld+json'",
-      " type=application/ld+json",
-      ' id="x" type="application/ld+json"',
-    ])
+    for (const ok of [' type="application/ld+json"', " TYPE='application/ld+json'", " type=application/ld+json"])
       expect(isJsonLdScriptAttrs(ok), ok).toBe(true);
     for (const bad of [
       "",
@@ -45,12 +40,28 @@ describe("test HTML helpers (CodeQL js/bad-tag-filter)", () => {
       ` data-x='a type="application/ld+json"'`,
       ' type="application/ld+json" type="module"',
       ' xtype="application/ld+json"',
+      ' id="x" type="application/ld+json"',
     ])
       expect(isJsonLdScriptAttrs(bad), bad).toBe(false);
     expect(parseAttributes(` data-x='type="y"' id=z`)).toEqual([
       ["data-x", 'type="y"'],
       ["id", "z"],
     ]);
+  });
+
+  it("V1-AegisLow a JSON-LD script may carry only the type attribute (src and onload fixtures fail)", () => {
+    for (const bad of [
+      ' type="application/ld+json" src="https://example.invalid/x.js"',
+      ' src="x.js" type="application/ld+json"',
+      ' type="application/ld+json" onload="alert(1)"',
+      " ONLOAD=alert(1) type=application/ld+json",
+      ' type="application/ld+json" async',
+      ' type="application/ld+json" is:inline',
+    ])
+      expect(isJsonLdScriptAttrs(bad), bad).toBe(false);
+    expect(isJsonLdScriptAttrs(' type="application/ld+json" /')).toBe(true);
+    expect(nonJsonLdScriptTags('<script type="application/ld+json" src="x.js">{}</script>')).toHaveLength(1);
+    expect(nonJsonLdScriptTags('<script type="application/ld+json" onload="x()">{}</script>')).toHaveLength(1);
   });
 
   it("F3-38 non-JSON-LD script tags are found in any case", () => {

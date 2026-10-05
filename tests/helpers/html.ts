@@ -58,11 +58,19 @@ export function parseAttributes(attrs: string): [string, string][] {
   ]);
 }
 
-/** True when the opening tag's own `type` attribute is application/ld+json (not text inside another attribute). */
+/**
+ * True when the opening tag carries exactly one attribute, `type`, whose value
+ * is application/ld+json (F3-38; V1 Aegis Low: any other attribute, e.g. `src`
+ * or `onload`, makes it a non-JSON-LD script).
+ */
 export function isJsonLdScriptAttrs(attrs: string): boolean {
   if (!JSONLD_TYPE.test(attrs.trim())) return false;
-  const types = parseAttributes(attrs).filter(([name]) => name === "type");
-  return types.length === 1 && types[0]?.[1].trim().toLowerCase() === "application/ld+json";
+  const parsed = parseAttributes(attrs);
+  if (parsed.length !== 1 || parsed[0]?.[0] !== "type") return false;
+  if (parsed[0][1].trim().toLowerCase() !== "application/ld+json") return false;
+  // Nothing but that one attribute (and an optional self-closing slash) may be in the tag.
+  const rest = attrs.replace(new RegExp(ATTR.source, "i"), "").replace(/\/\s*$/, "");
+  return rest.trim() === "";
 }
 
 /** F3-38 / F1-15: every <script> opening tag (any case) that isn't a JSON-LD block. */
