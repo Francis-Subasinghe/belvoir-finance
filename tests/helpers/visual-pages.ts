@@ -1,8 +1,9 @@
 /**
  * F3-41: the pages the visual suite screenshots, and the full snapshot set it
- * must produce. Shared by tests/visual/pages.visual.ts and the
- * check:visual-tests guard (scripts/check-visual-tests.ts), so a regenerated
- * baseline set can't silently be partial.
+ * must produce. Shared by tests/visual/pages.visual.ts, the check:visual-tests
+ * guard (scripts/check-visual-tests.ts) and the check:visual-baselines coverage
+ * check (scripts/check-visual-baselines.ts), so neither a regenerated nor a
+ * committed baseline set can silently be partial or carry extras.
  */
 export const VISUAL_PROJECTS = ["visual-360", "visual-768", "visual-1280"] as const;
 

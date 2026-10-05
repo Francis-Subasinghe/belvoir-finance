@@ -54,8 +54,34 @@ export const sha256File = (file: string): string => createHash("sha256").update(
  * under `root`: any file under SCREENSHOT_DIR that is not a `*-linux.png` (a -darwin.png,
  * -win32.png or anything else), hash mismatches, unlisted baselines and listed files that
  * are not committed. Empty when everything matches, or when there is no manifest and no baseline.
+ * With `expected`, also requires the tracked baselines to be exactly that set (coverageProblems).
  */
-export function checkBaselines(root: string, files: readonly string[]): string[] {
+export function checkBaselines(root: string, files: readonly string[], expected?: readonly string[]): string[] {
+  const coverage = expected ? coverageProblems(files.filter(isBaseline), expected) : [];
+  return [...hashProblems(root, files), ...coverage];
+}
+
+/**
+ * Coverage: the tracked baselines must be exactly `expected` (the set the visual specs
+ * produce, e.g. expectedBaselinePaths() from tests/helpers/visual-pages.ts), so a partial
+ * or stale set fails even when its manifest is consistent with it.
+ */
+export function coverageProblems(baselines: readonly string[], expected: readonly string[]): string[] {
+  const want = new Set(expected);
+  const have = new Set(baselines);
+  return [
+    ...[...want]
+      .filter((p) => !have.has(p))
+      .sort()
+      .map((p) => `${p} is produced by the visual specs but not committed (a partial baseline set?)`),
+    ...[...have]
+      .filter((p) => !want.has(p))
+      .sort()
+      .map((p) => `${p} is committed but no visual spec produces it (stale or extra baseline)`),
+  ];
+}
+
+function hashProblems(root: string, files: readonly string[]): string[] {
   const baselines = files.filter(isBaseline).sort();
   const strays = files
     .filter((p) => p.startsWith(SCREENSHOT_DIR) && !isBaseline(p))
@@ -170,9 +196,13 @@ export const manifestHeader = ({ run, artifact, commit }: ManifestSource): strin
     "# F2-38 visual baselines (sha256sum format; check with `npm run check:visual-baselines`).",
     `# Source: GitHub Actions run ${run}, artifact "visual-baselines" (id ${artifact}),`,
     `# built from commit ${commit} on runner ubuntu-24.04.`,
-    "# Written by `npm run visual:manifest`. To update: download the artifact from a new CI",
-    "# run, copy the files into tests/visual/__screenshots__/<project>/, `git add -f` them,",
-    "# then run `npm run visual:manifest -- --run <run id> --artifact <artifact id> --commit <sha>`.",
+    "# Written by `npm run visual:manifest`. To update, follow the Visual regression job summary:",
+    "# `gh api repos/<owner>/<repo>/actions/artifacts/<artifact id>/zip` into a `mktemp -d` folder",
+    "# outside the repo (`gh run download` can fail with 'path traversal' on newer gh); every zip",
+    "# entry must match ^visual-(360|768|1280)/[a-z0-9-]+-linux\\.png$; after unzip, `find -type l`",
+    "# and `find ! -type f ! -type d` must print nothing; replace tests/visual/__screenshots__/ with",
+    "# the files, `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact",
+    "# <artifact id> --commit <PR head sha>`, then `npm run check:visual-baselines`.",
   ].join("\n");
 
 /**

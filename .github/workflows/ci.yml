@@ -154,12 +154,12 @@ jobs:
     # Baselines committed    -> compare; on a difference (or a missing snapshot), upload
     #   "visual-diff", then regenerate the FULL set (--update-snapshots=all, gallery projects
     #   only) and upload it as "visual-baselines". The job still fails via the compare step.
-    # To (re)baseline: review the diff, then
-    # gh run download <run-id> -n visual-baselines -D tests/visual/__screenshots__,
-    # `git add -f` the *-linux.png files, then rewrite tests/visual/BASELINES.sha256 with
-    # `npm run visual:manifest -- --run <run-id> --artifact <artifact-id> --commit <sha>`
-    # (the step summary prints the exact command).
-    # Repo guards checks the hashes and rejects non-*-linux.png files (check:visual-baselines).
+    # To (re)baseline: review the diff, then follow the step summary, which prints the exact
+    # commands: `gh api .../actions/artifacts/<id>/zip` into a `mktemp -d` folder outside the
+    # repo, check every zip entry and the unzipped files (no symlinks, nothing unexpected),
+    # copy them in, `git add -f`, then `npm run visual:manifest -- --run <run-id> --artifact
+    # <artifact-id> --commit <PR head sha>`. Repo guards (check:visual-baselines) checks the
+    # hashes, rejects non-*-linux.png files, and requires exactly the set the specs produce.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -260,6 +260,7 @@ jobs:
           REGEN: ${{ steps.regen.outcome }}
           ARTIFACT_ID: ${{ steps.regen-upload.outputs.artifact-id || steps.generated-upload.outputs.artifact-id }}
           RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
           # The commit to record: the PR head (what was pushed), or the pushed commit on push.
           # On a pull request the run actually builds GitHub's test merge commit; the run id
           # links the recorded head commit to that build.
@@ -286,14 +287,29 @@ jobs:
             if [ -n "$ARTIFACT_ID" ]; then
               echo ""
               echo "### To accept these screenshots as the new baselines"
-              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then:"
+              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then run this from the repo root. It downloads into a temporary folder outside the repo and checks the zip before anything is copied in (\`gh run download\` can fail with \"path traversal\" on newer gh, and should not extract straight into the checkout):"
               echo ""
               echo '```sh'
-              echo "rm -rf tests/visual/__screenshots__"
-              echo "gh run download $RUN_ID -n visual-baselines -D tests/visual/__screenshots__"
-              echo "git add -f -A tests/visual/__screenshots__"
+              echo "( # in a subshell: any failed check stops the remaining steps"
+              echo "set -euo pipefail"
+              echo "tmp=\"\$(mktemp -d)\"   # outside the repo"
+              echo "gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip > \"\$tmp/a.zip\""
+              cat <<'STEPS'
+          unzip -tq "$tmp/a.zip"
+          # Every zip entry must match the pattern, and none may be a symlink.
+          bad="$({ zipinfo -1 "$tmp/a.zip" | grep -Ev '^visual-(360|768|1280)/[a-z0-9-]+-linux\.png$'; zipinfo "$tmp/a.zip" | grep '^l'; } || true)"
+          [ -z "$bad" ] || { printf 'STOP: unexpected zip entries:\n%s\n' "$bad"; exit 1; }
+          unzip -q "$tmp/a.zip" -d "$tmp/x"
+          # After unzip: no symlinks, and nothing but regular files and folders.
+          odd="$(find "$tmp/x" -type l; find "$tmp/x" ! -type f ! -type d)"
+          [ -z "$odd" ] || { printf 'STOP: unexpected files:\n%s\n' "$odd"; exit 1; }
+          git rm -rq --ignore-unmatch tests/visual/__screenshots__ && rm -rf tests/visual/__screenshots__
+          mkdir -p tests/visual/__screenshots__ && cp -R "$tmp/x/." tests/visual/__screenshots__/
+          git add -f tests/visual/__screenshots__
+          STEPS
               echo "npm run visual:manifest -- --run $RUN_ID --artifact $ARTIFACT_ID --commit $BUILT_SHA"
-              echo "npm run check:visual-baselines"
+              echo "npm run check:visual-baselines   # hashes, plus exactly the set the visual specs produce"
+              echo ")"
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY"

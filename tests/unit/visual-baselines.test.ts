@@ -9,10 +9,12 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { VISUAL_PAGES, VISUAL_PROJECTS, expectedBaselinePaths } from "../helpers/visual-pages";
 import {
   MANIFEST,
   buildManifest,
   checkBaselines,
+  coverageProblems,
   manifestHeader,
   parseManifest,
   parseManifestArgs,
@@ -174,7 +176,92 @@ describe("the committed baselines", () => {
     const listed = parseManifest(readFileSync(MANIFEST, "utf8")).entries;
     expect(listed.length).toBeGreaterThan(0);
     expect(tracked.filter((f) => f.endsWith("-linux.png"))).toHaveLength(listed.length);
-    expect(checkBaselines(".", tracked)).toEqual([]);
+    expect(checkBaselines(".", tracked, expectedBaselinePaths())).toEqual([]);
+  });
+
+  it("are exactly (gallery + VISUAL_PAGES) x the visual projects, as listed in the manifest", () => {
+    const listed = parseManifest(readFileSync(MANIFEST, "utf8")).entries.map((e) => e.path);
+    expect(listed.sort()).toEqual(expectedBaselinePaths());
+    expect(listed).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+  });
+
+  it("VISUAL_PROJECTS matches the snapshot projects in playwright.visual.config.ts", () => {
+    const config = readFileSync("playwright.visual.config.ts", "utf8");
+    const names = [...config.matchAll(/name: "([a-z0-9-]+)"/g)].map((m) => m[1]).filter((n) => n !== "wireframes");
+    expect(names).toEqual([...VISUAL_PROJECTS]);
+    expect(config).toContain(
+      'snapshotPathTemplate: "tests/visual/__screenshots__/{projectName}/{arg}-{platform}{ext}"',
+    );
+  });
+});
+
+describe("coverage (checkBaselines with the expected set)", () => {
+  const expected = expectedBaselinePaths();
+  const HOME360 = "tests/visual/__screenshots__/visual-360/page-home-linux.png";
+  const EXTRA = "tests/visual/__screenshots__/visual-768/page-bogus-linux.png";
+
+  /** A temp repo holding every expected baseline (each with distinct bytes) and a matching manifest. */
+  function fullSet(drop: string[] = [], add: string[] = []): { root: string; tracked: string[] } {
+    const tracked = [...expected.filter((p) => !drop.includes(p)), ...add].sort();
+    const files: Record<string, string> = {};
+    for (const p of tracked) files[p] = p;
+    files[MANIFEST] = manifest(...tracked.map((p) => `${sha(p)}  ${p}`));
+    return { root: fixture(files), tracked };
+  }
+
+  it("derives the expected set from the specs, not a hard-coded count", () => {
+    expect(expected).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+    expect(expected).toContain(HOME360);
+    expect(expected).toContain("tests/visual/__screenshots__/visual-1280/gallery-linux.png");
+  });
+
+  it("passes for exactly the expected set", () => {
+    const { root, tracked } = fullSet();
+    expect(checkBaselines(root, tracked, expected)).toEqual([]);
+  });
+
+  it("fails when a PNG is deleted together with its manifest line", () => {
+    const { root, tracked } = fullSet([HOME360]);
+    // Hash checks alone are satisfied: the manifest matches what is committed.
+    expect(checkBaselines(root, tracked)).toEqual([]);
+    expect(checkBaselines(root, tracked, expected)).toEqual([
+      `${HOME360} is produced by the visual specs but not committed (a partial baseline set?)`,
+    ]);
+  });
+
+  it("fails on an extra listed and committed entry that no spec produces", () => {
+    const { root, tracked } = fullSet([], [EXTRA]);
+    expect(checkBaselines(root, tracked)).toEqual([]);
+    expect(checkBaselines(root, tracked, expected)).toEqual([
+      `${EXTRA} is committed but no visual spec produces it (stale or extra baseline)`,
+    ]);
+  });
+
+  it("an extra manifest line without a file fails on both checks", () => {
+    const { root, tracked } = fullSet();
+    writeFileSync(join(root, MANIFEST), manifest(...[...tracked, EXTRA].sort().map((p) => `${sha(p)}  ${p}`)));
+    const errors = checkBaselines(root, tracked, expected);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(new RegExp(`^${EXTRA} is listed in ${MANIFEST}:\\d+ but not committed$`));
+  });
+
+  it("keeps the hash checks: a tampered file still fails alongside coverage", () => {
+    const { root, tracked } = fullSet([HOME360]);
+    const first = tracked[0] ?? "";
+    writeFileSync(join(root, first), "tampered");
+    const errors = checkBaselines(root, tracked, expected);
+    expect(errors).toHaveLength(2);
+    expect(errors[0]).toContain(`${first}: sha256 ${sha("tampered")} does not match`);
+    expect(errors[1]).toContain(`${HOME360} is produced by the visual specs but not committed`);
+  });
+
+  it("coverageProblems reports missing then extra, each sorted", () => {
+    expect(coverageProblems(["b", "x", "z"], ["a", "b", "c"])).toEqual([
+      "a is produced by the visual specs but not committed (a partial baseline set?)",
+      "c is produced by the visual specs but not committed (a partial baseline set?)",
+      "x is committed but no visual spec produces it (stale or extra baseline)",
+      "z is committed but no visual spec produces it (stale or extra baseline)",
+    ]);
   });
 });
 
