@@ -1,0 +1,4 @@
+@keyframes fade-in { from { opacity: 0 } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: fade-in 300ms 150ms }
+}

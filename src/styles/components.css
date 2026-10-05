@@ -417,7 +417,6 @@
   background: var(--color-white);
   border: var(--border-width-strong) solid var(--color-border-strong);
   border-radius: var(--radius);
-  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 .input:hover,
 .input.is-hover {
@@ -475,7 +474,6 @@
   border-radius: var(--radius);
   border: var(--border-width-strong) solid var(--color-button-primary-bg);
   cursor: pointer;
-  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 .button-primary {
   background: var(--color-button-primary-bg);
@@ -579,4 +577,14 @@
 }
 .disclosure-label {
   font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- V1 motion guard (V1-23, V1-24)
+ * Buttons keep their F2-32 transition timing, now on transform only and only
+ * when motion is allowed (the F2 background-colour transitions were removed:
+ * V1 animates transform and opacity only). */
+@media (prefers-reduced-motion: no-preference) {
+  .button {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+  }
 }

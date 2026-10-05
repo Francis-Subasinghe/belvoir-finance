@@ -1,0 +1,4 @@
+@keyframes glow { to { box-shadow: 0 0 4px currentColor } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: glow var(--motion-duration-base) }
+}

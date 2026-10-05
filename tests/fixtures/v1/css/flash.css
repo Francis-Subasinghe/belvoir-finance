@@ -1,0 +1,4 @@
+@keyframes flash { 0% { opacity: 1 } 25% { opacity: 0.2 } 50% { opacity: 1 } 75% { opacity: 0.2 } 100% { opacity: 1 } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: flash 400ms }
+}
