@@ -588,3 +588,236 @@
     transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
   }
 }
+
+/* ================================================================ V1 visual layer
+ * Art colours come only from token classes (V1-14): inline SVGs carry these
+ * classes or currentColor, never literal colours. Gold is used only under a
+ * navy/slate surface (F2-06, V1-15); every art panel and cover is
+ * .surface-navy. */
+.art-f-light {
+  fill: var(--color-alabaster);
+}
+.art-f-slate {
+  fill: var(--color-slate);
+}
+.art-f-teal {
+  fill: var(--color-chart-series-2);
+}
+.art-s-light {
+  stroke: var(--color-alabaster);
+}
+.art-s-slate {
+  stroke: var(--color-slate);
+}
+.art-s-teal {
+  stroke: var(--color-chart-series-2);
+}
+.art-s-line {
+  stroke: var(--color-border-strong);
+}
+.surface-navy .art-f-gold {
+  fill: var(--color-gold);
+}
+.surface-navy .art-s-gold {
+  stroke: var(--color-gold);
+}
+.surface-white .art-f-gold-light {
+  fill: var(--color-gold-on-light);
+}
+.surface-white .art-s-white {
+  stroke: var(--color-white);
+}
+
+/* ---------------------------------------------------------------- art panels (V1-01, V1-35) */
+.art-panel {
+  border-radius: var(--radius);
+  overflow: hidden;
+  line-height: 0;
+}
+.art-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.art-panel-hero {
+  aspect-ratio: 480 / 300;
+}
+.art-panel-page {
+  aspect-ratio: 320 / 200;
+}
+.art-panel-card {
+  aspect-ratio: 320 / 200;
+  margin-bottom: var(--space-2);
+}
+.page-hero {
+  display: grid;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+.page-hero .page-intro {
+  margin-bottom: 0;
+}
+.page-hero > .art-panel {
+  width: 100%;
+  max-width: 30rem;
+}
+@media (min-width: 48rem) {
+  .page-hero {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+/* ---------------------------------------------------------------- covers (V1-42) */
+.story-cover {
+  aspect-ratio: 320 / 120;
+  border-radius: var(--radius);
+  overflow: hidden;
+  line-height: 0;
+  margin-bottom: var(--space-2);
+}
+.story-cover-card {
+  max-height: 8rem;
+}
+.story-cover-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.story-cover-page {
+  max-width: var(--measure);
+  max-height: 12rem;
+  margin-bottom: var(--space-4);
+}
+
+/* ---------------------------------------------------------------- icons (V1-20) */
+.icon {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+}
+.with-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- diagram (V1-19) and chart note (V1-44) */
+.diagram {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  max-width: var(--measure);
+}
+.diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 400 / 160;
+}
+.diagram-caption {
+  margin-top: var(--space-2);
+  font-size: var(--step--1);
+}
+.chart-note {
+  font-weight: 600;
+}
+.chart-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* ---------------------------------------------------------------- layout fixes (V1-58 to V1-61) */
+/* V1-58: the jurisdiction label can wrap (a 60-character "other" note), so it
+ * uses the small radius: wrapped lines never run over a pill-shaped border. */
+.story-card-jurisdiction {
+  border-radius: var(--radius);
+  max-width: 100%;
+}
+/* V1-59: adjacent pills always keep >= 4 px between their border boxes. */
+.story-card-demo,
+.story-card-jurisdiction {
+  margin-right: var(--space-1);
+}
+/* V1-60: the person-page placeholder pill keeps clear of the Role term. */
+.story-card-demo + .definition-list {
+  margin-top: var(--space-2);
+}
+/* V1-49: the gallery's forced focus state on a card shows the F2-30 ring on its link. */
+.story-card.is-focus .story-card-title a {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-offset);
+}
+/* V1-61: byline terms ("Reviewed by") never wrap mid-label. */
+.article-meta dt {
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- motion (V1-23 to V1-31, V1-57)
+ * Only decorative art fades (covers and pillar art), never text, so contrast
+ * checks never see a part-faded word. The hero art, the h1 (LCP) and the demo
+ * banner are never animated (V1-29). The stagger comes from duration, not
+ * delay, so nothing appears and then drops back to 0 (V1-57). No fill-mode:
+ * after the animation the base opacity (1) applies, and with
+ * `animation: none` everything is fully visible (V1-26). */
+@keyframes belvoir-art-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* Transform-only, so a scroll-driven run (inactive outside its range, no fill)
+ * can never drop opacity when the element enters the range (V1-57). */
+@keyframes belvoir-rise {
+  from {
+    transform: translateY(12px);
+  }
+}
+@keyframes belvoir-bar-draw {
+  from {
+    transform: scaleY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .story-list > li:nth-child(1) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-1) var(--motion-ease-out);
+  }
+  .story-list > li:nth-child(2) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-2) var(--motion-ease-out);
+  }
+  .story-list > li:nth-child(3) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-3) var(--motion-ease-out);
+  }
+  .story-list > li:nth-child(4) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-4) var(--motion-ease-out);
+  }
+  .story-list > li:nth-child(5) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-5) var(--motion-ease-out);
+  }
+  .story-list > li:nth-child(n + 6) :is(.story-cover, .art-panel-card) {
+    animation: belvoir-art-enter var(--motion-duration-stagger-6) var(--motion-ease-out);
+  }
+  /* V1-30: a lift of 4 px on hover, and the same for keyboard focus inside the card. */
+  .story-card {
+    transition: transform var(--motion-duration-lift) var(--motion-ease-standard);
+  }
+  .story-card:hover,
+  .story-card:focus-within,
+  .story-card.is-hover,
+  .story-card.is-focus {
+    transform: translateY(-4px);
+  }
+  /* V1-31: bars grow from the baseline; values and the table are static text. */
+  .chart-bar {
+    animation: belvoir-bar-draw var(--motion-duration-draw) var(--motion-ease-out);
+  }
+  /* Scroll-driven rise for the story cover, only where supported (no opacity). */
+  @supports (animation-timeline: view()) {
+    .story-cover-page {
+      animation: belvoir-rise var(--motion-duration-reveal) linear;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}

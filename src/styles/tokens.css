@@ -118,4 +118,18 @@
   --motion-duration-fast: 120ms;
   --motion-duration-base: 200ms;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  /* V1 motion (Q-4, D-5): transform and opacity only, all under the
+     prefers-reduced-motion: no-preference guard. The load stagger comes from
+     duration, never delay, so nothing blinks (V1-57): 6 steps, each <= 400 ms,
+     all done by 400 ms (< the 800 ms cap). */
+  --motion-duration-lift: 160ms;
+  --motion-duration-stagger-1: 200ms;
+  --motion-duration-stagger-2: 240ms;
+  --motion-duration-stagger-3: 280ms;
+  --motion-duration-stagger-4: 320ms;
+  --motion-duration-stagger-5: 360ms;
+  --motion-duration-stagger-6: 400ms;
+  --motion-duration-draw: 600ms;
+  --motion-duration-reveal: 400ms;
+  --motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
 }
