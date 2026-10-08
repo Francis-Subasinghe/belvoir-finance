@@ -1,0 +1,17 @@
+{
+  "$comment": "Aegis Low (PR #29): generated cover shapes that assertCoverShape / coverShapeAttrs must reject. Each is a real shape with one thing changed.",
+  "cases": [
+    { "name": "onclick on a circle", "shape": { "el": "circle", "cls": "art-f-slate", "attrs": { "cx": 10, "cy": 10, "r": 3, "onclick": "alert(1)" } }, "error": "attribute \"onclick\" not allowed" },
+    { "name": "mixed-case onClick on a rect", "shape": { "el": "rect", "cls": "art-f-gold", "attrs": { "x": 0, "y": 114, "width": 48, "height": 6, "onClick": "alert(1)" } }, "error": "attribute \"onClick\" not allowed" },
+    { "name": "style on a path", "shape": { "el": "path", "cls": "art-s-slate", "attrs": { "d": "M0 120L30 0", "style": "fill:red" } }, "error": "attribute \"style\" not allowed" },
+    { "name": "href on a path", "shape": { "el": "path", "cls": "art-s-slate", "attrs": { "d": "M0 120L30 0", "href": "javascript:alert(1)" } }, "error": "attribute \"href\" not allowed" },
+    { "name": "xlink:href on a rect", "shape": { "el": "rect", "cls": "art-f-slate", "attrs": { "x": 0, "y": 0, "width": 1, "height": 1, "xlink:href": "#x" } }, "error": "attribute \"xlink:href\" not allowed" },
+    { "name": "class inside attrs", "shape": { "el": "circle", "cls": "art-f-slate", "attrs": { "cx": 1, "cy": 1, "r": 1, "class": "x" } }, "error": "attribute \"class\" not allowed" },
+    { "name": "a rect key on a circle", "shape": { "el": "circle", "cls": "art-f-slate", "attrs": { "cx": 1, "cy": 1, "r": 1, "width": 4 } }, "error": "attribute \"width\" not allowed" },
+    { "name": "a string where a number belongs", "shape": { "el": "circle", "cls": "art-f-slate", "attrs": { "cx": "1\" onload=\"alert(1)", "cy": 1, "r": 1 } }, "error": "cx must be a finite number" },
+    { "name": "url() in path data", "shape": { "el": "path", "cls": "art-s-slate", "attrs": { "d": "M0 0 url(#x)" } }, "error": "d must be plain path data" },
+    { "name": "fill other than none", "shape": { "el": "path", "cls": "art-s-slate", "attrs": { "d": "M0 0L1 1", "fill": "url(#x)" } }, "error": "fill must be \"none\"" },
+    { "name": "an element outside rect/circle/path", "shape": { "el": "image", "cls": "art-f-slate", "attrs": {} }, "error": "element not allowed" },
+    { "name": "a class outside the cover tokens", "shape": { "el": "rect", "cls": "evil", "attrs": { "x": 0, "y": 0, "width": 1, "height": 1 } }, "error": "class \"evil\" not allowed" }
+  ]
+}

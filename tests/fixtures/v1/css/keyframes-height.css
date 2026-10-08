@@ -1,0 +1,4 @@
+@keyframes grow { from { height: 0 } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: grow var(--motion-duration-base) }
+}

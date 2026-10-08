@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import StatusNotice from "../../components/StatusNotice.astro";
+import Icon from "../../components/art/Icon.astro";
 
 // F3-10 (Q-7): a static shell. No form controls and no script until the F4 explorer.
 export async function getStaticPaths() {
@@ -12,7 +13,10 @@ const d = tool.data;
 ---
 
 <BaseLayout title={d.title} description={`${d.summary} Illustrative only.`} demo={d.demo}>
-  <p class="eyebrow">Tool</p>
+  <p class="eyebrow with-icon">
+    {tool.id === "cash-vs-profit" && <Icon name="cash-vs-profit" />}
+    Tool
+  </p>
   <h1>{d.title}</h1>
   <p class="page-intro prose">{d.summary}</p>
   <StatusNotice variant="info" title="Illustrative only">

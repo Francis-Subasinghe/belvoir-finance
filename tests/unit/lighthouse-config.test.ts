@@ -193,6 +193,7 @@ describe("SEO exemption for the 404 page", () => {
     "cumulative-layout-shift",
     "total-blocking-time",
     "resource-summary:script:size",
+    "resource-summary:image:size",
   ].sort();
   const keys = (u: string, demo = false) => Object.keys(pageAssertions(budgets, { url: u, demo }, "warn")).sort();
 
@@ -248,6 +249,7 @@ describe("generated assertMatrix", () => {
     "cumulative-layout-shift",
     "total-blocking-time",
     "resource-summary:script:size",
+    "resource-summary:image:size",
   ];
   let matrix: MatrixEntry[] = [];
   beforeAll(() => {
@@ -379,5 +381,16 @@ describe("lighthouserc.cjs: LHCI_BLOCKING sets the assertion level", () => {
 
   it.each([["false"], [undefined], ["TRUE"], ["1"], [""]])('LHCI_BLOCKING=%s makes every assertion "warn"', (v) => {
     expect(new Set(levels(v))).toEqual(new Set(["warn"]));
+  });
+});
+
+describe("V1-33 image budget", () => {
+  it("V1-33 budgets.json pins 100 KB of images per URL, asserted on every page", () => {
+    expect(budgets.imageTransferBytes).toBe(100 * 1024);
+    for (const p of listPages(dist))
+      expect(pageAssertions(budgets, p, "error")["resource-summary:image:size"], p.url).toEqual([
+        "error",
+        { maxNumericValue: 102400, aggregationMethod: "median" },
+      ]);
   });
 });

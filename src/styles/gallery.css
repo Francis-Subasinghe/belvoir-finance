@@ -73,3 +73,8 @@
   align-items: center;
   min-height: var(--target-min);
 }
+
+/* V1-58: a narrow cell so the long "other" label wraps at every gallery width. */
+.gallery-narrow {
+  max-width: 20rem;
+}

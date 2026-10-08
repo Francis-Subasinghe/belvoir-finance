@@ -159,6 +159,29 @@ describe("F2-24 source note", () => {
   );
 });
 
+describe("V1-47 source note text", () => {
+  const props = { name: "Example statistics", publisher: "Publisher", url: "https://example.org/x", accessed: day };
+  /** Text nodes joined and whitespace collapsed, as the browser renders textContent. */
+  const text = (html: string) =>
+    [...html.matchAll(/(?:^|>)([^<]*)/g)]
+      .map((m) => m[1] ?? "")
+      .join("")
+      .replace(/\s+/g, " ")
+      .trim();
+  it.each([
+    ["link", "https://example.org/x"],
+    ["plain text", "http://example.org/"],
+  ])('V1-47 the %s branch reads "Source: name, publisher. Accessed date."', async (_b, url) => {
+    expect(text(await render(SourceNote, { ...props, url }))).toBe(
+      "Source: Example statistics, Publisher. Accessed 2 October 2026.",
+    );
+  });
+  it("V1-47 negative: the F3 markup (no explicit separators) collapses to the wrong text", () => {
+    const f3 = '<p><span>Source:</span><a href="x">\n      Example statistics\n    </a>\n  , Publisher.</p>';
+    expect(text(f3)).not.toBe("Source: Example statistics, Publisher.");
+  });
+});
+
 describe("F2-25 callouts", () => {
   it("the allowlist holds exactly the four types", () => {
     expect([...CALLOUT_TYPES].sort()).toEqual(["estimate", "example", "fact", "opinion"]);

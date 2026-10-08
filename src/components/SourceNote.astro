@@ -3,6 +3,9 @@
  * F2-24 source note. The link goes through toSafeLink (https only,
  * rel="noopener noreferrer") and its text is the source name. A refused URL
  * (http:, javascript:, malformed) renders the name as plain text, no link.
+ * V1-47: the separators are explicit expressions, so the text reads
+ * "Source: name, publisher. Accessed date." with exactly one space after the
+ * colon and none before the comma, in both branches.
  */
 import { toSafeLink } from "../lib/links";
 import { formatDateGB, isoDate } from "../lib/format";
@@ -18,7 +21,7 @@ const link = toSafeLink(url);
 ---
 
 <p class="source-note" data-testid="source-note">
-  <span class="source-note-label">Source:</span>
+  <span class="source-note-label">Source:</span>{" "}
   {link.ok && link.external ? (
     <a href={link.href} rel={link.rel}>
       {name}
@@ -26,5 +29,6 @@ const link = toSafeLink(url);
   ) : (
     <span class="source-note-name">{name}</span>
   )}
-  , {publisher}. Accessed <time datetime={isoDate(accessed)}>{formatDateGB(accessed)}</time>.
+  {`, ${publisher}. Accessed `}
+  <time datetime={isoDate(accessed)}>{formatDateGB(accessed)}</time>.
 </p>

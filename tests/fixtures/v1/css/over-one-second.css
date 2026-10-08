@@ -1,0 +1,4 @@
+@keyframes rise { from { transform: translateY(8px) } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: rise 1200ms }
+}

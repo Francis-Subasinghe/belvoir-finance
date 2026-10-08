@@ -80,11 +80,21 @@ test.describe("gallery page", () => {
   });
 
   test("F2-01: every component is present in every variant", async ({ page }) => {
-    await expect(page.getByTestId("story-card")).toHaveCount(6);
-    await expect(page.getByTestId("article-header")).toHaveCount(3);
+    // V1-49 adds the hover/focus cards, the long-label card and the 60-character byline.
+    await expect(page.getByTestId("story-card")).toHaveCount(9);
+    await expect(page.getByTestId("article-header")).toHaveCount(4);
     await expect(page.getByTestId("source-note")).toHaveCount(2);
     await expect(page.getByTestId("callout")).toHaveCount(8);
-    await expect(page.getByTestId("chart")).toHaveCount(1);
+    await expect(page.getByTestId("chart")).toHaveCount(2);
+    // V1-49: the art variants.
+    await expect(page.getByTestId("hero-art")).toHaveCount(1);
+    await expect(page.getByTestId("pillar-art")).toHaveCount(4);
+    await expect(page.getByTestId("icon-set").locator("svg.icon")).toHaveCount(5);
+    expect(await page.getByTestId("story-cover").count()).toBeGreaterThanOrEqual(6);
+    await expect(page.getByTestId("diagram")).toHaveCount(1);
+    for (const id of ["card-hover", "card-focus", "card-long-other", "person-variant", "byline-long-name"]) {
+      await expect(page.getByTestId(id), id).toHaveCount(1);
+    }
     await expect(page.getByTestId("status-notice")).toHaveCount(8);
     await expect(page.getByTestId("demo-banner")).toHaveCount(1);
     for (const s of ["white", "alabaster", "navy", "slate"]) {
@@ -189,13 +199,18 @@ test.describe("gallery page", () => {
   });
 
   test("F2-26: chart figure, caption, table equivalent, scroll region", async ({ page }) => {
-    const chart = page.getByTestId("chart");
-    await expect(chart.locator("figcaption")).toContainText("Units:");
-    await expect(chart.locator("figcaption")).toContainText("Source:");
-    await expect(chart.locator("svg.chart-svg")).toHaveAttribute("aria-hidden", "true");
-    await expect(chart.getByRole("region", { name: /^Data table:/ })).toHaveAttribute("tabindex", "0");
-    await expect(chart.getByRole("table")).toHaveCount(1);
-    expect(await chart.locator("[style]").count()).toBe(0);
+    // Every chart (the F2 one and V1-49's story-style one) has the same structure.
+    const charts = await page.getByTestId("chart").all();
+    expect(charts.length).toBeGreaterThan(1);
+    for (const c of charts) {
+      await expect(c.locator("figcaption")).toContainText("Units:");
+      await expect(c.locator("figcaption")).toContainText("Source:");
+      await expect(c.locator("svg.chart-svg")).toHaveAttribute("aria-hidden", "true");
+      await expect(c.getByRole("region", { name: /^Data table:/ })).toHaveAttribute("tabindex", "0");
+      await expect(c.getByRole("table")).toHaveCount(1);
+      expect(await c.locator("[style]").count()).toBe(0);
+    }
+    const chart = page.getByTestId("chart").first();
     // Numeric column headers (Profit, Cash) are right-aligned over their right-aligned figures.
     for (const name of ["Profit", "Cash"]) {
       await expect(chart.getByRole("columnheader", { name })).toHaveCSS("text-align", "right");

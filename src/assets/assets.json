@@ -1,0 +1,114 @@
+{
+  "assets": [
+    {
+      "path": "src/assets/diagram-cash-timing.svg",
+      "kind": "diagram",
+      "cap": "diagram",
+      "idPrefix": "diagram-cash-timing-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "de75f79555983443584859a36715090dd520b3aa459f30b3a89a49132060e148"
+    },
+    {
+      "path": "src/assets/hero.svg",
+      "kind": "illustration",
+      "cap": "hero",
+      "idPrefix": "hero-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "5058beab9ab25c49230857edba342b372acf89f3fdf481b562a4d39fa55868f0"
+    },
+    {
+      "path": "src/assets/icons/build-capability.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "icon-build-capability-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "5c3dfd99fb8e6fb7190eeecff23bd879ee6a00b9dc9cf2db268bb10b59f86a08"
+    },
+    {
+      "path": "src/assets/icons/cash-vs-profit.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "icon-cash-vs-profit-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "c7e54c65695c01ab55e8a5cfd311f0a74faf9d1eea14c4ebd306749504367481"
+    },
+    {
+      "path": "src/assets/icons/finance-in-context.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "icon-finance-in-context-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "a4f50d994eba138753eff269c8cf10507b4f07af3ec02cdabb2ca77f267fb08a"
+    },
+    {
+      "path": "src/assets/icons/make-better-decisions.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "icon-make-better-decisions-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "1407b9b0523f3530f01fe9c2de821ba4ae57570f27fba7486da8bf43eb1be021"
+    },
+    {
+      "path": "src/assets/icons/understand-the-numbers.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "icon-understand-the-numbers-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "a1835e5fde1cbd70b8e43282f8761c3e7597d585f8b6595154c45164f54a8423"
+    },
+    {
+      "path": "src/assets/pillars/build-capability.svg",
+      "kind": "illustration",
+      "cap": "illustration",
+      "idPrefix": "pillar-build-capability-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "973545e05fad557c355fa822210fd85f45158c09ea263b5e952e9eabb79867bd"
+    },
+    {
+      "path": "src/assets/pillars/finance-in-context.svg",
+      "kind": "illustration",
+      "cap": "illustration",
+      "idPrefix": "pillar-finance-in-context-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "357c16e368a974e872c296d6abbbef1ba494624b1c6fab73a3d4509b711e97fe"
+    },
+    {
+      "path": "src/assets/pillars/make-better-decisions.svg",
+      "kind": "illustration",
+      "cap": "illustration",
+      "idPrefix": "pillar-make-better-decisions-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "3366d7fcc047b86a46215d4233f55a32c2577f975f03d2f78c48209b4a1b5899"
+    },
+    {
+      "path": "src/assets/pillars/understand-the-numbers.svg",
+      "kind": "illustration",
+      "cap": "illustration",
+      "idPrefix": "pillar-understand-the-numbers-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "ef7dcb74cd949caba9a4f31ab258ac48080d15571da5494406a261f1e75bfa78"
+    }
+  ]
+}

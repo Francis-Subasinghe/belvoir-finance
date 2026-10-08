@@ -1,0 +1,14 @@
+{
+  "assets": [
+    {
+      "path": "tests/fixtures/v1/manifest/wrong-hash/a.svg",
+      "kind": "icon",
+      "cap": "icon",
+      "idPrefix": "fx-",
+      "author": "Forge (bot)",
+      "method": "hand-authored SVG",
+      "licence": "Original work for Belvoir Finance, all rights reserved",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

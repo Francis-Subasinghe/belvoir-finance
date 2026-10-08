@@ -1,0 +1,4 @@
+@keyframes drop { from { top: -10px } }
+@media (prefers-reduced-motion: no-preference) {
+.a { animation: drop var(--motion-duration-base) }
+}

@@ -5,6 +5,7 @@ import JsonLd from "../../components/JsonLd.astro";
 import ArticleHeader from "../../components/ArticleHeader.astro";
 import SourceNote from "../../components/SourceNote.astro";
 import StoryCard from "../../components/StoryCard.astro";
+import StoryCover from "../../components/art/StoryCover.astro";
 import { onlyPublished, publishedByIds } from "../../lib/stories";
 import {
   byline,
@@ -73,6 +74,7 @@ const jsonLd = {
     jurisdiction={d.jurisdiction}
     jurisdictionNote={d.jurisdictionNote}
   />
+  <StoryCover id={story.id} pillar={d.pillars[0] ?? "understand-the-numbers"} size="page" />
   {d.disclosure && (
     <p class="disclosure" data-testid="disclosure">
       <span class="disclosure-label">Disclosure:</span> {d.disclosure}

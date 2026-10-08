@@ -12,7 +12,7 @@ import { join, relative } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { expectedSite } from "../helpers/expected-site";
 import { astroBuild, FAKE_CLOCK, hashTree, makeSite, type Site, walkFiles } from "../helpers/fixture-build";
-import { scriptBlocks } from "../helpers/html";
+import { scriptBlocks, scriptStartTags } from "../helpers/html";
 
 const FX = "tests/fixtures/content";
 const BASE = `${FX}/base`;
@@ -105,6 +105,40 @@ describe("F3 rich fixture build (tests/fixtures/content/base)", () => {
     expect(JSON.parse(scriptBlocks(story)[0]?.body ?? "{}").headline).toContain("</script><script>alert(1)</script>");
   });
 
+  it("V1-55 chart labels like <script>alert(1)</script> render as literal text in the SVG and the table", () => {
+    const html = read(site, "stories/fx-chart-story/index.html");
+    const chart = html.split('data-testid="chart"')[1]?.split("</figure>")[0] ?? "";
+    expect(chart).toContain("CHART-TITLE-MARKER");
+    const svg = chart.split('class="chart-svg"')[1]?.split("</svg>")[0] ?? "";
+    expect(svg).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    const table = chart.split("<table")[1] ?? "";
+    expect(table).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    // The only script element is the JSON-LD one; the label survives only as text
+    // (escaped in the SVG and table, and as a quoted aria-label value).
+    expect(scriptStartTags(html).map((a) => a.trim())).toEqual(['type="application/ld+json"']);
+    expect(html.split('data-testid="chart"').length - 1).toBe(2);
+    expect(html).toContain("Illustrative demo data");
+    expect(html).toContain("Source: Fixture Demo Source (placeholder), Fixture publisher");
+  });
+
+  it("V1-41 a fixture Topic on each of the four pillars renders that pillar's illustration and icon", () => {
+    const want: [string, string][] = [
+      ["fx-topic-a", "understand-the-numbers"],
+      ["fx-topic-b", "make-better-decisions"],
+      ["fx-topic-c", "finance-in-context"],
+      ["fx-topic-d", "build-capability"],
+    ];
+    const home = read(site, "index.html");
+    for (const [id, pillar] of want) {
+      const html = read(site, `topics/${id}/index.html`);
+      expect(html, id).toContain(`data-testid="pillar-art" data-pillar="${pillar}"`);
+      expect(html, id).toContain(`data-icon="${pillar}"`);
+      const card = home.split('data-testid="topic-card"').find((c) => c.includes(`/topics/${id}/`)) ?? "";
+      expect(card, id).toContain(`data-pillar="${pillar}"`);
+      expect(card, id).toContain(`data-icon="${pillar}"`);
+    }
+  });
+
   it("F3-06 the featured story is the newest; a date tie goes to the alphabetically first id", () => {
     const home = read(site, "index.html");
     const featured = home.split('data-testid="featured-story"')[1]?.split("</section>")[0] ?? "";
@@ -190,6 +224,36 @@ describe("F3-49 empty Source library (no active sources)", () => {
 
 /** One failing build per rule family, through the real astro build (F3-31). */
 const FAILING: [string, string, RegExp][] = [
+  [
+    "V1-44 a demo chart citing a non-placeholder Source",
+    "v1-chart-real-source",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): source: "fx-active" is not a labelled placeholder Source.*\[chart-source\]/,
+  ],
+  [
+    "V1-44 a demo chart citing a paused Source (F3-11 would hide it)",
+    "v1-chart-paused-source",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): source: "fx-demo-paused" is paused.*\[chart-source-inactive\]/,
+  ],
+  [
+    "V1-44 a chart in a non-demo story",
+    "v1-chart-non-demo-story",
+    /fx-uk-story\.mdoc: body chart 1 \(line \d+\): charts appear only in demo stories.*\[chart-demo-only\]/,
+  ],
+  [
+    "V1-54 a chart with an unknown attribute",
+    "v1-chart-extra-attribute",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): colour: unknown attribute.*\[chart-unknown-attribute\]/,
+  ],
+  [
+    "V1-54 a chart with a 13th point",
+    "v1-chart-13-points",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): categories\[12\]: 13 points; at most 12 \[chart-points\]/,
+  ],
+  [
+    "V1-12 a content value naming an .svg file (the Keystatic .svg upload case)",
+    "v1-svg-content-value",
+    /fx-uk-story\.mdoc: sources\[0\]\.url: .*cover\.svg" is an SVG; content may not supply SVG files \[svg-content\]/,
+  ],
   ["F3-15 references", "ref-story-author", /stories\/fx-uk-story\.mdoc: author: no Person with id "no-such-person"/],
   [
     "F3-17 CF-02 factual needs a reviewer",

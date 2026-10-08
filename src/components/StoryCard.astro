@@ -5,12 +5,18 @@
  * level, a non-UK jurisdiction (F3-22) and demo status are always text,
  * never colour alone.
  * Surfaces: white (default), alabaster, slate.
+ * V1-42: every card shows the story's derived cover (decorative, first in the
+ * card visually, outside the heading and link so reading and tab order keep F3's).
  */
 import { formatDateGB, isoDate, jurisdictionLabel, labelOf } from "../lib/format";
+import StoryCover from "./art/StoryCover.astro";
 
 interface Props {
   title: string;
   href: string;
+  /** Story id and first pillar: the cover's only inputs (V1-42). */
+  coverId: string;
+  pillar: string;
   summary: string;
   format: string;
   level: string;
@@ -20,10 +26,14 @@ interface Props {
   jurisdictionNote?: string | undefined;
   headingLevel?: 2 | 3 | 4;
   surface?: "white" | "alabaster" | "slate";
+  /** Gallery only: show the hover or focus state (V1-49), like the form controls' .is-hover/.is-focus. */
+  state?: "hover" | "focus" | undefined;
 }
 const {
   title,
   href,
+  coverId,
+  pillar,
   summary,
   format,
   level,
@@ -33,12 +43,14 @@ const {
   jurisdictionNote,
   headingLevel = 2,
   surface = "white",
+  state,
 } = Astro.props;
 const place = jurisdictionLabel(jurisdiction, jurisdictionNote);
 const Heading = `h${headingLevel}` as "h2" | "h3" | "h4";
 ---
 
-<article class={`story-card surface-${surface}`} data-testid="story-card">
+<article class={`story-card surface-${surface}${state ? ` is-${state}` : ""}`} data-testid="story-card">
+  <StoryCover id={coverId} pillar={pillar} />
   <Heading class="story-card-title">
     <a href={href}>{title}</a>
   </Heading>

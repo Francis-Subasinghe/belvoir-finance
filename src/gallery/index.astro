@@ -19,6 +19,11 @@ import CheckboxField from "../components/forms/CheckboxField.astro";
 import Button from "../components/forms/Button.astro";
 import { withBase } from "../lib/paths";
 import { WIREFRAMES } from "./wireframes/pages";
+import HeroArt from "../components/art/HeroArt.astro";
+import PillarArt from "../components/art/PillarArt.astro";
+import Icon from "../components/art/Icon.astro";
+import StoryCover from "../components/art/StoryCover.astro";
+import Diagram from "../components/art/Diagram.astro";
 import "../styles/gallery.css";
 
 const day = new Date("2026-10-02T00:00:00Z");
@@ -29,7 +34,26 @@ const card = {
   format: "explainer",
   level: "beginner",
   date: day,
+  coverId: "gallery-card",
+  pillar: "understand-the-numbers",
 };
+// V1-49: covers for six ids, one per motif (src/lib/cover.ts).
+const COVERS = [
+  ["gallery-cover-1", "make-better-decisions"],
+  ["gallery-cover-2", "finance-in-context"],
+  ["gallery-cover-3", "build-capability"],
+  ["gallery-cover-4", "understand-the-numbers"],
+  ["gallery-cover-6", "finance-in-context"],
+  ["gallery-cover-15", "build-capability"],
+] as const;
+const PILLAR_NAMES = [
+  ["understand-the-numbers", "Understand the numbers"],
+  ["make-better-decisions", "Make better decisions"],
+  ["finance-in-context", "Finance in context"],
+  ["build-capability", "Build capability"],
+] as const;
+const LONG_OTHER = "Placeholder territory with a long sixty-character label text";
+const LONG_NAME = "Placeholder Reviewer Name Long Enough To Wrap At Small Width";
 const LIGHT = ["white", "alabaster"] as const;
 const levels = [
   { value: "", label: "Choose a level" },
@@ -63,6 +87,12 @@ const levels = [
         </li>
         <li>
           <a href="#chart">Chart wrapper</a>
+        </li>
+        <li>
+          <a href="#art">Art and icons</a>
+        </li>
+        <li>
+          <a href="#v1-layout">Pills and bylines</a>
         </li>
         <li>
           <a href="#forms">Form controls</a>
@@ -208,6 +238,109 @@ const levels = [
           { name: "Cash", values: [8200, 4300, 11600, 13900] },
         ]}
       />
+    </section>
+
+    <section id="art" aria-labelledby="h-art" class="gallery-section surface-white">
+      <h2 id="h-art">Art and icons (V1)</h2>
+      <p class="gallery-label">Home hero illustration</p>
+      <div class="page-hero">
+        <p>Hero text sits beside the art, never on it.</p>
+        <HeroArt />
+      </div>
+      <p class="gallery-label">Pillar illustrations</p>
+      <ul class="story-list">
+        {PILLAR_NAMES.map(([p, label]) => (
+          <li>
+            <p class="with-icon">
+              <Icon name={p} />
+              {label}
+            </p>
+            <PillarArt pillar={p} size="card" />
+          </li>
+        ))}
+      </ul>
+      <p class="gallery-label">Icons, each beside the text it names</p>
+      <ul class="page-links" data-testid="icon-set">
+        {PILLAR_NAMES.map(([p, label]) => (
+          <li class="with-icon">
+            <Icon name={p} />
+            {label}
+          </li>
+        ))}
+        <li class="with-icon">
+          <Icon name="cash-vs-profit" />
+          Cash vs profit tool
+        </li>
+      </ul>
+      <p class="gallery-label">Story covers derived from id and first pillar (one per motif)</p>
+      <ul class="story-list" data-testid="cover-set">
+        {COVERS.map(([id, p]) => (
+          <li>
+            <StoryCover id={id} pillar={p} />
+            <p class="gallery-label">
+              {id} ({p})
+            </p>
+          </li>
+        ))}
+      </ul>
+      <p class="gallery-label">Diagram (meaning carried by the caption)</p>
+      <Diagram />
+      <p class="gallery-label">Story chart, as the Markdoc chart tag renders it</p>
+      <ChartWrapper
+        title="Profit and cash in a placeholder quarter"
+        units="£ thousand"
+        source="Example Business Research (placeholder), Example Research Publisher (placeholder)"
+        categories={["July", "August", "September"]}
+        series={[
+          { name: "Profit", values: [12, 14, 13] },
+          { name: "Cash received", values: [4, 9, 15] },
+        ]}
+        note="Illustrative demo data"
+      />
+      <p class="gallery-label">Story card hover and focus states (lift shown only when motion is allowed)</p>
+      <ul class="story-list">
+        <li data-testid="card-hover">
+          <StoryCard {...card} coverId="gallery-hover" state="hover" headingLevel={3} />
+        </li>
+        <li data-testid="card-focus">
+          <StoryCard {...card} coverId="gallery-focus" state="focus" headingLevel={3} />
+        </li>
+      </ul>
+    </section>
+
+    <section id="v1-layout" aria-labelledby="h-v1-layout" class="gallery-section surface-alabaster">
+      <h2 id="h-v1-layout">Pills, person flag and byline (V1-58 to V1-61)</h2>
+      <p class="gallery-label">Card with a 60-character "other" label and the demo pill</p>
+      <div class="gallery-narrow" data-testid="card-long-other">
+        <StoryCard
+          {...card}
+          coverId="gallery-long-other"
+          jurisdiction="other"
+          jurisdictionNote={LONG_OTHER}
+          demo
+          headingLevel={3}
+          surface="white"
+        />
+      </div>
+      <p class="gallery-label">Person page: placeholder flag above the Role term</p>
+      <div class="surface-white" data-testid="person-variant">
+        <p class="story-card-demo">Placeholder person: not a real person</p>
+        <dl class="definition-list page-intro">
+          <dt>Role</dt>
+          <dd>Demo author</dd>
+        </dl>
+      </div>
+      <p class="gallery-label">Byline with a 60-character reviewer name</p>
+      <div data-testid="byline-long-name">
+        <ArticleHeader
+          titleLevel={2}
+          title="Placeholder article title"
+          summary="One-sentence placeholder summary."
+          author={{ name: "Placeholder Author", href: withBase("/design/"), demo: true }}
+          reviewer={{ name: LONG_NAME, href: withBase("/design/"), demo: true }}
+          firstPublished={day}
+        />
+      </div>
     </section>
 
     <section id="forms" aria-labelledby="h-forms" class="gallery-section">

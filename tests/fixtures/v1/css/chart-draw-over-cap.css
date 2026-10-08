@@ -1,0 +1,4 @@
+@keyframes bar-draw { from { transform: scaleY(0) } }
+@media (prefers-reduced-motion: no-preference) {
+.bar { animation: bar-draw 700ms }
+}

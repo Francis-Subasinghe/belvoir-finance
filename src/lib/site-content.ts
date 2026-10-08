@@ -76,6 +76,8 @@ export function cardProps(s: StoryEntry) {
   return {
     title: s.data.title,
     href: storyHref(s.id),
+    coverId: s.id,
+    pillar: s.data.pillars[0] ?? "understand-the-numbers",
     summary: s.data.summary,
     format: s.data.format,
     level: s.data.level,

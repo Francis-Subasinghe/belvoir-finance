@@ -1,0 +1,90 @@
+{
+  "$comment": "V1-33 baseline: raw and gzip (level 9) bytes of every built HTML page at F3 (df6d146, PUBLIC_PREVIEW unset). Regenerate only if F3 itself changes.",
+  "commit": "df6d146",
+  "pages": {
+    "404.html": {
+      "raw": 2679,
+      "gzip": 1041
+    },
+    "about/index.html": {
+      "raw": 3570,
+      "gzip": 1388
+    },
+    "contact/index.html": {
+      "raw": 3471,
+      "gzip": 1334
+    },
+    "cookies/index.html": {
+      "raw": 3081,
+      "gzip": 1195
+    },
+    "editorial-standards/index.html": {
+      "raw": 3737,
+      "gzip": 1497
+    },
+    "explore/index.html": {
+      "raw": 6162,
+      "gzip": 1781
+    },
+    "index.html": {
+      "raw": 5311,
+      "gzip": 1837
+    },
+    "newsletter/index.html": {
+      "raw": 3189,
+      "gzip": 1240
+    },
+    "people/placeholder-author/index.html": {
+      "raw": 5132,
+      "gzip": 1700
+    },
+    "people/placeholder-reviewer/index.html": {
+      "raw": 5142,
+      "gzip": 1701
+    },
+    "privacy/index.html": {
+      "raw": 3125,
+      "gzip": 1222
+    },
+    "sources/index.html": {
+      "raw": 3352,
+      "gzip": 1318
+    },
+    "stories/index.html": {
+      "raw": 4557,
+      "gzip": 1500
+    },
+    "stories/pricing-and-cash-timing/index.html": {
+      "raw": 5237,
+      "gzip": 1816
+    },
+    "stories/what-is-working-capital/index.html": {
+      "raw": 6036,
+      "gzip": 2022
+    },
+    "stories/why-profit-isnt-cash/index.html": {
+      "raw": 6964,
+      "gzip": 2265
+    },
+    "terms/index.html": {
+      "raw": 3080,
+      "gzip": 1181
+    },
+    "tools/cash-vs-profit/index.html": {
+      "raw": 3990,
+      "gzip": 1489
+    },
+    "tools/index.html": {
+      "raw": 3142,
+      "gzip": 1223
+    },
+    "topics/make-better-decisions/index.html": {
+      "raw": 4245,
+      "gzip": 1584
+    },
+    "topics/understand-the-numbers/index.html": {
+      "raw": 5974,
+      "gzip": 1891
+    }
+  }
+}

@@ -1,0 +1,2 @@
+@keyframes fade-in { from { opacity: 0 } }
+.card { animation: fade-in 300ms }

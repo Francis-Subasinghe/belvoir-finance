@@ -7,6 +7,8 @@ import { PILLAR_LABELS } from "../../content/schemas";
 import { publishedByIds } from "../../lib/stories";
 import { cardProps, publishedStories, tool, toolHref, verifiedSources } from "../../lib/site-content";
 import { withBase } from "../../lib/paths";
+import PillarArt from "../../components/art/PillarArt.astro";
+import Icon from "../../components/art/Icon.astro";
 
 export async function getStaticPaths() {
   return (await getCollection("topics")).map((topic) => ({ params: { slug: topic.id }, props: { topic } }));
@@ -25,9 +27,17 @@ const sources = (await verifiedSources()).filter((s) => s.data.topics.includes(t
 ---
 
 <BaseLayout title={d.title} description={`${d.summary} A Belvoir Finance topic.`} demo={d.demo}>
-  <p class="eyebrow">Topic: {PILLAR_LABELS[d.pillar]}</p>
-  <h1>{d.title}</h1>
-  <p class="page-intro prose">{d.summary}</p>
+  <div class="page-hero topic-hero">
+    <div class="page-hero-text">
+      <p class="eyebrow with-icon">
+        <Icon name={d.pillar} />
+        Topic: {PILLAR_LABELS[d.pillar]}
+      </p>
+      <h1>{d.title}</h1>
+      <p class="page-intro prose">{d.summary}</p>
+    </div>
+    <PillarArt pillar={d.pillar} />
+  </div>
 
   {path.length > 0 && (
     <section class="page-section" aria-labelledby="path-heading">

@@ -76,6 +76,9 @@ Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by L
 | Total Blocking Time (lab proxy for INP) | < 200 ms |
 | JavaScript per editorial page (compressed) | ≤ 50 KB |
 | JavaScript on `/tools/cash-vs-profit` (compressed) | 0 KB in F3 (static shell, no script); ≤ 120 KB from F4, when the interactive tool lands |
+| Image transfer per URL (V1-33) | ≤ 100 KB (`resource-summary:image:size`; V1 ships no image files, all art is inline SVG) |
+| Inline SVG per page (V1-33, build test) | ≤ 40 KB of inline `<svg>` markup per site page, and ≤ 15 KB gzip growth over the page's F3 size |
+| Font swap (V1, layout-shift E2E) | CLS ≤ 0.1 at 360, 768 and 1280 px on every page with the web fonts held back; < 0.02 at 412 px |
 
 ## Content-correctness checks
 - Required story metadata from `CONTENT_MODEL.md` renders visibly: author, reviewer (for factual finance items), first-published and last-reviewed dates, jurisdiction and period where relevant, and sources with accessed dates.

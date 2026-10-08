@@ -1,0 +1,15 @@
+---
+/**
+ * V1-19 meaningful diagram: a figure whose SVG is hidden and whose prose
+ * figcaption carries the full meaning (no text baked into the art).
+ */
+import CashTiming from "../../assets/diagram-cash-timing.svg";
+---
+
+<figure class="diagram surface-white" data-testid="diagram">
+  <CashTiming class="diagram-svg" aria-hidden="true" focusable="false" />
+  <figcaption class="diagram-caption">
+    Cash timing: an invoice is issued, about 60 days pass, and only then does the cash arrive. The sale counts towards
+    profit when invoiced.
+  </figcaption>
+</figure>

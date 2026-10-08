@@ -1,0 +1,11 @@
+@keyframes belvoir-enter { from { opacity: 0; transform: translateY(8px) } }
+@keyframes bar-draw { from { transform: scaleY(0) } }
+@media (prefers-reduced-motion: no-preference) {
+.l > li:nth-child(1) { animation: belvoir-enter 200ms }
+.l > li:nth-child(2) { animation: belvoir-enter 240ms }
+.card { transition: transform 120ms; }
+.card:hover { transform: translateY(-4px) }
+.bar { animation: bar-draw 600ms }
+@supports (animation-timeline: view()) { .art { animation: belvoir-enter linear; animation-timeline: view(); } }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

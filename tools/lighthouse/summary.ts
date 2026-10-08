@@ -82,7 +82,7 @@ if (!existsSync(manifestPath)) {
   }
   out.push(
     "",
-    `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page; /tools/cash-vs-profit/ ${budgets.scriptTransferBytes.tools[0]?.max === 0 ? "0 KB (F3 static shell)" : "≤ 120 KB"}. ${misses} budget miss(es).`,
+    `Median per metric, mobile emulation. Budgets (TEST_STRATEGY.md): categories ≥ 90, LCP < 2500 ms, CLS < 0.1, TBT < 200 ms, JS ≤ 50 KB per editorial page; images ≤ 100 KB per URL (V1-33); /tools/cash-vs-profit/ ${budgets.scriptTransferBytes.tools[0]?.max === 0 ? "0 KB (F3 static shell)" : "≤ 120 KB"}. ${misses} budget miss(es).`,
     'SEO is measured on a CI-only build with `PUBLIC_PREVIEW=false`. Pages marked `<meta name="belvoir-demo" content="true">`, `/belvoir-finance/404.html` and the Q-10 placeholder pages (SEO_EXEMPT_PATHS) are not asserted for SEO (their noindex is deliberate); every other budget still applies to them.',
     "JS is the transfer size of all scripts on the page, gzip-compressed by `astro preview`.",
     meta,

@@ -7,6 +7,11 @@ export default defineMarkdocConfig({
       ...allowedTags.callout,
       render: component("./src/components/markdoc/Callout.astro"),
     },
+    // V1-54: strict schema (self-closing, five attributes, finite numbers, <= 12 points).
+    chart: {
+      ...allowedTags.chart,
+      render: component("./src/components/markdoc/Chart.astro"),
+    },
   },
   nodes: {
     // Every Markdoc link goes through the safe-link helper.
