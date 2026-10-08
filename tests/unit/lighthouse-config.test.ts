@@ -26,6 +26,8 @@ import {
   strictlyBelow,
 } from "../../tools/lighthouse/assertions.ts";
 import { portInUse } from "../../tools/lighthouse/preflight.ts";
+import { CSP_DIRECTIVES, cspString } from "../../src/config/site";
+import { SITE_CSP, cspProblems, parseCsp } from "../helpers/csp";
 
 const budgets = readBudgets("tools/lighthouse/budgets.json");
 
@@ -412,5 +414,125 @@ describe("V1-33 image budget", () => {
         "error",
         { maxNumericValue: 102400, aggregationMethod: "median" },
       ]);
+  });
+});
+
+/**
+ * F4-47 (Aegis): Lighthouse skips exactly one audit, robots-txt, because the site
+ * CSP's connect-src 'none' (Q-9) blocks Lighthouse's own in-page fetch of
+ * /robots.txt. Everything else about collect, the CSP and the SEO budget stays.
+ */
+const SKIPPED_AUDITS = ["robots-txt"];
+const SKIP_LINE = '        skipAudits: ["robots-txt"],';
+
+/** Problems with the collect settings: exactly the chrome flags plus the one skipped audit. */
+function collectSettingsProblems(settings: Record<string, unknown>): string[] {
+  const out: string[] = [];
+  const skip = settings["skipAudits"];
+  if (!Array.isArray(skip)) out.push("skipAudits is missing");
+  else {
+    for (const a of skip) if (!SKIPPED_AUDITS.includes(a as string)) out.push(`audit ${String(a)} is skipped too`);
+    for (const a of SKIPPED_AUDITS) if (!skip.includes(a)) out.push(`${a} is not skipped`);
+    if (new Set(skip).size !== skip.length) out.push("skipAudits has duplicates");
+  }
+  for (const k of Object.keys(settings))
+    if (k !== "chromeFlags" && k !== "skipAudits") out.push(`unexpected collect setting ${k}`);
+  if (settings["chromeFlags"] !== "--headless=new --no-sandbox") out.push("chromeFlags changed");
+  return out;
+}
+
+/** Problems with the rationale: the comment lines right above the skipAudits line must name the cause. */
+function skipCommentProblems(rcText: string): string[] {
+  const lines = rcText.split("\n");
+  const at = lines.indexOf(SKIP_LINE);
+  if (at === -1) return ["no skipAudits line"];
+  const comment: string[] = [];
+  for (let i = at - 1; i >= 0 && /^\s*\/\//.test(lines[i] ?? ""); i--) comment.unshift(lines[i] ?? "");
+  const text = comment.join(" ");
+  const out: string[] = [];
+  for (const needle of ["F4-47", "Aegis", "connect-src 'none'", "Lighthouse's own in-page fetch of /robots.txt"])
+    if (!text.includes(needle)) out.push(`the comment above skipAudits does not say "${needle}"`);
+  return out;
+}
+
+describe("F4-47 Lighthouse skips only the robots-txt audit (connect-src 'none')", () => {
+  const RC = resolve("tools/lighthouse/lighthouserc.cjs");
+
+  /** Loads the real config in a child Node (cwd has dist-lhci/ = the fixture); returns ci as JSON. */
+  function realCi(): {
+    collect: { settings: Record<string, unknown> };
+    assert: { assertMatrix: MatrixEntry[] };
+  } {
+    const cwd = mkdtempSync(join(tmpdir(), "lhci-rc-"));
+    try {
+      symlinkSync(dist, join(cwd, "dist-lhci"), "dir");
+      const r = spawnSync(
+        process.execPath,
+        ["-e", "process.stdout.write(JSON.stringify(require(process.argv[1]).ci));", RC],
+        { cwd, env: { ...process.env, LHCI_BLOCKING: "true" }, encoding: "utf8" },
+      );
+      expect(r.status, r.stderr).toBe(0);
+      return JSON.parse(r.stdout);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+
+  it("F4-47 the collect settings skip exactly robots-txt and change nothing else", () => {
+    const { settings } = realCi().collect;
+    expect(settings["skipAudits"]).toEqual(["robots-txt"]);
+    expect(settings).toEqual({ chromeFlags: "--headless=new --no-sandbox", skipAudits: ["robots-txt"] });
+    expect(collectSettingsProblems(settings)).toEqual([]);
+  });
+
+  it("F4-47 a config that skips another audit too, or not robots-txt, fails the same check", () => {
+    const flags = { chromeFlags: "--headless=new --no-sandbox" };
+    expect(collectSettingsProblems({ ...flags, skipAudits: ["robots-txt", "is-crawlable"] })).toEqual([
+      "audit is-crawlable is skipped too",
+    ]);
+    expect(collectSettingsProblems({ ...flags, skipAudits: ["is-crawlable"] })).toEqual([
+      "audit is-crawlable is skipped too",
+      "robots-txt is not skipped",
+    ]);
+    expect(collectSettingsProblems({ ...flags, skipAudits: [] })).toEqual(["robots-txt is not skipped"]);
+    expect(collectSettingsProblems(flags)).toEqual(["skipAudits is missing"]);
+    expect(collectSettingsProblems({ ...flags, skipAudits: ["robots-txt"], onlyCategories: ["performance"] })).toEqual([
+      "unexpected collect setting onlyCategories",
+    ]);
+  });
+
+  it("F4-47 the skip carries its rationale: connect-src 'none' blocks Lighthouse's own robots.txt fetch", () => {
+    const rc = readFileSync(RC, "utf8");
+    expect(rc.split("\n").filter((l) => l.includes("skipAudits"))).toEqual([SKIP_LINE]);
+    expect(skipCommentProblems(rc)).toEqual([]);
+    // without the comment the check fails
+    const bare = rc
+      .split("\n")
+      .filter((l) => !/connect-src 'none'|Lighthouse's own in-page fetch|F4-47 \(Aegis\)/.test(l))
+      .join("\n");
+    expect(skipCommentProblems(bare)).not.toEqual([]);
+    // a comment that is not adjacent (a blank line in between) does not count
+    expect(skipCommentProblems(rc.replace(SKIP_LINE, `\n${SKIP_LINE}`))).toHaveLength(4);
+    // nor does a comment that no longer names connect-src 'none'
+    expect(skipCommentProblems(rc.replace("connect-src 'none' (Q-9)", "CSP"))).toEqual([
+      `the comment above skipAudits does not say "connect-src 'none'"`,
+    ]);
+  });
+
+  it("F4-47 the site CSP still has connect-src 'none' (the CSP is not relaxed for Lighthouse)", () => {
+    expect(CSP_DIRECTIVES["connect-src"]).toBe("'none'");
+    expect(cspString(CSP_DIRECTIVES)).toBe(SITE_CSP);
+    expect(parseCsp(SITE_CSP).get("connect-src")).toBe("'none'");
+    expect(cspProblems(cspString(CSP_DIRECTIVES))).toEqual([]);
+  });
+
+  it("F4-47 the SEO budget stays 0.9 and no assertion names robots-txt", () => {
+    expect(budgets.categories["seo"]).toBe(0.9);
+    const matrix = realCi().assert.assertMatrix;
+    expect(entryFor(matrix, url("")).assertions["categories:seo"]).toEqual([
+      "error",
+      { minScore: 0.9, aggregationMethod: "median" },
+    ]);
+    expect(JSON.stringify(matrix)).not.toContain("robots");
   });
 });

@@ -52,6 +52,10 @@ module.exports = {
         // --no-sandbox: CI runners block Chrome's user-namespace sandbox. Only our own
         // locally served pages are loaded.
         chromeFlags: "--headless=new --no-sandbox",
+        // F4-47 (Aegis): skip only robots-txt. The site CSP's connect-src 'none' (Q-9) blocks
+        // Lighthouse's own in-page fetch of /robots.txt, so that audit fails on every page
+        // (SEO 91). Every other SEO audit still runs; tests/build/dist.test.ts checks robots.txt.
+        skipAudits: ["robots-txt"],
       },
     },
     assert: { assertMatrix: buildAssertMatrix(budgets, pages, LEVEL) },
