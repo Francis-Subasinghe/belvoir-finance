@@ -160,19 +160,24 @@ test.describe("F4 explorer: results and errors", () => {
     await input(page, "sales").press("Enter");
     await settle();
     expect(await count(), "Enter").toBe(afterClear + 1);
+    // Enter is an explicit commit (D-2): pressed again with nothing changed, it still commits once.
+    // (Chrome fires change on Enter only when the value changed, so this needs the Enter handler.)
+    await input(page, "sales").press("Enter");
+    await settle();
+    expect(await count(), "Enter, unchanged").toBe(afterClear + 2);
     await page.keyboard.press("Tab"); // blur after Enter: the change event mustn't announce again
     await settle();
-    expect(await count(), "blur after Enter").toBe(afterClear + 1);
+    expect(await count(), "blur after Enter").toBe(afterClear + 2);
     await input(page, "costs").fill("1000");
     await page.keyboard.press("Tab"); // change
     await settle();
-    expect(await count(), "change").toBe(afterClear + 2);
+    expect(await count(), "change").toBe(afterClear + 3);
     await update(page);
     await settle();
-    expect(await count(), "button").toBe(afterClear + 3);
+    expect(await count(), "button").toBe(afterClear + 4);
     await page.getByRole("button", { name: "Reset" }).click();
     await settle();
-    expect(await count(), "reset").toBe(afterClear + 4);
+    expect(await count(), "reset").toBe(afterClear + 5);
     const v = view(DEFAULTS);
     if (v.ok) await expect(status(page)).toHaveText(`${RESET_NOTE} ${v.summary}`);
     for (const f of FIELDS) await expect(input(page, f.id)).toHaveValue(DEFAULTS[f.id]);
