@@ -23,7 +23,9 @@ test("F4-55 tool-errors full page", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(TOOL);
   await page.evaluate(() => document.fonts.ready);
-  await expect(page.locator("[data-cvp-fields]")).toBeEnabled();
+  // Enhanced: the script removed the fieldset's disabled attribute (toBeEnabled can't see a fieldset).
+  await expect(page.locator("[data-cvp-fields]")).not.toHaveAttribute("disabled");
+  await expect(page.locator("#cvp-sales")).toBeEnabled();
   for (const [id, value] of Object.entries(TOOL_ERROR_VALUES)) await page.locator(`#cvp-${id}`).fill(value);
   await page.getByRole("button", { name: "Update results" }).click();
   await expect(page.getByTestId("explorer-summary")).toHaveText("Results not updated. 5 answers need fixing.");
@@ -39,7 +41,8 @@ test.describe("JavaScript off", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(TOOL);
     await page.evaluate(() => document.fonts.ready).catch(() => undefined);
-    await expect(page.locator("[data-cvp-fields]")).toBeDisabled();
+    await expect(page.locator("[data-cvp-fields]")).toHaveAttribute("disabled");
+    await expect(page.locator("#cvp-sales")).toBeDisabled();
     await expect(page).toHaveScreenshot("tool-nojs.png", { fullPage: true });
   });
 });
