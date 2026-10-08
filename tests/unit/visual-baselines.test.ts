@@ -9,7 +9,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { VISUAL_PAGES, VISUAL_PROJECTS, expectedBaselinePaths } from "../helpers/visual-pages";
+import { VISUAL_PROJECTS, VISUAL_SNAPSHOTS, expectedBaselinePaths } from "../helpers/visual-pages";
 import {
   MANIFEST,
   buildManifest,
@@ -180,10 +180,10 @@ describe("the committed baselines", () => {
     expect(checkBaselines(".", tracked, expectedBaselinePaths())).toEqual([]);
   });
 
-  it("are exactly (gallery + VISUAL_PAGES) x the visual projects, as listed in the manifest", () => {
+  it("are exactly (gallery + VISUAL_PAGES + the F4-55 tool states) x the visual projects, as listed in the manifest", () => {
     const listed = parseManifest(readFileSync(MANIFEST, "utf8")).entries.map((e) => e.path);
     expect(listed.sort()).toEqual(expectedBaselinePaths());
-    expect(listed).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+    expect(listed).toHaveLength(VISUAL_PROJECTS.length * VISUAL_SNAPSHOTS.length);
   });
 
   it("VISUAL_PROJECTS matches the snapshot projects in playwright.visual.config.ts", () => {
@@ -211,7 +211,7 @@ describe("coverage (checkBaselines with the expected set)", () => {
   }
 
   it("derives the expected set from the specs, not a hard-coded count", () => {
-    expect(expected).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+    expect(expected).toHaveLength(VISUAL_PROJECTS.length * VISUAL_SNAPSHOTS.length);
     expect(expected).toContain(HOME360);
     expect(expected).toContain("tests/visual/__screenshots__/visual-1280/gallery-linux.png");
   });
@@ -378,7 +378,7 @@ describe("untrackedBaselineWarnings (check:visual-baselines ::warning:: lines)",
 describe("artifactEntries (npm run visual:expected)", () => {
   it("lists the expected baselines in the artifact layout, sorted in byte order", () => {
     const entries = artifactEntries(expectedBaselinePaths());
-    expect(entries).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+    expect(entries).toHaveLength(VISUAL_PROJECTS.length * VISUAL_SNAPSHOTS.length);
     expect(entries[0]).toBe("visual-1280/gallery-linux.png");
     expect(entries).toContain("visual-360/page-home-linux.png");
     for (const e of entries) expect(e).toMatch(/^visual-(360|768|1280)\/[a-z0-9-]+-linux\.png$/);

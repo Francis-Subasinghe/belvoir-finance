@@ -19,8 +19,24 @@ export const VISUAL_PAGES: readonly (readonly [name: string, path: string])[] = 
   ["page-sources", "sources/"],
 ];
 
-/** Snapshot names (without project or platform) the visual specs take: the gallery plus each page. */
-export const VISUAL_SNAPSHOTS: readonly string[] = ["gallery", ...VISUAL_PAGES.map(([n]) => n)];
+/**
+ * F4-55: the two explorer states with their own snapshot (pages.visual.ts):
+ * `tool-errors` after committing one bad value per field, and `tool-nojs`
+ * with JavaScript off. `page-tool` stays the default, enhanced state.
+ */
+export const VISUAL_TOOL_STATES = ["tool-errors", "tool-nojs"] as const;
+
+/** F4-55: the values committed for `tool-errors` (blank, negative, notWhole, daysRange, invalid). */
+export const TOOL_ERROR_VALUES = {
+  sales: "",
+  costs: "-5",
+  customerDays: "30.5",
+  supplierDays: "181",
+  opening: "1e6",
+} as const;
+
+/** Snapshot names (without project or platform) the visual specs take: the gallery, each page and the tool states. */
+export const VISUAL_SNAPSHOTS: readonly string[] = ["gallery", ...VISUAL_PAGES.map(([n]) => n), ...VISUAL_TOOL_STATES];
 
 /** Every baseline path a full regeneration on linux must contain. */
 export const expectedBaselinePaths = (): string[] =>
