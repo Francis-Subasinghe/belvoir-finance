@@ -8,7 +8,18 @@ import { describe, expect, it } from "vitest";
 import postcss, { type Rule } from "postcss";
 import { checkSvg, SVG_BYTE_CAPS } from "../helpers/svg-check";
 import { filesUnder, LICENCE, manifestProblems, readManifest } from "../helpers/v1-assets";
-import { COVER_H, COVER_W, coverFor, fnv1a, MOTIFS } from "../../src/lib/cover";
+import {
+  assertCoverShape,
+  COVER_ATTRIBUTES,
+  COVER_CLASSES,
+  COVER_H,
+  COVER_W,
+  coverFor,
+  coverShapeAttrs,
+  type CoverShape,
+  fnv1a,
+  MOTIFS,
+} from "../../src/lib/cover";
 import { PILLARS } from "../../src/content/schemas";
 
 const manifest = readManifest();
@@ -158,5 +169,54 @@ describe("V1-51 visual snapshots are taken without motion", () => {
       expect(readFileSync(`tests/visual/${f}`, "utf8"), f).toMatch(
         /emulateMedia\(\{\s*reducedMotion:\s*"reduce"\s*\}\)/,
       );
+  });
+});
+
+describe("Aegis Low (PR #29): cover shape attributes are an exact allowlist", () => {
+  const all = Array.from({ length: 400 }, (_, i) => i).flatMap((i) =>
+    ["understand-the-numbers", "make-better-decisions", "finance-in-context", "build-capability"].flatMap(
+      (p) => coverFor(`story-${i}`, p).shapes,
+    ),
+  );
+
+  it("the allowlist is exactly the keys and classes the generator emits (1,600 covers)", () => {
+    const used: Record<string, Set<string>> = { rect: new Set(), circle: new Set(), path: new Set() };
+    for (const sh of all) for (const k of Object.keys(sh.attrs)) used[sh.el]?.add(k);
+    for (const el of ["rect", "circle", "path"] as const)
+      expect([...(used[el] ?? [])].sort(), el).toEqual([...COVER_ATTRIBUTES[el]].sort());
+    expect([...new Set(all.map((sh) => sh.cls))].sort()).toEqual([...COVER_CLASSES].sort());
+    expect(COVER_ATTRIBUTES).toEqual({
+      rect: ["x", "y", "width", "height", "rx"],
+      circle: ["cx", "cy", "r"],
+      path: ["d", "fill", "stroke-width", "stroke-linecap"],
+    });
+  });
+
+  it("every generated shape passes, and coverShapeAttrs returns its attrs unchanged", () => {
+    for (const sh of all) expect(coverShapeAttrs(sh)).toBe(sh.attrs);
+  });
+
+  const fixture = JSON.parse(readFileSync("tests/fixtures/v1/cover/bad-shapes.json", "utf8")) as {
+    cases: { name: string; shape: CoverShape; error: string }[];
+  };
+  it("the negative fixture covers onclick, onClick, style and href", () => {
+    const keys = fixture.cases.flatMap((c) => Object.keys(c.shape.attrs));
+    for (const k of ["onclick", "onClick", "style", "href"]) expect(keys).toContain(k);
+  });
+  it.each(fixture.cases.map((c) => [c.name, c] as const))("rejects %s", (_n, c) => {
+    expect(() => assertCoverShape(c.shape)).toThrow(c.error);
+    expect(() => coverShapeAttrs(c.shape)).toThrow(c.error);
+  });
+
+  it("rejects symbol keys", () => {
+    const attrs: Record<string, number> = { cx: 1, cy: 1, r: 1 };
+    Object.defineProperty(attrs, Symbol("x"), { value: 1, enumerable: true });
+    expect(() => assertCoverShape({ el: "circle", cls: "art-f-slate", attrs })).toThrow("symbol keys not allowed");
+  });
+
+  it("StoryCover.astro spreads only coverShapeAttrs(...), never the raw attrs", () => {
+    const src = readFileSync("src/components/art/StoryCover.astro", "utf8");
+    expect(src).toContain("{...coverShapeAttrs(s)}");
+    expect(src).not.toMatch(/\{\.\.\.s\.attrs\}/);
   });
 });

@@ -3,9 +3,10 @@
  * V1-42 story cover: derived from the story id and its first pillar
  * (src/lib/cover.ts), rendered as component markup. Decorative (V1-18): no
  * text, nothing focusable (V1-21). The navy surface scopes the gold accent
- * (F2-06), and the container's aspect-ratio reserves the box (V1-35).
+ * (F2-06), and the container's aspect-ratio reserves the box (V1-35). Each
+ * shape's attributes pass the COVER_ATTRIBUTES allowlist before they are spread.
  */
-import { COVER_H, COVER_W, coverFor } from "../../lib/cover";
+import { COVER_H, COVER_W, coverFor, coverShapeAttrs } from "../../lib/cover";
 
 interface Props {
   id: string;
@@ -28,7 +29,8 @@ const cover = coverFor(id, pillar);
   >
     {cover.shapes.map((s) => {
       const Tag = s.el;
-      return <Tag class={s.cls} {...s.attrs} />;
+      // Only allowlisted keys and values get through (coverShapeAttrs throws otherwise).
+      return <Tag class={s.cls} {...coverShapeAttrs(s)} />;
     })}
   </svg>
 </div>

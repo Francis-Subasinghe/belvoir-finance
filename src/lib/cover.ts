@@ -25,6 +25,60 @@ export interface Cover {
   shapes: CoverShape[];
 }
 
+/**
+ * Aegis Low (PR #29): StoryCover.astro spreads each shape's `attrs` onto an SVG
+ * element, so the keys are pinned to exactly what this generator emits, per
+ * element. Anything else (an event handler in any case, `style`, `href`, a
+ * namespaced attribute) throws, at build time when the page renders.
+ * `class` isn't in `attrs`: it is `cls`, one of COVER_CLASSES.
+ */
+export const COVER_ATTRIBUTES: Readonly<Record<CoverElement, readonly string[]>> = {
+  rect: ["x", "y", "width", "height", "rx"],
+  circle: ["cx", "cy", "r"],
+  path: ["d", "fill", "stroke-width", "stroke-linecap"],
+};
+/** The token classes a cover may use (V1-14); gold resolves only under .surface-navy. */
+export const COVER_CLASSES: readonly string[] = [
+  "art-f-gold",
+  "art-f-teal",
+  "art-f-light",
+  "art-f-slate",
+  "art-s-gold",
+  "art-s-teal",
+  "art-s-light",
+  "art-s-slate",
+];
+/** The only string values besides path data. */
+const FIXED_VALUES: Readonly<Record<string, string>> = { fill: "none", "stroke-linecap": "round" };
+/** Path data: path commands and plain numbers only, so no CSS functions or other text. */
+const PATH_DATA = /^[MLHVCSQTAZmlhvcsqtaz0-9 .,-]+$/;
+
+/** Throws unless the shape is exactly what the generator may emit (element, class, keys and values). */
+export function assertCoverShape(shape: CoverShape): CoverShape {
+  const where = `cover shape <${String(shape.el)}>`;
+  if (!Object.hasOwn(COVER_ATTRIBUTES, shape.el)) throw new Error(`${where}: element not allowed`);
+  if (!COVER_CLASSES.includes(shape.cls)) throw new Error(`${where}: class "${shape.cls}" not allowed`);
+  if (Object.getOwnPropertySymbols(shape.attrs).length > 0) throw new Error(`${where}: symbol keys not allowed`);
+  const allowed = COVER_ATTRIBUTES[shape.el];
+  for (const key of Object.getOwnPropertyNames(shape.attrs)) {
+    if (!allowed.includes(key)) throw new Error(`${where}: attribute "${key}" not allowed`);
+    const value: unknown = shape.attrs[key];
+    if (key === "d") {
+      if (typeof value !== "string" || !PATH_DATA.test(value)) throw new Error(`${where}: d must be plain path data`);
+    } else if (key in FIXED_VALUES) {
+      if (value !== FIXED_VALUES[key]) throw new Error(`${where}: ${key} must be "${FIXED_VALUES[key]}"`);
+    } else if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new Error(`${where}: ${key} must be a finite number`);
+    }
+  }
+  return shape;
+}
+
+/** The attributes StoryCover.astro spreads: validated again at the point of use. */
+export function coverShapeAttrs(shape: CoverShape): Record<string, number | string> {
+  return assertCoverShape(shape).attrs;
+}
+
 /** Accent class per pillar; the others are the shared secondary tones. */
 const ACCENT: Record<string, string> = {
   "understand-the-numbers": "art-f-gold",
@@ -152,5 +206,6 @@ export function coverFor(id: string, pillar: string): Cover {
   }
   // The pillar's accent always appears as one rule, so every cover carries its pillar colour.
   rect(accent, 0, COVER_H - 6, 48 + (hash % 5) * 24, 6);
+  for (const shape of shapes) assertCoverShape(shape);
   return { motif, accent, hash, shapes };
 }
