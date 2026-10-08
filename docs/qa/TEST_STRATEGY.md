@@ -100,7 +100,7 @@ Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by L
 | F1 Scaffold | `docs/qa/AC_F1_SCAFFOLD.md` | Sentinel | Aegis, Launchpad |
 | F2 Design system | [`docs/qa/AC_F2_DESIGN_SYSTEM.md`](AC_F2_DESIGN_SYSTEM.md) | Sentinel | Atlas (design fit, D12 wireframes) |
 | F3 Pages | [`docs/qa/AC_F3_PAGES.md`](AC_F3_PAGES.md) | Sentinel | Atlas, Aegis (rendering and CSP) |
-| F4 Cash-vs-profit explorer | `docs/qa/AC_F4.md` + S3 calculation table (to write) | Sentinel | Aegis |
+| F4 Cash-vs-profit explorer | [`docs/qa/AC_F4_TOOL.md`](AC_F4_TOOL.md) (includes the S3 calculation table; draft) | Sentinel | Aegis |
 | F5 Source registry and parser | `docs/qa/AC_F5.md` (to write) | Sentinel (failure modes) | Aegis (hardening fixtures) |
 | F6 Newsletter UI | `docs/qa/AC_F6.md` (to write) | Sentinel | Aegis |
 | F7 SEO | `docs/qa/AC_F7.md` (to write) | Sentinel | Atlas |
