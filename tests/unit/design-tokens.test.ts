@@ -85,6 +85,15 @@ const PAIRS: [string, string, string, number][] = [
   ["Focus ring on notice background", "color-focus", "color-notice-bg", 3],
   ["Focus ring on navy", "color-focus-on-dark", "color-navy", 3],
   ["Focus ring on slate", "color-focus-on-dark", "color-slate", 3],
+  // V1-16: icons, the diagram (meaningful graphics, 3:1).
+  ["Icon on card (navy) on white", "color-navy", "color-white", 3],
+  ["Eyebrow icon (gold) on navy", "color-gold", "color-navy", 3],
+  ["Eyebrow icon (gold-on-light) on alabaster", "color-gold-on-light", "color-alabaster", 3],
+  ["Diagram outline on white", "color-border-strong", "color-white", 3],
+  ["Diagram arrow (teal) on white", "color-chart-series-2", "color-white", 3],
+  ["Diagram dots (slate) on white", "color-slate", "color-white", 3],
+  ["Diagram coin (gold-on-light) on white", "color-gold-on-light", "color-white", 3],
+  ["Diagram coin mark (white) on gold-on-light", "color-white", "color-gold-on-light", 3],
 ];
 
 describe("F1-24 / F1-25 contrast", () => {

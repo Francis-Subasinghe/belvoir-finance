@@ -53,7 +53,7 @@ Design rules behind the table:
 | Estimate label on white | `--color-callout-estimate` `#7E6026` | `--color-white` `#FFFFFF` | 5.85:1 | 4.5 | Callout label and bar |
 | Example label on white | `--color-callout-example` `#1D5F66` | `--color-white` `#FFFFFF` | 7.29:1 | 4.5 | Callout label and bar |
 | Opinion label on white | `--color-callout-opinion` `#6B3E75` | `--color-white` `#FFFFFF` | 8.17:1 | 4.5 | Callout label and bar |
-| Chart text on chart background | `--color-text` `#1C2541` | `--color-chart-bg` `#FFFFFF` | 15.10:1 | 4.5 | Values, categories, table |
+| Chart text on chart background | `--color-text` `#1C2541` | `--color-chart-bg` `#FFFFFF` | 15.10:1 | 4.5 | Values, categories, table, V1 demo-data note |
 | Chart series 1 on chart background | `--color-chart-series-1` `#0B132B` | `--color-chart-bg` `#FFFFFF` | 18.38:1 | 3 | Solid bars |
 | Chart series 2 on chart background | `--color-chart-series-2` `#1D5F66` | `--color-chart-bg` `#FFFFFF` | 7.29:1 | 3 | Outlined bars |
 | Chart axis on chart background | `--color-chart-axis` `#64748B` | `--color-chart-bg` `#FFFFFF` | 4.76:1 | 3 | Baseline |
@@ -68,6 +68,26 @@ Design rules behind the table:
 | Focus ring on notice background | `--color-focus` `#7E6026` | `--color-notice-bg` `#FFF8E6` | 5.52:1 | 3 | Focus indicator in the notice |
 | Focus ring on navy | `--color-focus-on-dark` `#C5A059` | `--color-navy` `#0B132B` | 7.48:1 | 3 | Focus indicator on navy |
 | Focus ring on slate | `--color-focus-on-dark` `#C5A059` | `--color-slate` `#1C2541` | 6.15:1 | 3 | Focus indicator on slate |
+| Icon on card (navy) on white | `--color-navy` `#0B132B` | `--color-white` `#FFFFFF` | 18.38:1 | 3 | V1 topic-card heading icons (`currentColor`) |
+| Eyebrow icon (gold) on navy | `--color-gold` `#C5A059` | `--color-navy` `#0B132B` | 7.48:1 | 3 | V1 icon in an eyebrow on a navy band (`currentColor`) |
+| Eyebrow icon (gold-on-light) on alabaster | `--color-gold-on-light` `#7E6026` | `--color-alabaster` `#F8FAFC` | 5.59:1 | 3 | V1 topic, tools and tool page eyebrow icons (`currentColor`) |
+| Diagram outline on white | `--color-border-strong` `#64748B` | `--color-white` `#FFFFFF` | 4.76:1 | 3 | V1 diagram: invoice outline and lines |
+| Diagram arrow (teal) on white | `--color-chart-series-2` `#1D5F66` | `--color-white` `#FFFFFF` | 7.29:1 | 3 | V1 diagram: the time arrow |
+| Diagram dots (slate) on white | `--color-slate` `#1C2541` | `--color-white` `#FFFFFF` | 15.10:1 | 3 | V1 diagram: waiting-time dots |
+| Diagram coin (gold-on-light) on white | `--color-gold-on-light` `#7E6026` | `--color-white` `#FFFFFF` | 5.85:1 | 3 | V1 diagram: the cash coin |
+| Diagram coin mark (white) on gold-on-light | `--color-white` `#FFFFFF` | `--color-gold-on-light` `#7E6026` | 5.85:1 | 3 | V1 diagram: the £ mark on the coin |
+
+## Decorative art pairs (V1-16, exempt)
+
+Hero, pillar and cover art is decorative (`aria-hidden`, no text, nothing meaningful depends on it), so WCAG 1.4.11 doesn't apply, but it uses only tokens and these pairs are listed for review. Gold appears only on navy (gold rule). Text never sits on art: covers and panels are separate boxes above or beside the text. The F2-09 rendered check runs on every page with art.
+
+| Pair | Foreground | Background | Ratio | Used by |
+| --- | --- | --- | --- | --- |
+| Gold on navy | `--color-gold` `#C5A059` | `--color-navy` `#0B132B` | 7.48:1 | Hero, pillar and cover accents |
+| Alabaster on navy | `--color-alabaster` `#F8FAFC` | `--color-navy` `#0B132B` | 17.57:1 | Hero and pillar shapes |
+| Slate on navy | `--color-slate` `#1C2541` | `--color-navy` `#0B132B` | 1.22:1 | Cover and pillar background texture (deliberately quiet) |
+| Teal on navy | `--color-chart-series-2` `#1D5F66` | `--color-navy` `#0B132B` | 2.52:1 | Pillar and cover secondary shapes |
+| Alabaster on white | `--color-alabaster` `#F8FAFC` | `--color-white` `#FFFFFF` | 1.05:1 | Diagram invoice fill (its boundary is the strong-border outline above) |
 
 ## Pairs that must fail (never used)
 
