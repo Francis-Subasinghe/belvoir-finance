@@ -4,7 +4,7 @@
  * demo classifier, the per-page assertions and the generated assertMatrix.
  */
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createServer, type AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -23,6 +23,8 @@ import {
   listPages,
   readBudgets,
   type MatrixEntry,
+  SKIP_REASONS,
+  skippedAuditsLine,
   strictlyBelow,
 } from "../../tools/lighthouse/assertions.ts";
 import { portInUse } from "../../tools/lighthouse/preflight.ts";
@@ -534,5 +536,88 @@ describe("F4-47 Lighthouse skips only the robots-txt audit (connect-src 'none')"
       { minScore: 0.9, aggregationMethod: "median" },
     ]);
     expect(JSON.stringify(matrix)).not.toContain("robots");
+  });
+});
+
+describe("F4-47 the Lighthouse job summary names the skipped audits", () => {
+  const SUMMARY = resolve("tools/lighthouse/summary.ts");
+  const LH_FILES = ["assertions.ts", "budgets.json", "lighthouserc.cjs", "preflight.ts", "summary.ts"];
+  const lhr = {
+    lighthouseVersion: "12.6.1",
+    environment: { hostUserAgent: "test" },
+    configSettings: { formFactor: "mobile" },
+    categories: {
+      performance: { score: 1 },
+      accessibility: { score: 1 },
+      "best-practices": { score: 1 },
+      seo: { score: 1 },
+    },
+    audits: {},
+  };
+
+  /**
+   * Runs summary.ts in a child Node (no GITHUB_STEP_SUMMARY, so it prints) from a temp cwd holding
+   * dist-lhci/ (the fixture) and a one-report LHCI upload. By default it runs the real summary.ts
+   * with the real lighthouserc.cjs; `editRc` runs copies of tools/lighthouse/ with an edited config.
+   */
+  function runSummary(editRc?: (rc: string) => string): string {
+    const cwd = mkdtempSync(join(tmpdir(), "lhci-summary-"));
+    try {
+      symlinkSync(dist, join(cwd, "dist-lhci"), "dir");
+      const report = join(cwd, ".lighthouseci", "report");
+      mkdirSync(report, { recursive: true });
+      writeFileSync(join(report, "lhr-1.json"), JSON.stringify(lhr));
+      writeFileSync(
+        join(report, "manifest.json"),
+        JSON.stringify([{ url: url(""), jsonPath: join(report, "lhr-1.json") }]),
+      );
+      let script = SUMMARY;
+      if (editRc) {
+        const tools = join(cwd, "copy", "tools", "lighthouse");
+        mkdirSync(tools, { recursive: true });
+        mkdirSync(join(cwd, "copy", "src", "config"), { recursive: true });
+        writeFileSync(join(cwd, "copy", "package.json"), '{ "type": "module" }');
+        copyFileSync("src/config/placeholder-pages.ts", join(cwd, "copy", "src", "config", "placeholder-pages.ts"));
+        for (const f of LH_FILES) copyFileSync(join("tools", "lighthouse", f), join(tools, f));
+        writeFileSync(
+          join(tools, "lighthouserc.cjs"),
+          editRc(readFileSync("tools/lighthouse/lighthouserc.cjs", "utf8")),
+        );
+        script = join(tools, "summary.ts");
+      }
+      const env: NodeJS.ProcessEnv = { ...process.env, LHCI_BLOCKING: "true" };
+      delete env["GITHUB_STEP_SUMMARY"];
+      const r = spawnSync(process.execPath, [script], { cwd, env, encoding: "utf8" });
+      expect(r.status, r.stderr).toBe(0);
+      return r.stdout;
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  }
+  const skipLines = (out: string) => out.split("\n").filter((l) => l.startsWith("Skipped audits"));
+  const SKIP = '        skipAudits: ["robots-txt"],';
+
+  it("F4-47 the summary names the robots-txt skip, read from the real lighthouserc.cjs, with connect-src 'none' and dist.test.ts", () => {
+    const lines = skipLines(runSummary());
+    expect(lines).toEqual([skippedAuditsLine(["robots-txt"])]);
+    for (const needle of ["`robots-txt`", "F4-47", "connect-src 'none'", "/robots.txt", "tests/build/dist.test.ts"])
+      expect(lines[0], needle).toContain(needle);
+    // derived from the config, not hard-coded in the summary script
+    expect(readFileSync(SUMMARY, "utf8")).not.toContain("robots-txt");
+  });
+
+  it("F4-47 a config without skipAudits prints no skip line; an extra skipped audit is listed and flagged", () => {
+    expect(skippedAuditsLine([])).toBeUndefined();
+    expect(skipLines(runSummary((rc) => rc.replace(SKIP, "")))).toEqual([]);
+    const extra = skipLines(
+      runSummary((rc) => rc.replace(SKIP, '        skipAudits: ["robots-txt", "is-crawlable"],')),
+    );
+    expect(extra).toHaveLength(1);
+    expect(extra[0]).toContain(`\`robots-txt\` (${SKIP_REASONS["robots-txt"]})`);
+    expect(extra[0]).toContain("`is-crawlable` (⚠️ no reason recorded in assertions.ts)");
+  });
+
+  it("F4-47 every audit the config skips has a recorded reason, and only robots-txt has one", () => {
+    expect(Object.keys(SKIP_REASONS)).toEqual(["robots-txt"]);
   });
 });

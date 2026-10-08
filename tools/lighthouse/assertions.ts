@@ -199,6 +199,23 @@ export function strictlyBelow(x: number): number {
   return f[0] ?? NaN;
 }
 
+/**
+ * F4-47: why each audit in lighthouserc.cjs `collect.settings.skipAudits` is skipped.
+ * The job summary names every skipped audit read from the real config; one with no
+ * reason here is still listed, flagged, so a new skip can't go unnoticed.
+ */
+export const SKIP_REASONS: Readonly<Record<string, string>> = {
+  "robots-txt":
+    "F4-47: the site CSP's `connect-src 'none'` blocks Lighthouse's own in-page `/robots.txt` fetch; `tests/build/dist.test.ts` checks robots.txt",
+};
+
+/** The job-summary line naming the skipped audits, or undefined when nothing is skipped. */
+export function skippedAuditsLine(skipAudits: readonly string[]): string | undefined {
+  if (skipAudits.length === 0) return undefined;
+  const items = skipAudits.map((id) => `\`${id}\` (${SKIP_REASONS[id] ?? "⚠️ no reason recorded in assertions.ts"})`);
+  return `Skipped audits (lighthouserc.cjs \`skipAudits\`, not run or scored on any page): ${items.join("; ")}.`;
+}
+
 export const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
