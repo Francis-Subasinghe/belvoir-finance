@@ -19,7 +19,7 @@ const walk = (dir: string): string[] =>
   });
 
 describe("F4-34 the Q-9 CSP check", () => {
-  it("the positive fixture carries exactly the site CSP and passes", () => {
+  it("F4-34 the positive fixture carries exactly the site CSP and passes", () => {
     expect(cspOf(fx("ok.html"))).toBe(SITE_CSP);
     expect(cspProblems(cspOf(fx("ok.html")))).toEqual([]);
   });
@@ -31,12 +31,12 @@ describe("F4-34 the Q-9 CSP check", () => {
     ["tt-policy-directive.html", "a trusted-types directive allows a policy"],
   ];
   for (const [file, message] of NEGATIVE) {
-    it(`${file} fails: ${message}`, () => {
+    it(`F4-34 ${file} fails: ${message}`, () => {
       const problems = cspProblems(cspOf(fx(file)));
       expect(problems.join(" | ")).toContain(message);
     });
   }
-  it("any other changed, missing or extra directive fails too", () => {
+  it("F4-34 any other changed, missing or extra directive fails too", () => {
     expect(cspProblems(SITE_CSP.replace("object-src 'none'", "object-src 'self'"))).toEqual([
       `object-src changed: "'self'", expected "'none'"`,
     ]);
@@ -45,13 +45,13 @@ describe("F4-34 the Q-9 CSP check", () => {
       cspProblems(SITE_CSP.replace("require-trusted-types-for 'script'", "require-trusted-types-for 'none'")),
     ).toEqual([`require-trusted-types-for is "'none'", not 'script'`]);
   });
-  it("parses directives without values (upgrade-insecure-requests)", () => {
+  it("F4-34 parses directives without values (upgrade-insecure-requests)", () => {
     expect(parseCsp(SITE_CSP).get("upgrade-insecure-requests")).toBe("");
   });
 });
 
 describe("F4-34 no Trusted Types policy in source or bundles", () => {
-  it("the fixtures that create a policy (source and minified bundle) or name a policy directive fail", () => {
+  it("F4-34 the fixtures that create a policy (source and minified bundle) or name a policy directive fail", () => {
     expect(trustedTypesPolicyProblems("tt-create-policy.ts.fixture", fx("tt-create-policy.ts.fixture"))).toEqual([
       "tt-create-policy.ts.fixture: creates a Trusted Types policy (createPolicy)",
     ]);
@@ -62,10 +62,10 @@ describe("F4-34 no Trusted Types policy in source or bundles", () => {
       "tt-policy-directive.html: names a trusted-types policy directive",
     ]);
   });
-  it("require-trusted-types-for on its own is not a policy directive", () => {
+  it("F4-34 require-trusted-types-for on its own is not a policy directive", () => {
     expect(trustedTypesPolicyProblems("ok.html", fx("ok.html"))).toEqual([]);
   });
-  it("src/, scripts/, astro.config.mjs and the Lighthouse tooling create no policy and name no policy directive", () => {
+  it("F4-34 src/, scripts/, astro.config.mjs and the Lighthouse tooling create no policy and name no policy directive", () => {
     const files = [
       ...walk("src"),
       ...walk("scripts"),

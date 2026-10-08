@@ -65,7 +65,7 @@ const PAGES = [
 
 test.describe("F4-34 (Q-9) every built page runs clean under the site CSP", () => {
   for (const url of PAGES) {
-    test(`no CSP violation, CSP console error or page error: ${url.replace(/^http:\/\/[^/]+/, "")}`, async ({
+    test(`F4-34 no CSP violation, CSP console error or page error: ${url.replace(/^http:\/\/[^/]+/, "")}`, async ({
       page,
     }) => {
       const w = await watch(page);
@@ -82,7 +82,7 @@ test.describe("F4-34 (Q-9) every built page runs clean under the site CSP", () =
 });
 
 test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'none'", () => {
-  test("change values, Enter, Update, every error state and Reset raise no violation", async ({ page }) => {
+  test("F4-34 change values, Enter, Update, every error state and Reset raise no violation", async ({ page }) => {
     const w = await watch(page);
     await page.goto(TOOL);
     await expect(page.locator("[data-cvp-fields]")).not.toHaveAttribute("disabled");
@@ -139,7 +139,7 @@ test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'non
     ).toBe("TypeError");
   });
 
-  test("negative: a deliberate innerHTML = string sink in the tool module is blocked by Trusted Types", async ({
+  test("F4-34 negative: a deliberate innerHTML = string sink in the tool module is blocked by Trusted Types", async ({
     page,
   }) => {
     const w = await watch(page);
@@ -154,7 +154,7 @@ test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'non
     expect(w.pageErrors.join(" | ")).toMatch(/TrustedHTML/);
   });
 
-  test("negative: a string sink from page script throws, on every sink kind", async ({ page }) => {
+  test("F4-34 negative: a string sink from page script throws, on every sink kind", async ({ page }) => {
     const w = await watch(page);
     await page.goto(TOOL);
     const thrown = await page.evaluate(() => {
@@ -186,7 +186,7 @@ test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'non
 });
 
 test.describe("F4-34 (Q-9) connect-src 'none' blocks every script connection", () => {
-  test("fetch, XHR, sendBeacon, WebSocket and EventSource are blocked before the network; an allowed image load is the control", async ({
+  test("F4-34 fetch, XHR, sendBeacon, WebSocket and EventSource are blocked before the network; an allowed image load is the control", async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-1280", "one viewport is enough for a network probe");
