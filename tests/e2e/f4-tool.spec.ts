@@ -467,6 +467,36 @@ test.describe("F4-36 / F4-38 progressive enhancement", () => {
   });
 });
 
+test.describe("F4-47 / F4-36 the web-font swap moves nothing on the tool page", () => {
+  // Lighthouse's mobile emulation. The notice sat on a line-break boundary at 412 px, so the
+  // swap from the metric-matched fallback added a line and moved the explorer (CLS 0.0056).
+  test.use({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
+  test("F4-47 the explorer starts at the same place before and after the web fonts swap in (412 px, fonts held back)", async ({
+    page,
+  }) => {
+    // Lighthouse CI is the CLS judge (0 on this page, F4-47). This is the deterministic part: everything
+    // above the explorer keeps its height through the swap, so the explorer never moves. The header's
+    // sub-pixel swap residue (~0.0003, on every page) is covered by layout-shift.spec.ts.
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    await page.route(/\.woff2(\?|$)/, async (route) => {
+      await gate;
+      await route.continue();
+    });
+    await page.goto(TOOL, { waitUntil: "domcontentloaded" });
+    const top = () => page.evaluate(() => document.querySelector("[data-cvp]")?.getBoundingClientRect().top ?? -1);
+    const before = await top();
+    release();
+    const loaded = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return [...document.fonts].filter((f) => f.status === "loaded").length;
+    });
+    expect(loaded, "the web fonts loaded, so the swap was measured").toBeGreaterThan(0);
+    await page.waitForTimeout(200);
+    expect(await top()).toBeCloseTo(before, 0);
+  });
+});
+
 test.describe("F4-50 commits are cheap", () => {
   test("F4-50 with 4x CPU throttling, committing S3-14 makes no long task over 50 ms", async ({ page }) => {
     await open(page);

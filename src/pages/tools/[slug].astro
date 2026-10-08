@@ -27,8 +27,8 @@ const isExplorer = tool.id === "cash-vs-profit";
   <p class="page-intro prose">{d.summary}</p>
   <StatusNotice variant="info" title="Illustrative only">
     <p data-testid="illustrative-only">
-      Illustrative only. This tool uses no current tax values and is not advice. It collects no data: nothing you type
-      leaves this page or is saved.
+      Illustrative only. This tool uses no current tax values and is not advice. It collects no data, so nothing you
+      type leaves this page or is saved.
     </p>
   </StatusNotice>
   {isExplorer && <CashVsProfitExplorer />}
