@@ -101,7 +101,11 @@
   --space-6: 4rem;
 
   /* Layout */
-  --measure: 68ch;
+  /* 68 Inter "0" advances at 16px. Not 68ch: ch follows the "0" of whichever
+     face is painting, so the metric fallback and Inter gave different widths and
+     every prose paragraph re-wrapped when the web font arrived (D-3, V1-36;
+     tests/e2e/layout-shift.spec.ts). */
+  --measure: 42.5rem;
   --container-max: 72rem;
   --gutter: var(--space-3);
   --target-min: 1.5rem; /* 24px, WCAG 2.5.8 */

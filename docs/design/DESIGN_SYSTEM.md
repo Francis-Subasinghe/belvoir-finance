@@ -32,7 +32,7 @@ The palette and fonts come from [ADR-0002](../decisions/ADR-0002-brand-colour-ty
 | Callouts | `--color-callout-{fact,estimate,example,opinion}` |
 | Chart | `--color-chart-bg`, `--color-chart-series-1`, `--color-chart-series-2`, `--color-chart-axis` |
 | Type | `--font-serif` (Source Serif 4), `--font-sans` (Inter), `--font-mono` (IBM Plex Mono), `--numeric` (`tabular-nums`), `--step--1` to `--step-4` |
-| Space and layout | `--space-1` to `--space-6`, `--measure` (68ch), `--container-max` (72rem), `--gutter`, `--target-min` (24 px) |
+| Space and layout | `--space-1` to `--space-6`, `--measure` (42.5rem, about 68 characters of Inter; not `ch`, which changes with the font while it loads), `--container-max` (72rem), `--gutter`, `--target-min` (24 px) |
 | Shape | `--radius`, `--radius-pill`, `--border-width`, `--border-width-strong`, `--focus-width` (3 px), `--focus-offset` |
 | Motion | `--motion-duration-fast` (120ms), `--motion-duration-base` (200ms), `--motion-ease-standard` |
 
