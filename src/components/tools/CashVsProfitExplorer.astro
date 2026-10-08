@@ -58,8 +58,14 @@ const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
 
 <section class="explorer" aria-labelledby={`${idPrefix}-heading`} data-cvp={idPrefix} data-testid="explorer">
   <H id={`${idPrefix}-heading`}>{EXPLORER_HEADING}</H>
-  <p class="explorer-note" data-cvp-note>
-    {note}
+  {/* F4-36: the script swaps the live text; the hidden copy keeps the line count, so nothing shifts. */}
+  <p class="explorer-note">
+    <span class="explorer-note-text" data-cvp-note>
+      {note}
+    </span>
+    <span class="explorer-note-reserve" aria-hidden="true">
+      {note}
+    </span>
   </p>
   <div class="explorer-layout">
     <fieldset class="explorer-fields" disabled={disabled} data-cvp-fields>

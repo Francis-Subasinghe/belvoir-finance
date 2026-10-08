@@ -134,11 +134,13 @@ describe("F4 explorer markup", () => {
     expect(controlProblems(fx("form-wrapper.html")).join(" ")).toContain("<form>");
     expect(controlProblems(fx("input-with-name.html")).join(" ")).toContain("has a name");
   });
-  it("F4-18 / F4-21 / F4-35 / F4-41 live region, table, disabled fieldset, note and disclaimer; the fixtures fail", () => {
+  it("F4-18 / F4-21 / F4-35 / F4-36 / F4-41 live region, table, disabled fieldset, note and its reserve, disclaimer; the fixtures fail", () => {
     expect(resultsMarkupProblems(tool())).toEqual([]);
     expect(resultsMarkupProblems(fx("no-disclaimer.html")).join(" ")).toContain("disclaimer");
     expect(resultsMarkupProblems(fx("live-region-by-script.html")).join(" ")).toContain("live region");
     expect(resultsMarkupProblems(fx("fieldset-enabled.html")).join(" ")).toContain("disabled");
+    // F4-36: without the hidden copy, swapping the note can change its height.
+    expect(resultsMarkupProblems(fx("note-no-reserve.html")).join(" ")).toContain("reserve");
   });
   it("F4-39 each input value and its assumption default equal DEFAULTS, and the F3 placeholder text is gone", () => {
     const entry = parse(read("content/tools/cash-vs-profit.yaml")) as {

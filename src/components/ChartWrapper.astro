@@ -37,6 +37,20 @@ const bottom = 24;
 const groupW = W / categories.length;
 const barW = Math.min(36, (groupW - 12) / series.length);
 const plotH = H - top - bottom;
+/*
+ * F4-51: labels are positioned so the widest a label can render stays inside
+ * the viewBox. The CSS caps label size at 13 units; hinted mono advances reach
+ * about 0.66 em at small on-screen sizes, so 0.7 em per character is the
+ * worst case. A label near either edge moves inward just enough; the rest
+ * stay centred on their bar or category.
+ */
+const LABEL_MAX_UNITS = 13;
+const LABEL_ADVANCE_EM = 0.7;
+const labelX = (centre: number, text: string): number => {
+  const half = (text.length * LABEL_ADVANCE_EM * LABEL_MAX_UNITS) / 2;
+  const x = Math.min(W - half, Math.max(half, centre));
+  return Math.round(x * 100) / 100;
+};
 const bars = categories.flatMap((cat, ci) =>
   series.map((s, si) => {
     const v = s.values[ci] ?? 0;
@@ -75,7 +89,13 @@ const bars = categories.flatMap((cat, ci) =>
           width={barW - 2}
           height={b.h}
         />
-        <text class="chart-value numeric" data-numeric="true" x={b.x + barW / 2} y={b.y - 4} text-anchor="middle">
+        <text
+          class="chart-value numeric"
+          data-numeric="true"
+          x={labelX(b.x + barW / 2, nf.format(b.v))}
+          y={b.y - 4}
+          text-anchor="middle"
+        >
           {nf.format(b.v)}
         </text>
       </g>
@@ -84,7 +104,7 @@ const bars = categories.flatMap((cat, ci) =>
       <text
         class="chart-category numeric"
         data-numeric="true"
-        x={ci * groupW + groupW / 2}
+        x={labelX(ci * groupW + groupW / 2, c)}
         y={H - 6}
         text-anchor="middle"
       >

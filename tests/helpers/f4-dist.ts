@@ -177,8 +177,13 @@ export function resultsMarkupProblems(html: string): string[] {
   if (!text(results).includes(DISCLAIMER)) out.push("the disclaimer isn't in the results area");
   const fieldset = /<fieldset\b([^>]*)>/.exec(ex)?.[1] ?? "";
   if (!attrsOf(fieldset).has("disabled")) out.push("the fieldset isn't disabled in the HTML");
-  const note = /<p\b[^>]*data-cvp-note[^>]*>([\s\S]*?)<\/p>/.exec(ex)?.[1];
+  const note = /<span\b[^>]*data-cvp-note[^>]*>([\s\S]*?)<\/span>/.exec(ex)?.[1];
   if (note === undefined || text(note) !== NOJS_NOTE) out.push("the JavaScript-off note is missing");
+  // F4-36: a hidden, aria-hidden copy of the note holds its height when the script swaps the text.
+  const reserve = /<span\b[^>]*class="explorer-note-reserve"[^>]*>([\s\S]*?)<\/span>/.exec(ex);
+  if (!reserve || !/aria-hidden="true"/.test(reserve[0]) || text(reserve[1] ?? "") !== NOJS_NOTE) {
+    out.push("the note has no hidden reserve copy, so enhancement can shift the layout");
+  }
   return out;
 }
 

@@ -846,6 +846,16 @@
 .explorer-results {
   max-width: var(--measure);
 }
+/* F4-36: the live note and its hidden copy share one cell, so swapping the text never changes the height. */
+.explorer-note {
+  display: grid;
+}
+.explorer-note > span {
+  grid-area: 1 / 1;
+}
+.explorer-note-reserve {
+  visibility: hidden;
+}
 .explorer-fields {
   min-width: 0;
   margin: 0;
