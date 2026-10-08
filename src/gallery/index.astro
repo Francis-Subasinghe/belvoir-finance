@@ -331,14 +331,16 @@ const levels = [
         </dl>
       </div>
       <p class="gallery-label">Byline with a 60-character reviewer name</p>
-      <ArticleHeader
-        titleLevel={2}
-        title="Placeholder article title"
-        summary="One-sentence placeholder summary."
-        author={{ name: "Placeholder Author", href: withBase("/design/"), demo: true }}
-        reviewer={{ name: LONG_NAME, href: withBase("/design/"), demo: true }}
-        firstPublished={day}
-      />
+      <div data-testid="byline-long-name">
+        <ArticleHeader
+          titleLevel={2}
+          title="Placeholder article title"
+          summary="One-sentence placeholder summary."
+          author={{ name: "Placeholder Author", href: withBase("/design/"), demo: true }}
+          reviewer={{ name: LONG_NAME, href: withBase("/design/"), demo: true }}
+          firstPublished={day}
+        />
+      </div>
     </section>
 
     <section id="forms" aria-labelledby="h-forms" class="gallery-section">

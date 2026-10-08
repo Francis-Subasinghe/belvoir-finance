@@ -76,6 +76,10 @@ export function overflowProblems(page: Page): Promise<string[]> {
     }
     for (const el of document.querySelectorAll("body *")) {
       if (el.closest(".visually-hidden, .skip-link")) continue;
+      // Shapes inside an <svg> are clipped to the svg's viewport (UA overflow: hidden),
+      // so they can't scroll the page; cover art with preserveAspectRatio "slice" draws
+      // past its box on purpose. The <svg> element itself is still checked.
+      if (el.tagName.toLowerCase() !== "svg" && el.closest("svg")) continue;
       const scroller = el.closest(".table-scroll");
       if (scroller && scroller !== el) {
         if (scroller.getAttribute("tabindex") !== "0" || !scroller.getAttribute("aria-label")) {
