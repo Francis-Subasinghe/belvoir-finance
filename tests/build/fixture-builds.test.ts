@@ -119,6 +119,24 @@ describe("F3 rich fixture build (tests/fixtures/content/base)", () => {
     expect(html).toContain("Source: Fixture Demo Source (placeholder), Fixture publisher");
   });
 
+  it("V1-41 a fixture Topic on each of the four pillars renders that pillar's illustration and icon", () => {
+    const want: [string, string][] = [
+      ["fx-topic-a", "understand-the-numbers"],
+      ["fx-topic-b", "make-better-decisions"],
+      ["fx-topic-c", "finance-in-context"],
+      ["fx-topic-d", "build-capability"],
+    ];
+    const home = read(site, "index.html");
+    for (const [id, pillar] of want) {
+      const html = read(site, `topics/${id}/index.html`);
+      expect(html, id).toContain(`data-testid="pillar-art" data-pillar="${pillar}"`);
+      expect(html, id).toContain(`data-icon="${pillar}"`);
+      const card = home.split('data-testid="topic-card"').find((c) => c.includes(`/topics/${id}/`)) ?? "";
+      expect(card, id).toContain(`data-pillar="${pillar}"`);
+      expect(card, id).toContain(`data-icon="${pillar}"`);
+    }
+  });
+
   it("F3-06 the featured story is the newest; a date tie goes to the alphabetically first id", () => {
     const home = read(site, "index.html");
     const featured = home.split('data-testid="featured-story"')[1]?.split("</section>")[0] ?? "";

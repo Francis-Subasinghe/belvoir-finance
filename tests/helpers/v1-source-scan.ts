@@ -229,7 +229,7 @@ export function fontFaceProblems(file: string, css: string, output = false): Sou
     const urls = [...f.src.matchAll(/url\(\s*["']?([^)"']+)/g)].map((m) => m[1] ?? "");
     if (/ Fallback$/.test(f.family) && urls.length > 0)
       out.push({ file, rule: "V1-36", message: `${key} must use local() only` });
-    if (output && urls.some((u) => !/^\/_astro\/[\w.-]+\.woff2$/.test(u)))
+    if (output && urls.some((u) => !/^(\/belvoir-finance)?\/_astro\/[\w.-]+\.woff2?$/.test(u)))
       out.push({ file, rule: "V1-36", message: `${key} loads ${urls.join(", ")}` });
   }
   return out;
