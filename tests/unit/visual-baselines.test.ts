@@ -13,6 +13,7 @@ import { VISUAL_PAGES, VISUAL_PROJECTS, expectedBaselinePaths } from "../helpers
 import {
   MANIFEST,
   buildManifest,
+  artifactEntries,
   checkBaselines,
   coverageProblems,
   manifestHeader,
@@ -371,5 +372,28 @@ describe("untrackedBaselineWarnings (check:visual-baselines ::warning:: lines)",
   it("is empty when everything on disk is tracked, or the folder does not exist", () => {
     expect(untrackedBaselineWarnings(fixture({ [P360]: "a" }), [P360])).toEqual([]);
     expect(untrackedBaselineWarnings(fixture({ "README.md": "x" }), [])).toEqual([]);
+  });
+});
+
+describe("artifactEntries (npm run visual:expected)", () => {
+  it("lists the expected baselines in the artifact layout, sorted in byte order", () => {
+    const entries = artifactEntries(expectedBaselinePaths());
+    expect(entries).toHaveLength(VISUAL_PROJECTS.length * (VISUAL_PAGES.length + 1));
+    expect(entries[0]).toBe("visual-1280/gallery-linux.png");
+    expect(entries).toContain("visual-360/page-home-linux.png");
+    for (const e of entries) expect(e).toMatch(/^visual-(360|768|1280)\/[a-z0-9-]+-linux\.png$/);
+    expect([...entries].sort()).toEqual(entries);
+  });
+
+  it("rejects anything that is not a baseline path", () => {
+    expect(() => artifactEntries(["docs/x-linux.png"])).toThrow("not a baseline path");
+    expect(() => artifactEntries(["tests/visual/__screenshots__/../x-linux.png"])).toThrow("not a baseline path");
+    expect(() => artifactEntries(["tests/visual/__screenshots__/visual-360/x-darwin.png"])).toThrow();
+  });
+
+  it("the npm script prints exactly that list", () => {
+    const r = spawnSync(process.execPath, ["scripts/print-visual-expected.ts"], { encoding: "utf8" });
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe(`${artifactEntries(expectedBaselinePaths()).join("\n")}\n`);
   });
 });

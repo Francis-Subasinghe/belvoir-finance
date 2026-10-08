@@ -159,7 +159,8 @@ jobs:
     #   only) and upload it as "visual-baselines". The job still fails via the compare step.
     # To (re)baseline: review the diff, then follow the step summary, which prints the exact
     # commands: `gh api .../actions/artifacts/<id>/zip` into a `mktemp -d` folder outside the
-    # repo, check every zip entry and the unzipped files (no symlinks, nothing unexpected),
+    # repo (removed on exit), `unzip -tq` integrity test, check every zip entry and the
+    # unzipped files (no symlinks, nothing unexpected, exactly `npm run visual:expected`),
     # copy them in, `git add -f`, then `npm run visual:manifest -- --run <run-id> --artifact
     # <artifact-id> --commit <PR head sha>`. Repo guards (check:visual-baselines) checks the
     # hashes, rejects non-*-linux.png files, and requires exactly the set the specs produce.
@@ -290,15 +291,17 @@ jobs:
             if [ -n "$ARTIFACT_ID" ]; then
               echo ""
               echo "### To accept these screenshots as the new baselines"
-              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then run this from the repo root. It downloads into a temporary folder outside the repo and checks the zip before anything is copied in (\`gh run download\` can fail with \"path traversal\" on newer gh, and should not extract straight into the checkout):"
+              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then run this from the repo root. It downloads into a temporary folder outside the repo (removed on exit), tests the zip's integrity (\`unzip -tq\`), checks every entry, then checks that the unzipped files are exactly the set the visual specs produce (\`npm run visual:expected\`) before anything is copied in (\`gh run download\` can fail with \"path traversal\" on newer gh, and should not extract straight into the checkout):"
               echo ""
               echo '```sh'
               echo "( # in a subshell: any failed check stops the remaining steps"
               echo "set -euo pipefail"
               echo "tmp=\"\$(mktemp -d)\"   # outside the repo"
+              # shellcheck disable=SC2016 # printed for the reviewer to run, not expanded here
+              echo 'trap '"'"'rm -rf "$tmp"'"'"' EXIT   # remove the temp folder however this ends'
               echo "gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip > \"\$tmp/a.zip\""
               cat <<'STEPS'
-          unzip -tq "$tmp/a.zip"
+          unzip -tq "$tmp/a.zip"   # zip integrity test
           # Every zip entry must match the pattern, and none may be a symlink.
           bad="$({ zipinfo -1 "$tmp/a.zip" | grep -Ev '^visual-(360|768|1280)/[a-z0-9-]+-linux\.png$'; zipinfo "$tmp/a.zip" | grep '^l'; } || true)"
           [ -z "$bad" ] || { printf 'STOP: unexpected zip entries:\n%s\n' "$bad"; exit 1; }
@@ -306,6 +309,10 @@ jobs:
           # After unzip: no symlinks, and nothing but regular files and folders.
           odd="$(find "$tmp/x" -type l; find "$tmp/x" ! -type f ! -type d)"
           [ -z "$odd" ] || { printf 'STOP: unexpected files:\n%s\n' "$odd"; exit 1; }
+          # Exactly the set the visual specs produce: nothing missing, nothing extra.
+          want="$(npm run -s visual:expected)"
+          got="$(cd "$tmp/x" && find . -type f | sed 's#^\./##' | LC_ALL=C sort)"
+          [ "$want" = "$got" ] || { echo 'STOP: not the expected set (< missing from the artifact, > extra):'; diff <(printf '%s\n' "$want") <(printf '%s\n' "$got") || true; exit 1; }
           git rm -rq --ignore-unmatch tests/visual/__screenshots__ && rm -rf tests/visual/__screenshots__
           mkdir -p tests/visual/__screenshots__ && cp -R "$tmp/x/." tests/visual/__screenshots__/
           git add -f tests/visual/__screenshots__
