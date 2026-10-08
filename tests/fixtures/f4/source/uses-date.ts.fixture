@@ -1,0 +1,2 @@
+// F4-01 negative fixture: a tool module reading the clock.
+export const month = (): number => new Date().getMonth();

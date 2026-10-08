@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+location.hash = "results";

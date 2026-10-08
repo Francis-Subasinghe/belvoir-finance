@@ -1,0 +1,2 @@
+// F4-27 negative fixture: remembering the last inputs.
+export const save = (v: string): void => localStorage.setItem("inputs", v);

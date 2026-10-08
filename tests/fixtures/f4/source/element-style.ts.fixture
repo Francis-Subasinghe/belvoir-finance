@@ -1,0 +1,2 @@
+// F4-33 negative fixture: an inline style instead of `hidden`.
+export const hide = (el: HTMLElement): void => { el.style.display = "none"; };

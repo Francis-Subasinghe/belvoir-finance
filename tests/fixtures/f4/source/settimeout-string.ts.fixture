@@ -1,0 +1,2 @@
+// F4-32 negative fixture: setTimeout with a string is eval.
+setTimeout("update()", 0);

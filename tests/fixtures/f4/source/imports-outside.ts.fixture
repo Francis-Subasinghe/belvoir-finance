@@ -1,0 +1,3 @@
+// F4-01 negative fixture: a tool module importing from outside its folder.
+import { formatDateGB } from "../format.ts";
+export const label = formatDateGB;

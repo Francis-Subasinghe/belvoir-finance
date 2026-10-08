@@ -1,0 +1,2 @@
+// F4-32 negative fixture.
+export const run = (code: string): unknown => new Function(code)();

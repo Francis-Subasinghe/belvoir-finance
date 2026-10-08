@@ -1,0 +1,5 @@
+---
+// F4-30 negative fixture: define:vars inlines the script.
+const months = 6;
+---
+<script define:vars={{ months }}>console.log(months);</script>

@@ -1,0 +1,2 @@
+// F4-33 negative fixture.
+export const hide = (el: Element): void => el.setAttribute("style", "display:none");

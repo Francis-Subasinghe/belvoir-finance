@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+export const ws = new WebSocket("wss://example.invalid/");

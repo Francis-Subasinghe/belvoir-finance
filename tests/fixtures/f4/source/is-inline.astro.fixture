@@ -1,0 +1,5 @@
+---
+// F4-30 negative fixture: an inline script in a tool component.
+---
+<div id="explorer"></div>
+<script is:inline>document.getElementById("explorer");</script>

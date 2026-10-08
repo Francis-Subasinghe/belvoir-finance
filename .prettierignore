@@ -16,3 +16,5 @@ tests/fixtures/content/
 # Verbatim HTML fixtures (case and quoting are the point of the test)
 tests/fixtures/html/script-*.html
 tests/fixtures/v1/
+# F4 negative fixtures are verbatim
+tests/fixtures/f4/
