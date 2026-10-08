@@ -58,6 +58,39 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
   "ref-story-related-tool": ["F3-15", "ref-missing", "relatedTools[0]", /no Tool with id "no-such-tool"/],
   "ref-topic-reading-path": ["F3-15", "ref-missing", "readingPath[1]", /no Story with id "no-such-story"/],
   "ref-topic-featured-tool": ["F3-15", "ref-missing", "featuredTool", /no Tool with id "no-such-tool"/],
+  "tool-official-no-reviewer": [
+    "F4-42",
+    "schema",
+    "reviewer",
+    /CF-06: a tool with usesOfficialValues: true needs a reviewer/,
+  ],
+  "tool-official-no-source": [
+    "F4-42",
+    "schema",
+    "sourceRecord",
+    /CF-06: a tool with usesOfficialValues: true needs a source record/,
+  ],
+  "tool-official-neither": ["F4-42", "schema", "reviewer", /CF-06: .* needs a reviewer/],
+  "tool-missing-uses-official-values": [
+    "F4-43",
+    "schema",
+    "usesOfficialValues",
+    /usesOfficialValues is required \(true or false\), with no default/,
+  ],
+  "tool-official-demo-source": [
+    "F4-44",
+    "tool-official-source",
+    "sourceRecord",
+    /CF-06: "fx-demo-source" is a placeholder/,
+  ],
+  "tool-official-paused-source": ["F4-44", "tool-official-source", "sourceRecord", /CF-06: "fx-paused" is paused/],
+  "tool-official-demo-reviewer": [
+    "F4-44",
+    "tool-official-reviewer",
+    "reviewer",
+    /CF-06: "fx-placeholder" is a placeholder \(demo\) person/,
+  ],
+  "demo-tool-real-source": ["F4-44", "demo-source", "sourceRecord", /demo tools cite only labelled placeholder/],
   "ref-tool-reviewer": ["F3-15", "ref-missing", "reviewer", /no Person with id "no-such-person"/],
   "ref-tool-source-record": ["F3-15", "ref-missing", "sourceRecord", /no Source with id "no-such-source"/],
   "ref-source-owner": ["F3-15", "ref-missing", "owner", /no Person with id "no-such-person"/],
@@ -213,6 +246,27 @@ describe("F3-31 content fixtures", () => {
  * written joined in the repo: a joined user@host string looks like an email
  * address to the F1-17 secrets check.
  */
+describe("F4-42 to F4-44 CF-06: tools that use official values", () => {
+  it("F4-42 a tool with neither reviewer nor source record gets both CF-06 messages, naming the file", () => {
+    const r = checkContentRules([BASE, `${NEG}/tool-official-neither`]);
+    const cf06 = r.errors.filter((e) => /CF-06/.test(e.message));
+    expect(cf06.map((e) => e.field).sort()).toEqual(["reviewer", "sourceRecord"]);
+    for (const e of cf06) expect(formatProblem(e)).toContain(`${NEG}/tool-official-neither/tools/fx-tool.yaml`);
+  });
+  it("F4-42 positive: usesOfficialValues true with a real reviewer and an active, non-demo source passes", () => {
+    const r = checkContentRules([BASE, `${ROOT}/positive/tool-official-values`]);
+    expect(r.errors.map(formatProblem)).toEqual([]);
+    const tool = must(r.entries.find((e) => e.collection === "tools" && e.id === "fx-tool"));
+    expect([tool.raw.usesOfficialValues, tool.raw.demo]).toEqual([true, false]);
+  });
+  it("F4-43 / F4-40 the committed tool writes usesOfficialValues: false and demo: true explicitly", () => {
+    const r = checkContentRules("content");
+    expect(r.errors.map(formatProblem)).toEqual([]);
+    const tools = r.entries.filter((e) => e.collection === "tools");
+    expect(tools.map((t) => [t.id, t.raw.usesOfficialValues, t.raw.demo])).toEqual([["cash-vs-profit", false, true]]);
+  });
+});
+
 describe("F3-48 placeholder URLs carrying userinfo", () => {
   const tmp = mkdtempSync(join(tmpdir(), "belvoir-f348-"));
   afterAll(() => rmSync(tmp, { recursive: true, force: true }));

@@ -336,16 +336,38 @@ export const personSchema = z
     protectedTermRule(p.bio, ["bio"], ctx);
   });
 
-export const toolSchema = z.strictObject({
-  title: z.string().min(1),
-  summary: z.string().min(1),
-  assumptions: z.array(z.strictObject({ label: z.string(), default: z.string(), explanation: z.string() })).default([]),
-  limitations: z.string().default(""),
-  reviewer: optionalRef,
-  sourceRecord: optionalRef,
-  usesOfficialValues: z.boolean().default(false),
-  demo: requiredBool("demo"),
-});
+/**
+ * F4-42 / F4-43 (CF-06, D-11, Q-7): a tool that uses current tax, legal or
+ * official values needs a reviewer and a source record. `usesOfficialValues`
+ * has no default, like `demo`, so leaving it out can't skip the rule. Whether
+ * the source is fit to use (active, non-demo) is a cross-entry rule in
+ * src/lib/content-rules.ts (F4-44).
+ */
+export const toolSchema = z
+  .strictObject({
+    title: z.string().min(1),
+    summary: z.string().min(1),
+    assumptions: z
+      .array(z.strictObject({ label: z.string(), default: z.string(), explanation: z.string() }))
+      .default([]),
+    limitations: z.string().default(""),
+    reviewer: optionalRef,
+    sourceRecord: optionalRef,
+    usesOfficialValues: requiredBool("usesOfficialValues"),
+    demo: requiredBool("demo"),
+  })
+  .superRefine((t, ctx) => {
+    if (!t.usesOfficialValues) return;
+    for (const field of ["reviewer", "sourceRecord"] as const) {
+      if (!t[field]) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: `CF-06: a tool with usesOfficialValues: true needs a ${field === "reviewer" ? "reviewer" : "source record"} (${field})`,
+        });
+      }
+    }
+  });
 
 export const newsletterCtaSchema = z.strictObject({
   heading: z.string().min(1),
