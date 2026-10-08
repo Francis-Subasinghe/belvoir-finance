@@ -6,6 +6,7 @@ import { expectedSite } from "../helpers/expected-site";
 import { parse } from "yaml";
 import { checkContentRules } from "../../src/lib/content-rules";
 import { isJsonLdScriptAttrs, nonJsonLdScriptTags } from "../helpers/html";
+import { scriptPolicyProblems } from "../helpers/f4-dist";
 
 const DIST = "dist";
 const BASE = "/belvoir-finance/";
@@ -173,10 +174,9 @@ describe("F3-12 / F3-13 editorial and placeholder pages", () => {
     expect(page).not.toContain("<form");
     expect(page).not.toMatch(/<input/);
   });
-  it("F3-10 the tool page is a static shell: assumptions, limitations, Illustrative only, no controls", () => {
+  it("F3-10 the tool page keeps assumptions, limitations and Illustrative only (the F4 explorer replaces the static shell; F4-59)", () => {
     const page = html("tools/cash-vs-profit/index.html");
     for (const id of ["assumptions", "limitations", "illustrative-only"]) expect(page).toContain(`data-testid="${id}"`);
-    expect(page).not.toMatch(/<(input|select|textarea|button|form)\b/);
   });
 });
 
@@ -216,9 +216,8 @@ describe("F3-14 / F3-11 / F3-19 / F3-34 nothing that mustn't render does", () =>
     for (const { page, html: h } of pages)
       expect(h, page).not.toMatch(/href="https?:\/\/([^"/]*\.)?(gov\.uk|hmrc|ons\.gov)/i);
   });
-  it("F3-38 dist has no .js file and no script other than JSON-LD", () => {
-    expect(files.filter((f) => /\.m?js$/.test(f)).map(rel)).toEqual([]);
-    for (const { page, html: h } of pages) expect(nonJsonLdScriptTags(h), page).toEqual([]);
+  it("F3-38 dist has no script other than JSON-LD, except the tool page's one module (F4-46, F4-59)", () => {
+    expect(scriptPolicyProblems(pages, files.filter((f) => /\.m?js$/.test(f)).map(rel))).toEqual([]);
   });
   it("F3-38 the same check catches an upper-case <SCRIPT> (CodeQL js/bad-tag-filter)", () => {
     const fixture = readFileSync("tests/fixtures/html/script-uppercase.html", "utf8");

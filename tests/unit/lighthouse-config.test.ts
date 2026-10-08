@@ -28,6 +28,18 @@ import {
 import { portInUse } from "../../tools/lighthouse/preflight.ts";
 
 const budgets = readBudgets("tools/lighthouse/budgets.json");
+
+/** F4-45 / F4-46 (D-8, Q-6): the pinned script budgets. */
+function scriptBudgetProblems(b: ReturnType<typeof readBudgets>): string[] {
+  const out: string[] = [];
+  if (b.scriptTransferBytes.editorial !== 0)
+    out.push(`editorial scriptTransferBytes is ${b.scriptTransferBytes.editorial}, expected 0`);
+  const tools = b.scriptTransferBytes.tools;
+  if (tools.length !== 1 || tools[0]?.path !== "/tools/cash-vs-profit/")
+    out.push("expected exactly the cash-vs-profit tool");
+  for (const t of tools) if (t.max !== 122_880) out.push(`tools ${t.path} max is ${t.max}, expected 122880`);
+  return out;
+}
 const url = (path: string) => `${ORIGIN}/belvoir-finance/${path}`;
 const page = (head: string) =>
   `<!doctype html><html lang="en-GB"><head><meta charset="utf-8">${head}<title>t</title></head><body><main><h1>t</h1></main></body></html>`;
@@ -209,12 +221,12 @@ describe("SEO exemption for the 404 page", () => {
       expect(seoExemption({ url: near, demo: false }), near).toBeUndefined();
   });
 
-  it("/belvoir-finance/404.html skips SEO only, and keeps the editorial JS budget", () => {
+  it("/belvoir-finance/404.html skips SEO only, and keeps the editorial JS budget (0 bytes from F4, Q-6)", () => {
     const u = url("404.html");
     expect(seoExemption({ url: u, demo: false })).toBe("404");
     expect(keys(u)).toEqual(ALL.filter((k) => k !== "categories:seo"));
     expect(pageAssertions(budgets, { url: u, demo: false }, "warn")["resource-summary:script:size"]?.[1]).toEqual({
-      maxNumericValue: 51200,
+      maxNumericValue: 0,
       aggregationMethod: "median",
     });
   });
@@ -311,17 +323,25 @@ describe("generated assertMatrix", () => {
       "warn",
       { maxNumericValue: strictlyBelow(200), aggregationMethod: "median" },
     ]);
-    expect(a["resource-summary:script:size"]).toEqual([
-      "warn",
-      { maxNumericValue: 51200, aggregationMethod: "median" },
-    ]);
+    expect(a["resource-summary:script:size"]).toEqual(["warn", { maxNumericValue: 0, aggregationMethod: "median" }]);
   });
 
-  it("the tool page gets a 0 KB JS budget in F3 (static shell; F4 raises it to 120 KB); editorial pages get 50 KB", () => {
+  it("F4-45 / F4-46 the tool page gets a 120 KB JS budget (122,880 bytes); editorial pages get 0 (Q-6)", () => {
     const tool = entryFor(matrix, url("tools/cash-vs-profit/")).assertions;
-    expect(tool["resource-summary:script:size"]?.[1].maxNumericValue).toBe(0);
+    expect(tool["resource-summary:script:size"]?.[1].maxNumericValue).toBe(122_880);
     const story = entryFor(matrix, url("stories/demo-story/")).assertions;
-    expect(story["resource-summary:script:size"]?.[1].maxNumericValue).toBe(51200);
+    expect(story["resource-summary:script:size"]?.[1].maxNumericValue).toBe(0);
+  });
+
+  it("F4-45 / F4-46 budgets.json pins tools max 122,880 and editorial 0; the negative fixtures fail the same check", () => {
+    expect(scriptBudgetProblems(budgets)).toEqual([]);
+    const fx = "tests/fixtures/f4/budgets";
+    expect(scriptBudgetProblems(readBudgets(`${fx}/tools-zero.json`))).toEqual([
+      "tools /tools/cash-vs-profit/ max is 0, expected 122880",
+    ]);
+    expect(scriptBudgetProblems(readBudgets(`${fx}/editorial-51200.json`))).toEqual([
+      "editorial scriptTransferBytes is 51200, expected 0",
+    ]);
   });
 
   it("groups pages by identical assertions and anchors every pattern", () => {

@@ -553,7 +553,14 @@ export function scanAstroDirectives(files: SourceFile[]): Problem[] {
         rule: "style-attr",
         message: "style attribute/prop not allowed (CSP style-src 'self')",
       });
-    if (inMarkup(/<script\b(?![^>]*type="application\/ld\+json")/i)) {
+    // F4-30 / F4-46 (D-1): the explorer's one external module script is the single exception, matched
+    // exactly (file and tag); any other <script> in a component, or anything else in that file, still fails.
+    const toolScript = /(?:^|[\\/])src[\\/]components[\\/]tools[\\/]CashVsProfitScript\.astro$/.test(file.path);
+    const scripts = markupHits(file.text, /<script\b(?![^>]*type="application\/ld\+json")/gi).map(
+      (i) => /^<script\b[^>]*>/i.exec(file.text.slice(i))?.[0] ?? "",
+    );
+    const allowed = (tag: string) => toolScript && tag === '<script src="../../scripts/cash-vs-profit.ts">';
+    if (scripts.some((tag) => !allowed(tag)) || (toolScript && scripts.length !== 1)) {
       problems.push({ path: file.path, rule: "script", message: "<script> in a component; F2 components are static" });
     }
   }

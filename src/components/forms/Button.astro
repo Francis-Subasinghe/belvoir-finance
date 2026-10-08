@@ -5,11 +5,16 @@ interface Props {
   variant?: "primary" | "secondary";
   disabled?: boolean;
   demoState?: "hover" | "focus";
+  id?: string;
+  /** F4: a hook for the explorer script (data-action). */
+  action?: string;
 }
-const { type, variant = "primary", disabled = false, demoState } = Astro.props;
+const { type, variant = "primary", disabled = false, demoState, id, action } = Astro.props;
 ---
 
 <button
+  id={id}
+  data-action={action}
   type={type}
   class:list={["button", `button-${variant}`, { [`is-${demoState}`]: demoState }]}
   disabled={disabled}

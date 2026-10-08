@@ -81,6 +81,13 @@ export default defineConfig({
     inlineStylesheets: "never",
   },
   devToolbar: { enabled: false },
+  vite: {
+    build: {
+      // F4-30 (D-1): never inline a bundled script. Astro inlines a small processed
+      // <script> unless this is 0, and the CSP (script-src 'self') blocks inline scripts.
+      assetsInlineLimit: 0,
+    },
+  },
   integrations: [
     contentRules,
     markdoc({ allowHTML: false }),

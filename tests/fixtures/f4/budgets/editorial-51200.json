@@ -1,5 +1,5 @@
 {
-  "$comment": "TEST_STRATEGY.md 'Performance budgets' table, row for row. Read by lighthouserc.cjs (assertions) and summary.ts (step summary). Bytes are KiB x 1024. categories are minimums (>=); audits are strict limits (<), asserted as the largest number below the limit; scriptTransferBytes are maximums (<=, at most).",
+  "$comment": "F4-46 / M-35 negative fixture: editorial back to 51,200.",
   "categories": {
     "performance": 0.9,
     "accessibility": 0.9,
@@ -14,7 +14,7 @@
   "imageTransferBytes": 102400,
   "$imageComment": "V1-33 (Q-3): images per URL <= 100 KB (resource-summary:image:size, transfer bytes). Inline SVG is HTML, not an image request, so this catches any served image.",
   "scriptTransferBytes": {
-    "editorial": 0,
+    "editorial": 51200,
     "$editorialComment": "F4-46 (Q-6): every page but the tool page ships 0 bytes of JavaScript, so Lighthouse enforces 0 too.",
     "tools": [
       {

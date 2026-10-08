@@ -9,6 +9,7 @@ import { cardProps, publishedStories, tool, toolHref, verifiedSources } from "..
 import { withBase } from "../../lib/paths";
 import PillarArt from "../../components/art/PillarArt.astro";
 import Icon from "../../components/art/Icon.astro";
+import ToolIcon from "../../components/art/ToolIcon.astro";
 
 export async function getStaticPaths() {
   return (await getCollection("topics")).map((topic) => ({ params: { slug: topic.id }, props: { topic } }));
@@ -56,7 +57,8 @@ const sources = (await verifiedSources()).filter((s) => s.data.topics.includes(t
     <section class="page-section" aria-labelledby="tools-heading">
       <h2 id="tools-heading">Tools</h2>
       <article class="story-card surface-white" data-testid="topic-tool">
-        <h3 class="story-card-title">
+        <h3 class="story-card-title with-icon">
+          <ToolIcon id={featuredTool.id} />
           <a href={toolHref(featuredTool.id)}>{featuredTool.data.title}</a>
         </h3>
         <p class="story-card-summary">{featuredTool.data.summary}</p>

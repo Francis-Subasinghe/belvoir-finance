@@ -1,0 +1,11 @@
+---
+/**
+ * F4-30 (D-1): the explorer's one external module script. Astro bundles it to
+ * /belvoir-finance/_astro/<hash>.js and astro.config.mjs pins
+ * vite.build.assetsInlineLimit to 0 so it is never inlined (the CSP has
+ * script-src 'self' and no 'unsafe-inline'). Only the tool page renders this
+ * component, so no other page loads JavaScript (F4-46).
+ */
+---
+
+<script src="../../scripts/cash-vs-profit.ts"></script>

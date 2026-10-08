@@ -70,3 +70,14 @@ export const MONTH_HEADERS = ["Month", "Profit", "Cash in", "Cash out", "Closing
 export function monthName(month: number): string {
   return `Month ${month}`;
 }
+
+export const EXPLORER_HEADING = "Explore the figures";
+export const FIELDSET_LEGEND = "Your business, each month";
+export const RESULTS_HEADING = "Results";
+export const HOW_HEADING = "How this works";
+/** F4-35: a short, plain explanation of the D-4 model. */
+export const HOW_IT_WORKS: readonly string[] = [
+  "Profit is what you earn minus what you spend. Cash is what is in the bank. The two drift apart when your customers pay you later than you pay your suppliers.",
+  "The explorer uses the same sales and costs every month for 6 months, starting in month 1, and counts each month as 30 days. A payment arrives a whole number of months later: 0 days is the same month, 1 to 30 days is one month later, 31 to 60 days is two months later, and so on.",
+  "It leaves out tax, VAT, interest, stock and growth, so it shows the timing gap and nothing else.",
+];

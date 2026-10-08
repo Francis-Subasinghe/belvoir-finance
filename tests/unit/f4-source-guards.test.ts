@@ -6,7 +6,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { walkFiles } from "../helpers/design-scan";
+import { scanAstroDirectives, walkFiles } from "../helpers/design-scan";
 import {
   bannedApiProblems,
   componentProblems,
@@ -120,5 +120,34 @@ describe("F4 source scans: the real tree", () => {
     const astro = walkFiles("src", [".astro"]);
     expect(astro.length).toBeGreaterThan(20);
     expect(astro.flatMap((f) => componentProblems(f, read(f)))).toEqual([]);
+  });
+});
+
+describe("F4-30 / F2-34 the one component script is an exact exception", () => {
+  const TAG = '<script src="../../scripts/cash-vs-profit.ts"></script>';
+  const file = (path: string, body: string) => ({ path, text: `---\n---\n${body}\n` });
+  it("F4-30 the real CashVsProfitScript.astro passes F2-34 and has exactly that one tag", () => {
+    const path = "src/components/tools/CashVsProfitScript.astro";
+    const text = read(path);
+    expect(scanAstroDirectives([{ path, text }])).toEqual([]);
+    expect(text.match(/<script\b[^>]*>/g)).toEqual(['<script src="../../scripts/cash-vs-profit.ts">']);
+  });
+  it.each([
+    ["the same tag in another component", file("src/components/tools/Other.astro", TAG)],
+    [
+      "another src in the tool script component",
+      file("src/components/tools/CashVsProfitScript.astro", '<script src="../../scripts/other.ts"></script>'),
+    ],
+    [
+      "an inline body in the tool script component",
+      file("src/components/tools/CashVsProfitScript.astro", "<script>console.log(1)</script>"),
+    ],
+    [
+      "a second script in the tool script component",
+      file("src/components/tools/CashVsProfitScript.astro", `${TAG}\n${TAG}`),
+    ],
+    ["the tag in the explorer markup component", file("src/components/tools/CashVsProfitExplorer.astro", TAG)],
+  ])("F4-30 %s still fails F2-34", (_name, f) => {
+    expect(scanAstroDirectives([f]).map((p) => p.rule)).toContain("script");
   });
 });

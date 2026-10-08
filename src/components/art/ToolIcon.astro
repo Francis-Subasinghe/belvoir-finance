@@ -1,0 +1,12 @@
+---
+/** F4-53 (D-10): a tool's icon from the shared mapping, or nothing. Decorative (V1-20). */
+import Icon from "./Icon.astro";
+import { toolIcon } from "./tool-icons.ts";
+
+interface Props {
+  id: string;
+}
+const name = toolIcon(Astro.props.id);
+---
+
+{name && <Icon name={name} />}

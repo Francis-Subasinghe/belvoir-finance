@@ -1,5 +1,5 @@
 {
-  "$comment": "TEST_STRATEGY.md 'Performance budgets' table, row for row. Read by lighthouserc.cjs (assertions) and summary.ts (step summary). Bytes are KiB x 1024. categories are minimums (>=); audits are strict limits (<), asserted as the largest number below the limit; scriptTransferBytes are maximums (<=, at most).",
+  "$comment": "F4-45 / M-35 negative fixture: tools max back to 0.",
   "categories": {
     "performance": 0.9,
     "accessibility": 0.9,
@@ -19,7 +19,7 @@
     "tools": [
       {
         "path": "/tools/cash-vs-profit/",
-        "max": 122880,
+        "max": 0,
         "$comment": "F4-45 (D-8): the explorer's one module script, at most 120 KB compressed (non-blocking target 10 KB)."
       }
     ]
