@@ -179,10 +179,11 @@ export function resultsMarkupProblems(html: string): string[] {
   if (!attrsOf(fieldset).has("disabled")) out.push("the fieldset isn't disabled in the HTML");
   const note = /<span\b[^>]*data-cvp-note[^>]*>([\s\S]*?)<\/span>/.exec(ex)?.[1];
   if (note === undefined || text(note) !== NOJS_NOTE) out.push("the JavaScript-off note is missing");
-  // F4-36: a hidden, aria-hidden copy of the note holds its height when the script swaps the text.
-  const reserve = /<span\b[^>]*class="explorer-note-reserve"[^>]*>([\s\S]*?)<\/span>/.exec(ex);
-  if (!reserve || !/aria-hidden="true"/.test(reserve[0]) || text(reserve[1] ?? "") !== NOJS_NOTE) {
-    out.push("the note has no hidden reserve copy, so enhancement can shift the layout");
+  // F4-36: the note carries its server-rendered text in data-reserve; CSS draws an invisible copy that
+  // holds the height when the script swaps the text.
+  const noteTag = /<p\b[^>]*class="explorer-note"[^>]*>/.exec(ex)?.[0] ?? "";
+  if (attrsOf(noteTag.slice(2, -1)).get("data-reserve") !== NOJS_NOTE) {
+    out.push("the note has no reserve copy (data-reserve), so enhancement can shift the layout");
   }
   return out;
 }

@@ -82,7 +82,12 @@ export function overflowProblems(page: Page): Promise<string[]> {
       if (el.tagName.toLowerCase() !== "svg" && el.closest("svg")) continue;
       const scroller = el.closest(".table-scroll");
       if (scroller && scroller !== el) {
-        if (scroller.getAttribute("tabindex") !== "0" || !scroller.getAttribute("aria-label")) {
+        // Named by aria-label, or by aria-labelledby pointing at text (F4-21: the table's caption).
+        const labelledBy = (scroller.getAttribute("aria-labelledby") ?? "")
+          .split(/\s+/)
+          .map((id) => (id ? document.getElementById(id)?.textContent?.trim() : ""))
+          .join("");
+        if (scroller.getAttribute("tabindex") !== "0" || !(scroller.getAttribute("aria-label") || labelledBy)) {
           out.push("scroll region not focusable or unnamed");
         }
         continue;

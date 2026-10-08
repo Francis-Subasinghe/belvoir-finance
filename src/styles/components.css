@@ -846,14 +846,21 @@
 .explorer-results {
   max-width: var(--measure);
 }
-/* F4-36: the live note and its hidden copy share one cell, so swapping the text never changes the height. */
+/*
+ * F4-36: the live note and an invisible copy of the server-rendered note share
+ * one grid cell, so the script swapping in the shorter note never changes the
+ * height. The copy is generated content with empty alternative text, so it
+ * isn't in the DOM text or the accessibility tree.
+ */
 .explorer-note {
   display: grid;
 }
-.explorer-note > span {
+.explorer-note-text,
+.explorer-note::after {
   grid-area: 1 / 1;
 }
-.explorer-note-reserve {
+.explorer-note::after {
+  content: attr(data-reserve) / "";
   visibility: hidden;
 }
 .explorer-fields {

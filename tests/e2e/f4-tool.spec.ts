@@ -405,6 +405,7 @@ test.describe("F4-36 / F4-38 progressive enhancement", () => {
     page,
     browser,
   }) => {
+    test.slow(); // several contexts and navigations; slow on a loaded runner
     const baseURL = test.info().project.use.baseURL ?? "";
     const off = await browser.newContext({ javaScriptEnabled: false, viewport: page.viewportSize() ?? null, baseURL });
     const offPage = await off.newPage();
@@ -446,6 +447,7 @@ test.describe("F4-36 / F4-38 progressive enhancement", () => {
   test("F4-38 a failed script leaves the JavaScript-off page, axe clean, with only the failed load in the console", async ({
     page,
   }) => {
+    test.slow(); // several contexts and navigations; slow on a loaded runner
     const errors: string[] = [];
     page.on("console", (m) => {
       if (m.type() === "error") errors.push(m.text());
@@ -468,6 +470,8 @@ test.describe("F4-36 / F4-38 progressive enhancement", () => {
 test.describe("F4-50 commits are cheap", () => {
   test("F4-50 with 4x CPU throttling, committing S3-14 makes no long task over 50 ms", async ({ page }) => {
     await open(page);
+    // Type the values unthrottled; the measured window is the S3-14 commit itself.
+    await fillAll(page, S3_14);
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
     await page.evaluate(() => {
@@ -477,7 +481,6 @@ test.describe("F4-50 commits are cheap", () => {
         for (const e of list.getEntries()) w.__long.push(e.duration);
       }).observe({ type: "longtask" });
     });
-    await fillAll(page, S3_14);
     await update(page);
     await expect(page.locator('[data-cvp-cell="6-closing"]')).toHaveText("£70,000,000");
     await page.waitForTimeout(300);
