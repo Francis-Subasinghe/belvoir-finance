@@ -328,7 +328,7 @@
 .chart-title {
   font-family: var(--font-serif);
   font-size: var(--step-1);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-navy);
 }
 .chart-legend {
