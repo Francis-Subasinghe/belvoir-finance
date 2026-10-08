@@ -91,6 +91,8 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
     /CF-06: "fx-placeholder" is a placeholder \(demo\) person/,
   ],
   "demo-tool-real-source": ["F4-44", "demo-source", "sourceRecord", /demo tools cite only labelled placeholder/],
+  "demo-tool-source-real-domain": ["F4-44", "demo-source", "sourceRecord", /demo tools cite only labelled placeholder/],
+  "demo-tool-source-unlabelled": ["F4-44", "demo-source", "sourceRecord", /demo tools cite only labelled placeholder/],
   "ref-tool-reviewer": ["F3-15", "ref-missing", "reviewer", /no Person with id "no-such-person"/],
   "ref-tool-source-record": ["F3-15", "ref-missing", "sourceRecord", /no Source with id "no-such-source"/],
   "ref-source-owner": ["F3-15", "ref-missing", "owner", /no Person with id "no-such-person"/],

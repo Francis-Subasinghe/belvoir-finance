@@ -355,13 +355,17 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
     const src = typeof d["sourceRecord"] === "string" ? get("sources", d["sourceRecord"]) : undefined;
     const person = typeof d["reviewer"] === "string" ? get("people", d["reviewer"]) : undefined;
     if (d["demo"] === true) {
-      if (src && src.raw["demo"] !== true) {
+      // F4-44 v0.2: every cited Source is a labelled placeholder: demo: true,
+      // "(placeholder)" in the name and a placeholder-domain URL (F3-48).
+      const name = String(src?.raw["name"] ?? "");
+      const website = String(src?.raw["website"] ?? "");
+      if (src && (src.raw["demo"] !== true || !name.includes("(placeholder)") || !isPlaceholderUrl(website))) {
         add(
           "error",
           t.file,
           "sourceRecord",
           "demo-source",
-          `until F5, demo tools cite only labelled placeholder (demo) sources; "${String(d["sourceRecord"])}" is not one`,
+          `until F5, demo tools cite only labelled placeholder (demo) sources (demo: true, "(placeholder)" in the name, a placeholder https URL); "${String(d["sourceRecord"])}" is not one`,
         );
       }
       continue;
