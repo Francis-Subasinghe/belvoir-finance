@@ -57,10 +57,15 @@
 .site-footer-inner {
   padding-block: var(--space-4);
 }
+/* A grid, not a wrapping row: in a flex row each link's place depends on the
+ * widths of the links before it, so when the web font replaced the fallback a
+ * link could jump to the next line (CLS 0.11 on /cookies/ at 360 px, V1 font
+ * guard). Grid columns depend only on the container width. 9rem fits the
+ * longest label ("Editorial standards") at --step--1. */
 .site-footer-links {
   list-style: none;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: var(--space-1) var(--space-3);
   margin: 0;
   padding: 0;

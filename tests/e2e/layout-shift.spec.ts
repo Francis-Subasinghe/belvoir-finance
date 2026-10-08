@@ -16,7 +16,9 @@
  *   the fallback (average glyph widths match, individual lines don't), so the
  *   limit is the budget itself. Widths in `ch` used to make every prose block
  *   change width on swap (0.20 on /editorial-standards/ at 768); `--measure` is
- *   now in rem for that reason.
+ *   now in rem for that reason. The footer links were a wrapping flex row, so a
+ *   link could jump to the next line on swap (0.11 on /cookies/ at 360); they are
+ *   a grid now, placed by container width only.
  *
  * Run it with only CI's system fonts (DejaVu, Liberation) for CI-like numbers:
  * a machine with Arial or Inter installed locally hides the problem.
