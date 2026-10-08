@@ -70,5 +70,5 @@ export function cspOf(html: string): string {
   return (/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] ?? "").replace(/&#39;/g, "'");
 }
 
-export const F1_CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests";
+/** The site CSP (F1 + Aegis Q-9), defined once in tests/helpers/csp.ts. */
+export { SITE_CSP } from "./csp";

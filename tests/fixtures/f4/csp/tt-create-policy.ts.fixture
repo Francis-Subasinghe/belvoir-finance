@@ -1,0 +1,2 @@
+// Q-9 negative: a Trusted Types policy in tool source.
+export const policy = window.trustedTypes?.createPolicy("cvp", { createHTML: (s: string) => s });

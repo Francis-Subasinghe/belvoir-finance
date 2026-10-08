@@ -7,7 +7,8 @@ import { join, relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { gzipSync } from "node:zlib";
 import { countTags, firstTagIndex, isJsonLdScriptAttrs, scriptBlocks, tagAttributes } from "../helpers/html";
-import { F1_CSP, compiledGold, cspOf, galleryLeaks } from "../helpers/built-site";
+import { SITE_CSP, compiledGold, cspOf, galleryLeaks } from "../helpers/built-site";
+import { cspProblems, trustedTypesPolicyProblems } from "../helpers/csp";
 import { expectedSite } from "../helpers/expected-site";
 import { checkContentRules } from "../../src/lib/content-rules";
 
@@ -323,9 +324,16 @@ describe("F2-29 not-advice notice and demo banner (restyle only)", () => {
   });
 });
 
-describe("F2-33 every built page carries the unchanged F1 CSP", () => {
-  it("the CSP meta content equals the F1 policy exactly", () => {
-    for (const { file, html } of pages) expect(cspOf(html), file).toBe(F1_CSP);
+describe("F2-33 / F4-34 every built page carries the site CSP (F1 + Aegis Q-9)", () => {
+  it("the CSP meta content equals the site policy exactly: connect-src 'none', Trusted Types required", () => {
+    for (const { file, html } of pages) {
+      expect(cspOf(html), file).toBe(SITE_CSP);
+      expect(cspProblems(cspOf(html)), file).toEqual([]);
+    }
+  });
+  it("F4-34 (Q-9) no file in dist/ creates a Trusted Types policy or names a policy directive", () => {
+    const text = files.filter((f) => /\.(html|m?js|css|json|xml|txt)$/.test(f));
+    expect(text.flatMap((f) => trustedTypesPolicyProblems(f, readFileSync(f, "utf8")))).toEqual([]);
   });
 });
 

@@ -5,7 +5,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { CSP_DIRECTIVES } from "../../src/config/site";
+import { CSP_DIRECTIVES, cspString } from "../../src/config/site";
+import { SITE_CSP, cspProblems } from "../helpers/csp";
 
 const read = (p: string) => readFileSync(p, "utf8");
 
@@ -66,19 +67,24 @@ describe("F4-31 no framework island", () => {
   });
 });
 
-describe("F4-34 CSP unchanged", () => {
-  it("F4-34 CSP_DIRECTIVES still deep-equals the F1 value (Q-9 pending Aegis)", () => {
+describe("F4-34 CSP: F1 plus Aegis Q-9", () => {
+  it("F4-34 the emitted policy string is exactly the site CSP, in order, and passes the Q-9 check", () => {
+    expect(cspString(CSP_DIRECTIVES)).toBe(SITE_CSP);
+    expect(cspProblems(cspString(CSP_DIRECTIVES))).toEqual([]);
+  });
+  it("F4-34 CSP_DIRECTIVES deep-equals F1 with connect-src 'none' and require-trusted-types-for 'script' (Q-9)", () => {
     expect(CSP_DIRECTIVES).toStrictEqual({
       "default-src": "'self'",
       "script-src": "'self'",
       "style-src": "'self'",
       "img-src": "'self'",
       "font-src": "'self'",
-      "connect-src": "'self'",
+      "connect-src": "'none'",
       "object-src": "'none'",
       "base-uri": "'self'",
       "form-action": "'self'",
       "upgrade-insecure-requests": "",
+      "require-trusted-types-for": "'script'",
     });
   });
 });

@@ -4,7 +4,8 @@
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { F1_CSP, compiledGold, cspOf, galleryLeaks, requireBuild } from "../helpers/built-site";
+import { SITE_CSP, compiledGold, cspOf, galleryLeaks, requireBuild } from "../helpers/built-site";
+import { cspProblems, trustedTypesPolicyProblems } from "../helpers/csp";
 import { countTags, scriptBlocks } from "../helpers/html";
 import { expectedSite } from "../helpers/expected-site";
 
@@ -53,8 +54,15 @@ describe("F2-08 gold rule in the gallery's compiled CSS", () => {
 });
 
 describe("F2-33 / F2-34 CSP and no inline code in the gallery build", () => {
-  it("every gallery page carries the unchanged F1 CSP", () => {
-    for (const { rel, html } of pages) expect(cspOf(html), rel).toBe(F1_CSP);
+  it("every gallery page carries the site CSP (F1 + Aegis Q-9), and nothing creates a Trusted Types policy", () => {
+    for (const { rel, html } of pages) {
+      expect(cspOf(html), rel).toBe(SITE_CSP);
+      expect(cspProblems(cspOf(html)), rel).toEqual([]);
+      expect(trustedTypesPolicyProblems(rel, html)).toEqual([]);
+    }
+    for (const f of files.filter((x) => /\.m?js$/.test(x))) {
+      expect(trustedTypesPolicyProblems(f, readFileSync(f, "utf8"))).toEqual([]);
+    }
   });
   it("no style= attributes, <style> elements, on* handlers or non-JSON-LD inline scripts", () => {
     for (const { rel, html } of pages) {
