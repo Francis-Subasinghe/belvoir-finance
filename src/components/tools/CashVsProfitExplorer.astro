@@ -35,7 +35,7 @@ interface Props {
   values?: RawInputs;
   /** True on the tool page until the script enables it (D-3). */
   disabled?: boolean;
-  note?: string;
+  note?: string | undefined;
   /** The tool page's one results live region (F4-18). Gallery copies are static. */
   live?: boolean;
   headingLevel?: 2 | 3;
