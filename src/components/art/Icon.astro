@@ -1,0 +1,29 @@
+---
+/**
+ * V1-01 / V1-20: icons for the pillars and tools. Always decorative and always
+ * next to visible text naming the same thing; never the only content of a
+ * link or button. Stroked in currentColor, so they follow the text colour.
+ */
+import UnderstandTheNumbers from "../../assets/icons/understand-the-numbers.svg";
+import MakeBetterDecisions from "../../assets/icons/make-better-decisions.svg";
+import FinanceInContext from "../../assets/icons/finance-in-context.svg";
+import BuildCapability from "../../assets/icons/build-capability.svg";
+import CashVsProfit from "../../assets/icons/cash-vs-profit.svg";
+
+const ICONS = {
+  "understand-the-numbers": UnderstandTheNumbers,
+  "make-better-decisions": MakeBetterDecisions,
+  "finance-in-context": FinanceInContext,
+  "build-capability": BuildCapability,
+  "cash-vs-profit": CashVsProfit,
+} as const;
+type IconName = keyof typeof ICONS;
+
+interface Props {
+  name: IconName;
+}
+const { name } = Astro.props;
+const Svg = ICONS[name];
+---
+
+<Svg class="icon" data-icon={name} aria-hidden="true" focusable="false" />

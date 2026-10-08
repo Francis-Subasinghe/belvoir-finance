@@ -1,0 +1,34 @@
+---
+/**
+ * V1-42 story cover: derived from the story id and its first pillar
+ * (src/lib/cover.ts), rendered as component markup. Decorative (V1-18): no
+ * text, nothing focusable (V1-21). The navy surface scopes the gold accent
+ * (F2-06), and the container's aspect-ratio reserves the box (V1-35).
+ */
+import { COVER_H, COVER_W, coverFor } from "../../lib/cover";
+
+interface Props {
+  id: string;
+  pillar: string;
+  size?: "card" | "page";
+}
+const { id, pillar, size = "card" } = Astro.props;
+const cover = coverFor(id, pillar);
+---
+
+<div class={`story-cover story-cover-${size} surface-navy`} data-testid="story-cover" data-motif={cover.motif}>
+  <svg
+    class="story-cover-svg"
+    viewBox={`0 0 ${COVER_W} ${COVER_H}`}
+    width={COVER_W}
+    height={COVER_H}
+    preserveAspectRatio="xMidYMid slice"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {cover.shapes.map((s) => {
+      const Tag = s.el;
+      return <Tag class={s.cls} {...s.attrs} />;
+    })}
+  </svg>
+</div>
