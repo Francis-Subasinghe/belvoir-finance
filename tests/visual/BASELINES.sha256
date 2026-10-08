@@ -3,11 +3,12 @@
 # built from commit aa588a79601306b09cab72d2a9c23fd35a35ac74 on runner ubuntu-24.04.
 # Written by `npm run visual:manifest`. To update, follow the Visual regression job summary:
 # `gh api repos/<owner>/<repo>/actions/artifacts/<artifact id>/zip` into a `mktemp -d` folder
-# outside the repo (`gh run download` can fail with 'path traversal' on newer gh); every zip
-# entry must match ^visual-(360|768|1280)/[a-z0-9-]+-linux\.png$; after unzip, `find -type l`
-# and `find ! -type f ! -type d` must print nothing; replace tests/visual/__screenshots__/ with
-# the files, `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact
-# <artifact id> --commit <PR head sha>`, then `npm run check:visual-baselines`.
+# outside the repo, removed on exit (`gh run download` can fail with 'path traversal' on newer
+# gh); `unzip -tq` must pass and every zip entry match ^visual-(360|768|1280)/[a-z0-9-]+-linux\.png$;
+# after unzip, `find -type l` and `find ! -type f ! -type d` must print nothing and the files
+# must be exactly `npm run visual:expected`; replace tests/visual/__screenshots__/ with them,
+# `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact <artifact id>
+# --commit <PR head sha>`, then `npm run check:visual-baselines`.
 4bf10d6f22dea532e129116c8a0a385a72322838a955b39b00cc7760de545945  tests/visual/__screenshots__/visual-1280/gallery-linux.png
 3d6fd0bc84f3a6cbea4c4109ead7844a87564053269e78439198e0e608df2dd8  tests/visual/__screenshots__/visual-1280/page-explore-linux.png
 49f06b761b349a6e681de86e1b104b505315ed628ff0cd07cc50b495f40ad31e  tests/visual/__screenshots__/visual-1280/page-home-linux.png

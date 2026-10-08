@@ -8,8 +8,9 @@ import { GALLERY } from "./tests/helpers/e2e-urls";
  * with none committed, or when the comparison fails (a changed or missing snapshot),
  * the job uploads the full set (`--update-snapshots=all`) as the `visual-baselines`
  * artifact. To (re)baseline: review the `visual-diff`, then follow the job summary
- * (download with `gh api` into a `mktemp -d` folder outside the repo, check the zip
- * and the unzipped files, replace tests/visual/__screenshots__/ with them, `git add -f`
+ * (download with `gh api` into a `mktemp -d` folder outside the repo, `unzip -tq`, check
+ * every zip entry and the unzipped files, which must be exactly `npm run visual:expected`,
+ * replace tests/visual/__screenshots__/ with them, `git add -f`
  * (the folder is gitignored) and rewrite tests/visual/BASELINES.sha256 with
  * `npm run visual:manifest -- --run <id> --artifact <id> --commit <PR head sha>`).
  * The Repo guards step `npm run check:visual-baselines` checks the hashes, rejects any

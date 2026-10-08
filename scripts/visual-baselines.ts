@@ -136,6 +136,20 @@ export function untrackedBaselineWarnings(root: string, tracked: readonly string
     );
 }
 
+/**
+ * `paths` (repo-relative baselines, e.g. expectedBaselinePaths()) relative to SCREENSHOT_DIR,
+ * which is the layout of the CI "visual-baselines" artifact, sorted in byte order.
+ * `npm run visual:expected` prints these so a downloaded artifact can be compared before use.
+ */
+export function artifactEntries(paths: readonly string[]): string[] {
+  return paths
+    .map((p) => {
+      if (!isBaseline(p) || p.split("/").includes("..")) throw new Error(`${p} is not a baseline path`);
+      return p.slice(SCREENSHOT_DIR.length);
+    })
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
 export interface ManifestSource {
   run: string;
   artifact: string;
@@ -198,11 +212,12 @@ export const manifestHeader = ({ run, artifact, commit }: ManifestSource): strin
     `# built from commit ${commit} on runner ubuntu-24.04.`,
     "# Written by `npm run visual:manifest`. To update, follow the Visual regression job summary:",
     "# `gh api repos/<owner>/<repo>/actions/artifacts/<artifact id>/zip` into a `mktemp -d` folder",
-    "# outside the repo (`gh run download` can fail with 'path traversal' on newer gh); every zip",
-    "# entry must match ^visual-(360|768|1280)/[a-z0-9-]+-linux\\.png$; after unzip, `find -type l`",
-    "# and `find ! -type f ! -type d` must print nothing; replace tests/visual/__screenshots__/ with",
-    "# the files, `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact",
-    "# <artifact id> --commit <PR head sha>`, then `npm run check:visual-baselines`.",
+    "# outside the repo, removed on exit (`gh run download` can fail with 'path traversal' on newer",
+    "# gh); `unzip -tq` must pass and every zip entry match ^visual-(360|768|1280)/[a-z0-9-]+-linux\\.png$;",
+    "# after unzip, `find -type l` and `find ! -type f ! -type d` must print nothing and the files",
+    "# must be exactly `npm run visual:expected`; replace tests/visual/__screenshots__/ with them,",
+    "# `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact <artifact id>",
+    "# --commit <PR head sha>`, then `npm run check:visual-baselines`.",
   ].join("\n");
 
 /**

@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -65,9 +65,12 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
+          # No install in this job: never auto-cache (setup-node v5+ caches by default when
+          # package.json names a packageManager).
+          package-manager-cache: false
       - name: "F2-38: visual baselines match BASELINES.sha256"
         # Pure Node, no install or network; git-tracked *-linux.png only (tests/unit/visual-baselines.test.ts).
         run: npm run check:visual-baselines
@@ -84,10 +87,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -122,10 +125,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
 
@@ -137,13 +140,13 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: javascript-typescript
-      - uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
 
   visual:
     name: Visual regression
@@ -156,17 +159,18 @@ jobs:
     #   only) and upload it as "visual-baselines". The job still fails via the compare step.
     # To (re)baseline: review the diff, then follow the step summary, which prints the exact
     # commands: `gh api .../actions/artifacts/<id>/zip` into a `mktemp -d` folder outside the
-    # repo, check every zip entry and the unzipped files (no symlinks, nothing unexpected),
+    # repo (removed on exit), `unzip -tq` integrity test, check every zip entry and the
+    # unzipped files (no symlinks, nothing unexpected, exactly `npm run visual:expected`),
     # copy them in, `git add -f`, then `npm run visual:manifest -- --run <run-id> --artifact
     # <artifact-id> --commit <PR head sha>`. Repo guards (check:visual-baselines) checks the
     # hashes, rejects non-*-linux.png files, and requires exactly the set the specs produce.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -287,15 +291,17 @@ jobs:
             if [ -n "$ARTIFACT_ID" ]; then
               echo ""
               echo "### To accept these screenshots as the new baselines"
-              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then run this from the repo root. It downloads into a temporary folder outside the repo and checks the zip before anything is copied in (\`gh run download\` can fail with \"path traversal\" on newer gh, and should not extract straight into the checkout):"
+              echo "The \`visual-baselines\` artifact (id $ARTIFACT_ID) is the complete set from run $RUN_ID. The commit recorded below, $BUILT_SHA, is the PR head commit (what was pushed; on a push to main, the pushed commit); run $RUN_ID links it to the merge build that rendered the screenshots. Review the screenshots (and the \`visual-diff\`, if any) first, then run this from the repo root. It downloads into a temporary folder outside the repo (removed on exit), tests the zip's integrity (\`unzip -tq\`), checks every entry, then checks that the unzipped files are exactly the set the visual specs produce (\`npm run visual:expected\`) before anything is copied in (\`gh run download\` can fail with \"path traversal\" on newer gh, and should not extract straight into the checkout):"
               echo ""
               echo '```sh'
               echo "( # in a subshell: any failed check stops the remaining steps"
               echo "set -euo pipefail"
               echo "tmp=\"\$(mktemp -d)\"   # outside the repo"
+              # shellcheck disable=SC2016 # printed for the reviewer to run, not expanded here
+              echo 'trap '"'"'rm -rf "$tmp"'"'"' EXIT   # remove the temp folder however this ends'
               echo "gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip > \"\$tmp/a.zip\""
               cat <<'STEPS'
-          unzip -tq "$tmp/a.zip"
+          unzip -tq "$tmp/a.zip"   # zip integrity test
           # Every zip entry must match the pattern, and none may be a symlink.
           bad="$({ zipinfo -1 "$tmp/a.zip" | grep -Ev '^visual-(360|768|1280)/[a-z0-9-]+-linux\.png$'; zipinfo "$tmp/a.zip" | grep '^l'; } || true)"
           [ -z "$bad" ] || { printf 'STOP: unexpected zip entries:\n%s\n' "$bad"; exit 1; }
@@ -303,6 +309,10 @@ jobs:
           # After unzip: no symlinks, and nothing but regular files and folders.
           odd="$(find "$tmp/x" -type l; find "$tmp/x" ! -type f ! -type d)"
           [ -z "$odd" ] || { printf 'STOP: unexpected files:\n%s\n' "$odd"; exit 1; }
+          # Exactly the set the visual specs produce: nothing missing, nothing extra.
+          want="$(npm run -s visual:expected)"
+          got="$(cd "$tmp/x" && find . -type f | sed 's#^\./##' | LC_ALL=C sort)"
+          [ "$want" = "$got" ] || { echo 'STOP: not the expected set (< missing from the artifact, > extra):'; diff <(printf '%s\n' "$want") <(printf '%s\n' "$got") || true; exit 1; }
           git rm -rq --ignore-unmatch tests/visual/__screenshots__ && rm -rf tests/visual/__screenshots__
           mkdir -p tests/visual/__screenshots__ && cp -R "$tmp/x/." tests/visual/__screenshots__/
           git add -f tests/visual/__screenshots__

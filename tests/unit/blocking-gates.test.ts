@@ -141,6 +141,30 @@ describe("Visual regression gate (ci.yml)", () => {
     expect(summary).toContain(`[ -z "$odd" ] || {`);
     expect(summary).toContain("git add -f tests/visual/__screenshots__");
     expect(summary).toContain("path traversal");
+    // Temp folder removed on exit; zip integrity test; the extracted list must equal the specs' set.
+    expect(summary).toContain(`echo 'trap '"'"'rm -rf "$tmp"'"'"' EXIT`);
+    expect(summary).toContain('unzip -tq "$tmp/a.zip"');
+    expect(summary).toContain('want="$(npm run -s visual:expected)"');
+    expect(summary).toContain(`got="$(cd "$tmp/x" && find . -type f | sed 's#^\\./##' | LC_ALL=C sort)"`);
+    expect(summary).toContain(`[ "$want" = "$got" ] || {`);
+    // Order of the printed commands (searched from the start of the code block, not the prose).
+    const commands = summary.slice(summary.indexOf("echo '```sh'"));
+    const order = [
+      "tmp=",
+      "trap '\"'\"'rm -rf",
+      "gh api repos/",
+      'unzip -tq "$tmp/a.zip"',
+      "zipinfo -1",
+      'unzip -q "$tmp/a.zip" -d',
+      'odd="$(find',
+      "visual:expected",
+      "git rm -rq",
+      "git add -f",
+      "npm run visual:manifest",
+      "npm run check:visual-baselines",
+    ].map((s) => commands.indexOf(s));
+    expect(order.every((i) => i > -1)).toBe(true);
+    expect(order).toEqual([...order].sort((x, y) => x - y));
     // Never extract the artifact straight into the checkout.
     expect(summary).not.toMatch(/gh run download [$0-9]/);
     expect(summary).not.toMatch(/-D tests\/visual/);
