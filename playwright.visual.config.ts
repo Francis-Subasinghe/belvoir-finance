@@ -7,12 +7,14 @@ import { GALLERY } from "./tests/helpers/e2e-urls";
  * Baselines must come from that CI image (font rendering), never a local machine:
  * with none committed, or when the comparison fails (a changed or missing snapshot),
  * the job uploads the full set (`--update-snapshots=all`) as the `visual-baselines`
- * artifact. To (re)baseline: review the `visual-diff`, download that artifact, replace
- * tests/visual/__screenshots__/ with it,
- * `git add -f` the *-linux.png files (the folder is gitignored) and rewrite
- * tests/visual/BASELINES.sha256 with `npm run visual:manifest -- --run <id>
- * --artifact <id> --commit <sha>`; the Repo guards step `npm run check:visual-baselines`
- * checks the hashes and rejects any other file under __screenshots__/.
+ * artifact. To (re)baseline: review the `visual-diff`, then follow the job summary
+ * (download with `gh api` into a `mktemp -d` folder outside the repo, check the zip
+ * and the unzipped files, replace tests/visual/__screenshots__/ with them, `git add -f`
+ * (the folder is gitignored) and rewrite tests/visual/BASELINES.sha256 with
+ * `npm run visual:manifest -- --run <id> --artifact <id> --commit <PR head sha>`).
+ * The Repo guards step `npm run check:visual-baselines` checks the hashes, rejects any
+ * other file under __screenshots__/ and requires exactly the set the specs produce
+ * (VISUAL_PROJECTS x gallery + VISUAL_PAGES, tests/helpers/visual-pages.ts).
  *   npm run test:visual -- --update-snapshots   (in the CI image) creates baselines
  *   npm run test:visual                          compares, threshold below
  *   npm run wireframes                           regenerates docs/design/wireframes/*.png (D12)

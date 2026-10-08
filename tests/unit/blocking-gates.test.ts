@@ -108,8 +108,10 @@ describe("Visual regression gate (ci.yml)", () => {
     expect(fail).not.toContain("continue-on-error");
 
     // The only ::error:: / exit 1 lines in the job are in that step.
-    expect(visual.match(/::error::/g)).toHaveLength(1);
-    expect(visual.match(/exit 1/g)).toHaveLength(1);
+    // (The summary only prints commands for the reviewer; it is excluded here.)
+    const steps = visual.replace(step(visual, "Visual summary"), "");
+    expect(steps.match(/::error::/g)).toHaveLength(1);
+    expect(steps.match(/exit 1/g)).toHaveLength(1);
     expect(step(visual, "Compare with baselines")).toContain("if: steps.baselines.outputs.present == 'true'");
   });
 
@@ -124,6 +126,24 @@ describe("Visual regression gate (ci.yml)", () => {
     expect(summary).toContain("npm run visual:manifest -- --run $RUN_ID --artifact $ARTIFACT_ID --commit $BUILT_SHA");
     // No ${{ }} inside the script itself: every value arrives through env.
     expect(summary.slice(summary.indexOf("run: |"))).not.toContain("${{");
+  });
+
+  it("the summary's rebaseline steps use the safe download method", () => {
+    const summary = step(job(ci, "visual"), "Visual summary");
+    expect(summary).toContain("REPO: ${{ github.repository }}");
+    expect(summary).toContain('tmp=\\"\\$(mktemp -d)\\"   # outside the repo');
+    expect(summary).toContain('gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID/zip > \\"\\$tmp/a.zip\\"');
+    expect(summary).toContain(`zipinfo -1 "$tmp/a.zip" | grep -Ev '^visual-(360|768|1280)/[a-z0-9-]+-linux\\.png$'`);
+    expect(summary).toContain(`zipinfo "$tmp/a.zip" | grep '^l'`);
+    expect(summary).toContain('odd="$(find "$tmp/x" -type l; find "$tmp/x" ! -type f ! -type d)"');
+    expect(summary).toContain("set -euo pipefail");
+    expect(summary).toContain(`[ -z "$bad" ] || {`);
+    expect(summary).toContain(`[ -z "$odd" ] || {`);
+    expect(summary).toContain("git add -f tests/visual/__screenshots__");
+    expect(summary).toContain("path traversal");
+    // Never extract the artifact straight into the checkout.
+    expect(summary).not.toMatch(/gh run download [$0-9]/);
+    expect(summary).not.toMatch(/-D tests\/visual/);
   });
 
   it("keeps the workflow read-only", () => {
