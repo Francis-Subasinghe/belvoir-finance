@@ -23,6 +23,8 @@ export interface Budgets {
   categories: Record<string, number>;
   audits: Record<string, number>;
   scriptTransferBytes: { editorial: number; tools: { path: string; max: number }[] };
+  /** V1-33: image transfer bytes per URL (at most). */
+  imageTransferBytes: number;
 }
 export interface Page {
   url: string;
@@ -184,6 +186,7 @@ export function pageAssertions(budgets: Budgets, page: Page, level: Level): Reco
     level,
     { maxNumericValue: scriptBudget(budgets, new URL(page.url).pathname), aggregationMethod },
   ];
+  out["resource-summary:image:size"] = [level, { maxNumericValue: budgets.imageTransferBytes, aggregationMethod }];
   return out;
 }
 

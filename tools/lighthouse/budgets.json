@@ -11,6 +11,8 @@
     "cumulative-layout-shift": 0.1,
     "total-blocking-time": 200
   },
+  "imageTransferBytes": 102400,
+  "$imageComment": "V1-33 (Q-3): images per URL <= 100 KB (resource-summary:image:size, transfer bytes). Inline SVG is HTML, not an image request, so this catches any served image.",
   "scriptTransferBytes": {
     "editorial": 51200,
     "tools": [
