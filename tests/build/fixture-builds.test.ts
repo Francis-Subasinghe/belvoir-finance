@@ -12,7 +12,7 @@ import { join, relative } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { expectedSite } from "../helpers/expected-site";
 import { astroBuild, FAKE_CLOCK, hashTree, makeSite, type Site, walkFiles } from "../helpers/fixture-build";
-import { scriptBlocks } from "../helpers/html";
+import { scriptBlocks, scriptStartTags } from "../helpers/html";
 
 const FX = "tests/fixtures/content";
 const BASE = `${FX}/base`;
@@ -113,7 +113,9 @@ describe("F3 rich fixture build (tests/fixtures/content/base)", () => {
     expect(svg).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     const table = chart.split("<table")[1] ?? "";
     expect(table).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
-    expect(scriptBlocks(html).every((b) => /application\/ld\+json/.test(b.attrs))).toBe(true);
+    // The only script element is the JSON-LD one; the label survives only as text
+    // (escaped in the SVG and table, and as a quoted aria-label value).
+    expect(scriptStartTags(html).map((a) => a.trim())).toEqual(['type="application/ld+json"']);
     expect(html.split('data-testid="chart"').length - 1).toBe(2);
     expect(html).toContain("Illustrative demo data");
     expect(html).toContain("Source: Fixture Demo Source (placeholder), Fixture publisher");
@@ -226,6 +228,11 @@ const FAILING: [string, string, RegExp][] = [
     "V1-44 a demo chart citing a non-placeholder Source",
     "v1-chart-real-source",
     /fx-chart-story\.mdoc: body chart 2 \(line 27\): source: "fx-active" is not a labelled placeholder Source.*\[chart-source\]/,
+  ],
+  [
+    "V1-44 a demo chart citing a paused Source (F3-11 would hide it)",
+    "v1-chart-paused-source",
+    /fx-chart-story\.mdoc: body chart 2 \(line 27\): source: "fx-demo-paused" is paused.*\[chart-source-inactive\]/,
   ],
   [
     "V1-44 a chart in a non-demo story",

@@ -367,6 +367,14 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
           "chart-source",
           `"${id}" is not a labelled placeholder Source (demo: true, "(placeholder)" in the name, a placeholder https URL); demo charts cite only those`,
         );
+      else if (src.raw["status"] !== "active")
+        add(
+          "error",
+          s.file,
+          at("source"),
+          "chart-source-inactive",
+          `"${id}" is ${String(src.raw["status"])}; a chart cites only an active Source (paused and retired Sources never render, F3-11)`,
+        );
     });
   }
 

@@ -9,6 +9,7 @@ import {
   parseAttributes,
   scriptBlocks,
   tagAttributes,
+  scriptStartTags,
 } from "../helpers/html";
 
 describe("test HTML helpers (CodeQL js/bad-tag-filter)", () => {
@@ -72,5 +73,28 @@ describe("test HTML helpers (CodeQL js/bad-tag-filter)", () => {
 
   it("rejects tag names that would inject into the pattern", () => {
     expect(() => countTags("", "a|b")).toThrow();
+  });
+});
+
+describe("V1-55 scriptStartTags (tokenizer-style, not a regex)", () => {
+  it("finds real script start tags, with their attributes", () => {
+    expect(scriptStartTags('<p>a</p><script type="application/ld+json">{}</script><script>x()</script>')).toEqual([
+      ' type="application/ld+json"',
+      "",
+    ]);
+  });
+  it("ignores <script> inside a quoted attribute value or a comment", () => {
+    expect(
+      scriptStartTags(
+        `<div aria-label="Data table: <script>alert(1)</script>"></div><a title='<script>'>x</a><!-- <script>c</script> -->`,
+      ),
+    ).toEqual([]);
+  });
+  it("skips a script's body, so '<script>' text inside it isn't a second tag", () => {
+    expect(scriptStartTags('<script>var s = "<script>";</script>')).toEqual([""]);
+  });
+  it("still catches an injected tag after an attribute value closes", () => {
+    expect(scriptStartTags('<div title="x"><script>alert(1)</script></div>')).toEqual([""]);
+    expect(scriptStartTags("<SCRIPT SRC=x></SCRIPT>")).toEqual([" SRC=x"]);
   });
 });

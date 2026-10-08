@@ -30,6 +30,12 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
     "body chart 2 (line 27): source",
     /"fx-active" is not a labelled placeholder Source/,
   ],
+  "v1-chart-paused-source": [
+    "V1-44",
+    "chart-source-inactive",
+    "body chart 2 (line 27): source",
+    /"fx-demo-paused" is paused; a chart cites only an active Source/,
+  ],
   "v1-chart-non-demo-story": [
     "V1-44",
     "chart-demo-only",

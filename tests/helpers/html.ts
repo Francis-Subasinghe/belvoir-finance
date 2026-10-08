@@ -79,3 +79,50 @@ export function nonJsonLdScriptTags(html: string): string[] {
     .filter((m) => !isJsonLdScriptAttrs(m[1] ?? ""))
     .map((m) => m[0]);
 }
+
+/**
+ * The attribute text of every real `<script>` start tag, found by walking the
+ * markup the way an HTML tokenizer does: a `<script>` inside a quoted
+ * attribute value (for example a chart's aria-label built from an untrusted
+ * title) or inside a comment is text, not a tag, and a script's own body is
+ * skipped up to its end tag. The regex helpers above can't tell those apart.
+ */
+export function scriptStartTags(html: string): string[] {
+  const out: string[] = [];
+  const lower = html.toLowerCase();
+  let i = 0;
+  while (i < html.length) {
+    const lt = html.indexOf("<", i);
+    if (lt < 0) break;
+    if (html.startsWith("<!--", lt)) {
+      const end = html.indexOf("-->", lt + 4);
+      i = end < 0 ? html.length : end + 3;
+      continue;
+    }
+    const m = /^<\/?([a-zA-Z][\w:-]*)/.exec(html.slice(lt, lt + 64));
+    if (!m) {
+      i = lt + 1;
+      continue;
+    }
+    // Walk the tag to its closing '>', skipping quoted attribute values.
+    let j = lt + m[0].length;
+    let quote = "";
+    for (; j < html.length; j++) {
+      const c = html[j];
+      if (quote) {
+        if (c === quote) quote = "";
+      } else if (c === '"' || c === "'") quote = c;
+      else if (c === ">") break;
+    }
+    const isStart = html[lt + 1] !== "/";
+    const name = (m[1] ?? "").toLowerCase();
+    if (isStart && name === "script") {
+      out.push(html.slice(lt + m[0].length, j).replace(/\/$/, ""));
+      const end = lower.indexOf("</script", j);
+      i = end < 0 ? html.length : end;
+      continue;
+    }
+    i = j + 1;
+  }
+  return out;
+}
