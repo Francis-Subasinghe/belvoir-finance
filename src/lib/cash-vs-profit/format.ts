@@ -20,3 +20,30 @@ export function formatGBP(pence: number): string {
 export function displaysNegative(pence: number): boolean {
   return formatGBP(pence).startsWith("-");
 }
+
+/** One piece of a sentence: plain text, or an amount exactly as formatGBP writes it. */
+export interface TextSegment {
+  text: string;
+  money: boolean;
+}
+
+/** An amount as formatGBP writes it: optional "-", "£", then grouped whole pounds. */
+const AMOUNT = /-?£\d{1,3}(?:,\d{3})*/g;
+
+/**
+ * F4-15: splits a sentence into text and amounts, so each amount can be one
+ * unbreakable unit (the `.money` class) and "-" never ends a line on its own.
+ * The server render and the browser script both use it; joining the pieces'
+ * text gives back the sentence unchanged.
+ */
+export function moneySegments(sentence: string): TextSegment[] {
+  const out: TextSegment[] = [];
+  let last = 0;
+  for (const m of sentence.matchAll(AMOUNT)) {
+    if (m.index > last) out.push({ text: sentence.slice(last, m.index), money: false });
+    out.push({ text: m[0], money: true });
+    last = m.index + m[0].length;
+  }
+  if (last < sentence.length) out.push({ text: sentence.slice(last), money: false });
+  return out;
+}

@@ -28,9 +28,13 @@ export const decodeEntities = (s: string) =>
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, "&");
-/** Text nodes only (the segments between tags), whitespace collapsed as a browser does. */
+/**
+ * Text nodes only (the segments between tags) joined as textContent joins them, so an
+ * inline element such as the summary's `.money` spans adds no space (F4-15); whitespace
+ * collapsed as a browser does.
+ */
 export const text = (html: string) =>
-  decodeEntities([...html.matchAll(/(?:^|>)([^<]*)/g)].map((m) => m[1] ?? "").join(" "))
+  decodeEntities([...html.matchAll(/(?:^|>)([^<]*)/g)].map((m) => m[1] ?? "").join(""))
     .replace(/\s+/g, " ")
     .trim();
 

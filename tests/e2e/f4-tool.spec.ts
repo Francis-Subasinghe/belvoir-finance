@@ -623,3 +623,123 @@ test.describe("F4-51 chart labels scale with the page", () => {
     });
   });
 });
+
+/* ---------------------------------------------------------------- F4-15 negatives never split */
+
+/** A loss-making case with long amounts, so "-£10,000,000"-sized values meet the 320 px line ends. */
+const BIG_LOSS: RawInputs = { sales: "1", costs: "10,000,000", customerDays: "180", supplierDays: "0", opening: "0" };
+
+/**
+ * F4-15: every negative amount ("-£…") in an explorer's summary and table, with the number of
+ * line boxes its text occupies. Ranges are built from text offsets, so the measurement doesn't
+ * depend on the markup it checks (a "-" left at a line end shows as 2 lines).
+ */
+function negativeAmountLines(page: Page, root: string): Promise<{ text: string; lines: number }[]> {
+  return page.evaluate((rootSel) => {
+    const out: { text: string; lines: number }[] = [];
+    const scope = document.querySelector(rootSel);
+    if (!scope) return out;
+    const hosts = [...scope.querySelectorAll("[data-cvp-status], [data-cvp-cell]")];
+    for (const host of hosts) {
+      const nodes: { node: Text; start: number }[] = [];
+      let all = "";
+      const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        nodes.push({ node: n as Text, start: all.length });
+        all += n.nodeValue ?? "";
+      }
+      const at = (offset: number, end: boolean) => {
+        const hit = nodes.find((x) => {
+          const len = x.node.nodeValue?.length ?? 0;
+          return end ? offset > x.start && offset <= x.start + len : offset >= x.start && offset < x.start + len;
+        });
+        if (!hit) throw new Error(`no text at ${offset}`);
+        return { node: hit.node, offset: offset - hit.start };
+      };
+      for (const m of all.matchAll(/-£[\d,]+/g)) {
+        const range = document.createRange();
+        const s = at(m.index, false);
+        const e = at(m.index + m[0].length, true);
+        range.setStart(s.node, s.offset);
+        range.setEnd(e.node, e.offset);
+        const tops = new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+        out.push({ text: m[0], lines: tops.size });
+      }
+    }
+    return out;
+  }, root);
+}
+
+test.describe("F4-15 a negative amount never wraps after its minus sign", () => {
+  const WIDTHS = [320, 360];
+  const CASES: [string, (page: Page) => Promise<string>][] = [
+    [
+      "tool page, S3-04",
+      async (page) => {
+        await open(page);
+        await fillAll(page, S3_04);
+        await update(page);
+        return "[data-cvp]";
+      },
+    ],
+    [
+      "tool page, a large loss",
+      async (page) => {
+        await open(page);
+        await fillAll(page, BIG_LOSS);
+        await update(page);
+        return "[data-cvp]";
+      },
+    ],
+    [
+      "gallery loss variant (server-rendered)",
+      async (page) => {
+        await page.goto(GALLERY_PAGE);
+        return '[data-cvp="g-negative"]';
+      },
+    ],
+  ];
+
+  async function measure(page: Page): Promise<{ count: number; split: string[] }> {
+    let count = 0;
+    const split: string[] = [];
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const [name, load] of CASES) {
+        const root = await load(page);
+        const amounts = await negativeAmountLines(page, root);
+        count += amounts.length;
+        for (const a of amounts) if (a.lines !== 1) split.push(`${width} px, ${name}: ${a.text} on ${a.lines} lines`);
+      }
+    }
+    return { count, split };
+  }
+
+  test("F4-15 at 320 and 360 px each negative amount in the summary and table sits on one line", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-360", "sets its own 320 and 360 px viewports");
+    const { count, split } = await measure(page);
+    expect(count).toBeGreaterThan(30);
+    expect(split).toEqual([]);
+  });
+
+  test.describe("negative check", () => {
+    test.use({ bypassCSP: true });
+    test("F4-15 with the money values allowed to wrap, the same measurement finds a split amount", async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "mobile-360", "sets its own 320 and 360 px viewports");
+      // bypassCSP only so this test stylesheet can be added, on every page measure() loads.
+      await page.addInitScript(() => {
+        document.addEventListener("DOMContentLoaded", () => {
+          const s = document.createElement("style");
+          s.textContent = ".money { white-space: normal !important; }";
+          document.head.append(s);
+        });
+      });
+      const { split } = await measure(page);
+      expect(split.length).toBeGreaterThan(0);
+    });
+  });
+});

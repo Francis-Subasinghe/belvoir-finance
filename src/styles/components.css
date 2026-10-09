@@ -885,6 +885,11 @@
 .explorer-summary {
   font-weight: 600;
 }
+/* F4-15: an amount is one unbreakable unit, so a "-" never ends a line on its own
+   (the summary's amount spans and every results cell). */
+.money {
+  white-space: nowrap;
+}
 .explorer-caption {
   text-align: left;
   font-weight: 600;

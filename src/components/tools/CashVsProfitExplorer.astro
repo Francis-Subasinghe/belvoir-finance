@@ -28,6 +28,7 @@ import {
 import { DEFAULTS } from "../../lib/cash-vs-profit/defaults.ts";
 import { MONTHS } from "../../lib/cash-vs-profit/calculate.ts";
 import { view, type RawInputs } from "../../lib/cash-vs-profit/view.ts";
+import { moneySegments } from "../../lib/cash-vs-profit/format.ts";
 
 interface Props {
   /** Id prefix, so the gallery can show several explorers on one page. */
@@ -92,7 +93,9 @@ const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
     <div class="explorer-results" data-testid="explorer-results">
       <Hsub>{RESULTS_HEADING}</Hsub>
       <p class="explorer-summary" role={live ? "status" : undefined} data-cvp-status data-testid="explorer-summary">
-        {v.ok ? v.summary : errorCountSentence(v.errors.length)}
+        {v.ok
+          ? moneySegments(v.summary).map((s) => (s.money ? <span class="money">{s.text}</span> : s.text))
+          : errorCountSentence(v.errors.length)}
       </p>
       <div data-cvp-table hidden={!v.ok}>
         <div class="table-scroll explorer-table" role="region" aria-labelledby={`${idPrefix}-caption`} tabindex="0">
@@ -114,7 +117,7 @@ const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
                 <tr>
                   <th scope="row">{monthName(m)}</th>
                   {COLS.map((c) => (
-                    <td class="numeric data-table-num" data-numeric="true" data-cvp-cell={`${m}-${c}`}>
+                    <td class="numeric data-table-num money" data-numeric="true" data-cvp-cell={`${m}-${c}`}>
                       {v.ok ? v.rows[m - 1]?.[c] : ""}
                     </td>
                   ))}

@@ -1,7 +1,8 @@
 /**
  * F4 explorer, progressive enhancement (D-1 to D-3). Reads the five inputs,
- * calls the pure view() and writes the results with textContent, attributes
- * and `hidden` only (F4-32, F4-33). Results update on commit only: an input's
+ * calls the pure view() and writes the results with textContent, attributes,
+ * `hidden` and replaceChildren() with created text and span nodes only (F4-32,
+ * F4-33). Results update on commit only: an input's
  * change event, Enter in any input, or the Update button (D-2, Q-3). Nothing
  * is requested, stored or put in the URL (D-7). Focus is never moved (F4-20).
  * Every handler is attached before the fieldset is enabled, so a script that
@@ -9,6 +10,7 @@
  */
 import { errorCountSentence, FIELDS, JS_NOTE, RESET_NOTE } from "../lib/cash-vs-profit/copy.ts";
 import { DEFAULTS } from "../lib/cash-vs-profit/defaults.ts";
+import { moneySegments } from "../lib/cash-vs-profit/format.ts";
 import { type RawInputs, view } from "../lib/cash-vs-profit/view.ts";
 
 const COLUMNS = ["profit", "cashIn", "cashOut", "closing"] as const;
@@ -52,6 +54,16 @@ function enhance(root: HTMLElement): void {
   };
   let committed = JSON.stringify(read());
 
+  /** F4-15: the summary with each amount in a `.money` span (no wrap after "-"), built from nodes, never HTML. */
+  const sentence = (text: string): Node[] =>
+    moneySegments(text).map((s) => {
+      if (!s.money) return document.createTextNode(s.text);
+      const span = document.createElement("span");
+      span.className = "money";
+      span.textContent = s.text;
+      return span;
+    });
+
   /** One commit: fields, table and exactly one write to the live region. */
   function commit(raw: RawInputs, lead = ""): void {
     committed = JSON.stringify(raw);
@@ -79,7 +91,7 @@ function enhance(root: HTMLElement): void {
       }
       table.hidden = false;
       fix.hidden = true;
-      status.textContent = `${lead}${v.summary}`;
+      status.replaceChildren(...sentence(`${lead}${v.summary}`));
     } else {
       table.hidden = true;
       fix.hidden = false;

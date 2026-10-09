@@ -9,7 +9,7 @@ import { relative } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { errorMessage, FIELDS } from "../../src/lib/cash-vs-profit/copy";
 import { requireBuild } from "../helpers/built-site";
-import { scriptPolicyProblems } from "../helpers/f4-dist";
+import { scriptPolicyProblems, text } from "../helpers/f4-dist";
 
 const DIR = "dist-gallery";
 let files: string[] = [];
@@ -53,7 +53,11 @@ describe("F4-58 gallery explorer variants", () => {
     const html = gallery();
     const nojs = html.slice(html.indexOf('data-testid="explorer-nojs"'));
     expect(nojs).toMatch(/<fieldset class="explorer-fields" disabled/);
-    expect(html).toContain("profit is -£12,000 but cash falls by £10,000");
+    expect(text(html)).toContain("profit is -£12,000 but cash falls by £10,000");
+    // F4-15: each amount is one .money unit in the server render too.
+    expect(html).toContain(
+      'profit is <span class="money">-£12,000</span> but cash falls by <span class="money">£10,000</span>',
+    );
   });
 
   it("F4-46 / F2-35 the gallery build loads no script except on the tool page, and the gallery copies have no live region", () => {

@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { calculate, lagMonths, MONTHS, type Inputs } from "../../src/lib/cash-vs-profit/calculate.ts";
 import { DISCLAIMER, errorCountSentence, errorMessage, FIELDS, NOJS_NOTE } from "../../src/lib/cash-vs-profit/copy.ts";
 import { DEFAULT_INPUTS, DEFAULTS } from "../../src/lib/cash-vs-profit/defaults.ts";
-import { formatGBP } from "../../src/lib/cash-vs-profit/format.ts";
+import { formatGBP, moneySegments } from "../../src/lib/cash-vs-profit/format.ts";
 import { DAYS_MAX, MONEY_MAX_PENCE, parseDays, parseMoney } from "../../src/lib/cash-vs-profit/parse.ts";
 import { summary } from "../../src/lib/cash-vs-profit/summary.ts";
 import { view } from "../../src/lib/cash-vs-profit/view.ts";
@@ -743,6 +743,34 @@ describe("F4-15 / F4-18 summary sentence", () => {
     expect(sentence(row("S3-05"))).toBe(
       "Over 6 months, profit is £0 and cash ends where it started. Cash is lowest at £0 in month 1.",
     );
+  });
+  it("F4-15 moneySegments marks each amount as one unit and joins back to the same sentence", () => {
+    expect(moneySegments(sentence(row("S3-04")))).toEqual([
+      { text: "Over 6 months, profit is ", money: false },
+      { text: "-£12,000", money: true },
+      { text: " but cash falls by ", money: false },
+      { text: "£10,000", money: true },
+      { text: ". Cash is lowest at ", money: false },
+      { text: "-£5,000", money: true },
+      { text: " in month 6, when it goes below zero.", money: false },
+    ]);
+    for (const r of S3) {
+      const parts = moneySegments(sentence(r));
+      expect(parts.map((p) => p.text).join(""), r.id).toBe(sentence(r));
+      // Every amount is whole, sign included, and nothing else is marked as money.
+      for (const p of parts.filter((x) => x.money)) expect(p.text, r.id).toMatch(/^-?£\d{1,3}(,\d{3})*$/);
+      expect(
+        parts.filter((x) => !x.money).some((x) => /£|-£/.test(x.text)),
+        r.id,
+      ).toBe(false);
+    }
+    expect(moneySegments("-£10,000,000.")).toEqual([
+      { text: "-£10,000,000", money: true },
+      { text: ".", money: false },
+    ]);
+    expect(moneySegments("Results not updated. 2 answers need fixing.")).toEqual([
+      { text: "Results not updated. 2 answers need fixing.", money: false },
+    ]);
   });
   it("F4-18 the error-count sentence", () => {
     expect(errorCountSentence(1)).toBe("Results not updated. 1 answer needs fixing.");
