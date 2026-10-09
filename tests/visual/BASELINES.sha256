@@ -1,6 +1,6 @@
 # F2-38 visual baselines (sha256sum format; check with `npm run check:visual-baselines`).
-# Source: GitHub Actions run 37839987828, artifact "visual-baselines" (id 11577107553),
-# built from commit 0d2355cd5ab66f2d291b36a04f6b21cef424f729 on runner ubuntu-24.04.
+# Source: GitHub Actions run 37866253005, artifact "visual-baselines" (id 11588765610),
+# built from commit 47532aff4241c3862cd65eb44398de7bf185da17 on runner ubuntu-24.04.
 # Written by `npm run visual:manifest`. To update, follow the Visual regression job summary:
 # `gh api repos/<owner>/<repo>/actions/artifacts/<artifact id>/zip` into a `mktemp -d` folder
 # outside the repo, removed on exit (`gh run download` can fail with 'path traversal' on newer
@@ -9,33 +9,39 @@
 # must be exactly `npm run visual:expected`; replace tests/visual/__screenshots__/ with them,
 # `git add -f` them, run `npm run visual:manifest -- --run <run id> --artifact <artifact id>
 # --commit <PR head sha>`, then `npm run check:visual-baselines`.
-21f5047894e771b666fa34bcaa421fb6ba4eb08a1355b982d57af4f49533eb18  tests/visual/__screenshots__/visual-1280/gallery-linux.png
+fc28d30dabaf2edc6b3aa735e5f5862db9b5cbf203d8bd235a649f97ea7af46d  tests/visual/__screenshots__/visual-1280/gallery-linux.png
 be86623cff5ae0af87054cd8c18d4185ba881b4fa3ada104c1be9e0eda18d370  tests/visual/__screenshots__/visual-1280/page-explore-linux.png
-5e0036921b30ddb47ee24ef29a6e0524cad2ae725f5d77ba0dedc6a88e5a1b35  tests/visual/__screenshots__/visual-1280/page-home-linux.png
+10e229a5b606084ab9c4b608e0cc3f182c8d0d0a1a050affc2c9a61c0cedbde2  tests/visual/__screenshots__/visual-1280/page-home-linux.png
 7ffad79e3f6f1a611519227db0a0e3652bb867df8a832e71d25c7310450d1d7b  tests/visual/__screenshots__/visual-1280/page-person-linux.png
 80e9c061730711d031382e9eb4967ebcd97cb3ef1dc7da635154338451b07b78  tests/visual/__screenshots__/visual-1280/page-sources-linux.png
 994d1414f7aa3b540ca981e3b4830c4d186e5111c38c62b1c7e20d1f4c48387f  tests/visual/__screenshots__/visual-1280/page-stories-linux.png
-c81d887a15f584b519276ba006c1cd0c2f0bab94c9fe0d368784a13ea6102ce3  tests/visual/__screenshots__/visual-1280/page-story-linux.png
-001b5536aa03b17d1ef8da009b1ab43fc151a8384ead55f7bc65f04129e5a922  tests/visual/__screenshots__/visual-1280/page-tool-linux.png
-f35260c1a6ada94546af526f732e776d825157527d62551af3ef9cabcf1b6308  tests/visual/__screenshots__/visual-1280/page-tools-linux.png
-fb52bcc88493de0adf1ebd1becb5fe4281ede58c39dea5f1a3facdb3fc82ebcf  tests/visual/__screenshots__/visual-1280/page-topic-linux.png
-cdef93a8a1565cddeb3581f507b8548eae8764a5f6ea47de84975ba2ae8b1343  tests/visual/__screenshots__/visual-360/gallery-linux.png
+2db99c57315ec8ffe37d84f3a2ded6a65671274ac74e350a704e821a74fd1949  tests/visual/__screenshots__/visual-1280/page-story-linux.png
+76cf43f03285fd360f72a7b5bb22593b461a98e57330daff4cc4994baad9a349  tests/visual/__screenshots__/visual-1280/page-tool-linux.png
+c358bdd12e414819e7a870cee9238fd9a6b742a4d5d907f54da045e42a6134ba  tests/visual/__screenshots__/visual-1280/page-tools-linux.png
+cc3e00120850d52e3f1255fdbe75f81234df4645e3101ef7ca97d45eeb77cbfc  tests/visual/__screenshots__/visual-1280/page-topic-linux.png
+20463ceaa04802ee3cc2d614e2e5e5e8d2497d38c1a9ab8b5ae048611524d364  tests/visual/__screenshots__/visual-1280/tool-errors-linux.png
+5b07b1b979b38fb27eb1179261b1edfebd6bd156315ede47bf4100f40ed0d31f  tests/visual/__screenshots__/visual-1280/tool-nojs-linux.png
+9ab0c723125f70fd0c64ec1433c6bb1e34bbc47ad71b941f35b2894cd02ce462  tests/visual/__screenshots__/visual-360/gallery-linux.png
 42ab3295f130b4e523372228cf85a6fd52b2eee1e9632d5191da37459188b2f0  tests/visual/__screenshots__/visual-360/page-explore-linux.png
-af9e4832e3f543b1b292dc1938bd3cffc708389704ff9fc1c07449525fef3166  tests/visual/__screenshots__/visual-360/page-home-linux.png
+5d1aa0e14a188e239a0304e14f2e5f4002109b4a296628ea0ae22f2b6502e096  tests/visual/__screenshots__/visual-360/page-home-linux.png
 004c65567a6c4216e9f65d9b813d1abd48f74a650805509b5a3bf62ac73a21a4  tests/visual/__screenshots__/visual-360/page-person-linux.png
 ca708f614722e5ddb891bc3a9aa894d5a6189ffc17fe3c550b53a8227e3bd189  tests/visual/__screenshots__/visual-360/page-sources-linux.png
 fab7ece1d25b73da361a7867dc18b5f5aebfdafab868066e1dbb430be611ef48  tests/visual/__screenshots__/visual-360/page-stories-linux.png
-62c927e2e38fe8ebfa96a403b23777f69ba245b02a2195a08bfb8a586c2ec578  tests/visual/__screenshots__/visual-360/page-story-linux.png
-8fec8c37171680b426a84f15a60be3c76d4e87d0caa8a1b1953fe7efe7978c0a  tests/visual/__screenshots__/visual-360/page-tool-linux.png
-9deb00a0ae8fc6c09770feab07b3a5a72e2ebdcee3b52d4c733287e4bd5e668e  tests/visual/__screenshots__/visual-360/page-tools-linux.png
-e0de78a898e72a8acb2b0cf8bf12b8ac9ae8409349a033cd76f22461575f19d2  tests/visual/__screenshots__/visual-360/page-topic-linux.png
-326afce6ecfb45cce3de63cff872c35ea40d1dbe05ff0d348859c467a95e30a9  tests/visual/__screenshots__/visual-768/gallery-linux.png
+1e6fe93026aba6ab29901b9fd6f6033ba1c2ad1cc73f1b5c13cbddd264f87171  tests/visual/__screenshots__/visual-360/page-story-linux.png
+077569cc2c1bc1ca543ea14d462d6f88ca48740925800de2fbd19bd645dc021c  tests/visual/__screenshots__/visual-360/page-tool-linux.png
+5b25afaa2738dbc43507b243b066c96d850291abab4126ec9d20045ede5b8ae8  tests/visual/__screenshots__/visual-360/page-tools-linux.png
+903bc6339f3d6e3908fa0fbb3e5b117396ec104caaddebb9dd9115ca370a2988  tests/visual/__screenshots__/visual-360/page-topic-linux.png
+4590f1d799513d04cd2432409c130b9f6cc6895066cf80ad474eb203dfc55e4c  tests/visual/__screenshots__/visual-360/tool-errors-linux.png
+2a0172117c8ac304cd8d1dd05d12e352945f56c17712b78d78ebee0b98d50826  tests/visual/__screenshots__/visual-360/tool-nojs-linux.png
+e972d37deea479b17df45509c57580381b0b13d14b58330a69a5347549b458d4  tests/visual/__screenshots__/visual-768/gallery-linux.png
 f0e3f7f7d1a85ef8349236a9919f520a9ba6eb0e6ea5ec6717eb0c28d8b70400  tests/visual/__screenshots__/visual-768/page-explore-linux.png
-9ca33fc977b270195e182c5fc155305ea519846b012ea6b3267821f88687c00a  tests/visual/__screenshots__/visual-768/page-home-linux.png
+bd7ead257feea4d852a24a02d460bf3e30ef1f39bb3347ebf525d83a48ccb794  tests/visual/__screenshots__/visual-768/page-home-linux.png
 8850ac70b8b2c3d034efeac5760ab433326d858e5643edeb78056e802852363d  tests/visual/__screenshots__/visual-768/page-person-linux.png
 e345b43fe9c87d71df28e2e083100f771cad6b328fe6a1a8bc4e954372905e15  tests/visual/__screenshots__/visual-768/page-sources-linux.png
 a63579c12f9e7fa1e28b7e41c74ce119968e7fc3c578171fd60572468d02a82b  tests/visual/__screenshots__/visual-768/page-stories-linux.png
-645ece18a545d44d373f18ff9d9a5b2b6ea58ac5e2531af783daba46d72614c9  tests/visual/__screenshots__/visual-768/page-story-linux.png
-c3ca97e8d3e3af9b8e7b37cd2b882fba1e1a73a1e2a5891e02e9f008e22d8b21  tests/visual/__screenshots__/visual-768/page-tool-linux.png
-dc271372a6ff71a01a721acb56c283a14ea490d12e8ff73ba9f077235dd4d32d  tests/visual/__screenshots__/visual-768/page-tools-linux.png
-257be694e244ae420dbdb9c9e982a489f0b3915b2539758b72d332c861aa018a  tests/visual/__screenshots__/visual-768/page-topic-linux.png
+08e119311d83a35ee587c26e9a08f239a154f318615fa39d1270844e3b016de9  tests/visual/__screenshots__/visual-768/page-story-linux.png
+5ed02b6cc4ae924fae8ef40c45f5d18d19d4842521452c18db6b6fad8b959c25  tests/visual/__screenshots__/visual-768/page-tool-linux.png
+47c0423dec43efd0b117e6ebfaa26793da8278fe99c3c7e174b9fab0efd794c7  tests/visual/__screenshots__/visual-768/page-tools-linux.png
+3012aa32b3846a29483035a0401a3f612dca84fd8f327b5c09ecce8454c1c3e0  tests/visual/__screenshots__/visual-768/page-topic-linux.png
+fae02eec0d1337e45cb7ae8c9a5cc472b6f546d0e4e27ea4d0f69fca14fcb6db  tests/visual/__screenshots__/visual-768/tool-errors-linux.png
+eeb195d1eef416365af2540cfa8ae3e709f3a0b8101d3c5b29f6eab79aad8178  tests/visual/__screenshots__/visual-768/tool-nojs-linux.png
