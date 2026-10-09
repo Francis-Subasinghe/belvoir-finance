@@ -539,61 +539,63 @@ describe("F4-47 Lighthouse skips only the robots-txt audit (connect-src 'none')"
   });
 });
 
-describe("F4-47 the Lighthouse job summary names the skipped audits", () => {
-  const SUMMARY = resolve("tools/lighthouse/summary.ts");
-  const LH_FILES = ["assertions.ts", "budgets.json", "lighthouserc.cjs", "preflight.ts", "summary.ts"];
-  const lhr = {
-    lighthouseVersion: "12.6.1",
-    environment: { hostUserAgent: "test" },
-    configSettings: { formFactor: "mobile" },
-    categories: {
-      performance: { score: 1 },
-      accessibility: { score: 1 },
-      "best-practices": { score: 1 },
-      seo: { score: 1 },
-    },
-    audits: {},
-  };
+const SUMMARY = resolve("tools/lighthouse/summary.ts");
+const LH_FILES = ["assertions.ts", "budgets.json", "lighthouserc.cjs", "preflight.ts", "summary.ts"];
+const lhr = {
+  lighthouseVersion: "12.6.1",
+  environment: { hostUserAgent: "test" },
+  configSettings: { formFactor: "mobile" },
+  categories: {
+    performance: { score: 1 },
+    accessibility: { score: 1 },
+    "best-practices": { score: 1 },
+    seo: { score: 1 },
+  },
+  audits: {},
+};
 
-  /**
-   * Runs summary.ts in a child Node (no GITHUB_STEP_SUMMARY, so it prints) from a temp cwd holding
-   * dist-lhci/ (the fixture) and a one-report LHCI upload. By default it runs the real summary.ts
-   * with the real lighthouserc.cjs; `editRc` runs copies of tools/lighthouse/ with an edited config.
-   */
-  function runSummary(editRc?: (rc: string) => string): string {
-    const cwd = mkdtempSync(join(tmpdir(), "lhci-summary-"));
-    try {
-      symlinkSync(dist, join(cwd, "dist-lhci"), "dir");
-      const report = join(cwd, ".lighthouseci", "report");
-      mkdirSync(report, { recursive: true });
-      writeFileSync(join(report, "lhr-1.json"), JSON.stringify(lhr));
-      writeFileSync(
-        join(report, "manifest.json"),
-        JSON.stringify([{ url: url(""), jsonPath: join(report, "lhr-1.json") }]),
-      );
-      let script = SUMMARY;
-      if (editRc) {
-        const tools = join(cwd, "copy", "tools", "lighthouse");
-        mkdirSync(tools, { recursive: true });
-        mkdirSync(join(cwd, "copy", "src", "config"), { recursive: true });
-        writeFileSync(join(cwd, "copy", "package.json"), '{ "type": "module" }');
-        copyFileSync("src/config/placeholder-pages.ts", join(cwd, "copy", "src", "config", "placeholder-pages.ts"));
-        for (const f of LH_FILES) copyFileSync(join("tools", "lighthouse", f), join(tools, f));
-        writeFileSync(
-          join(tools, "lighthouserc.cjs"),
-          editRc(readFileSync("tools/lighthouse/lighthouserc.cjs", "utf8")),
-        );
-        script = join(tools, "summary.ts");
-      }
-      const env: NodeJS.ProcessEnv = { ...process.env, LHCI_BLOCKING: "true" };
-      delete env["GITHUB_STEP_SUMMARY"];
-      const r = spawnSync(process.execPath, [script], { cwd, env, encoding: "utf8" });
-      expect(r.status, r.stderr).toBe(0);
-      return r.stdout;
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
+/**
+ * Runs summary.ts in a child Node (no GITHUB_STEP_SUMMARY, so it prints) from a temp cwd holding
+ * dist-lhci/ (the fixture) and an LHCI upload of `reports` (default: one report for the home page). By default it runs the real summary.ts
+ * with the real lighthouserc.cjs; `editRc` runs copies of tools/lighthouse/ with an edited config.
+ */
+function runSummary(
+  editRc?: (rc: string) => string,
+  reports: { url: string; lhr: object }[] = [{ url: url(""), lhr }],
+): string {
+  const cwd = mkdtempSync(join(tmpdir(), "lhci-summary-"));
+  try {
+    symlinkSync(dist, join(cwd, "dist-lhci"), "dir");
+    const report = join(cwd, ".lighthouseci", "report");
+    mkdirSync(report, { recursive: true });
+    const manifest = reports.map((r, i) => {
+      const jsonPath = join(report, `lhr-${i}.json`);
+      writeFileSync(jsonPath, JSON.stringify(r.lhr));
+      return { url: r.url, jsonPath };
+    });
+    writeFileSync(join(report, "manifest.json"), JSON.stringify(manifest));
+    let script = SUMMARY;
+    if (editRc) {
+      const tools = join(cwd, "copy", "tools", "lighthouse");
+      mkdirSync(tools, { recursive: true });
+      mkdirSync(join(cwd, "copy", "src", "config"), { recursive: true });
+      writeFileSync(join(cwd, "copy", "package.json"), '{ "type": "module" }');
+      copyFileSync("src/config/placeholder-pages.ts", join(cwd, "copy", "src", "config", "placeholder-pages.ts"));
+      for (const f of LH_FILES) copyFileSync(join("tools", "lighthouse", f), join(tools, f));
+      writeFileSync(join(tools, "lighthouserc.cjs"), editRc(readFileSync("tools/lighthouse/lighthouserc.cjs", "utf8")));
+      script = join(tools, "summary.ts");
     }
+    const env: NodeJS.ProcessEnv = { ...process.env, LHCI_BLOCKING: "true" };
+    delete env["GITHUB_STEP_SUMMARY"];
+    const r = spawnSync(process.execPath, [script], { cwd, env, encoding: "utf8" });
+    expect(r.status, r.stderr).toBe(0);
+    return r.stdout;
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
   }
+}
+
+describe("F4-47 the Lighthouse job summary names the skipped audits", () => {
   const skipLines = (out: string) => out.split("\n").filter((l) => l.startsWith("Skipped audits"));
   const SKIP = '        skipAudits: ["robots-txt"],';
 
@@ -619,5 +621,52 @@ describe("F4-47 the Lighthouse job summary names the skipped audits", () => {
 
   it("F4-47 every audit the config skips has a recorded reason, and only robots-txt has one", () => {
     expect(Object.keys(SKIP_REASONS)).toEqual(["robots-txt"]);
+  });
+});
+
+describe("Lighthouse summary matches pages by path, not the 4329 origin", () => {
+  const seo = (score: number) => ({
+    ...lhr,
+    categories: { ...lhr.categories, seo: { score } },
+    audits: {
+      "largest-contentful-paint": { numericValue: 1200 },
+      "cumulative-layout-shift": { numericValue: 0 },
+      "total-blocking-time": { numericValue: 0 },
+    },
+  });
+  // SEO-exempt pages score low on SEO on purpose (noindex); an asserted page scores 100.
+  const PAGES: [string, number][] = [
+    ["404.html", 0.69],
+    ["stories/demo-story/", 0.69],
+    ["noindex-only/", 1],
+    ["", 1],
+  ];
+  const reportsAt = (origin: string) =>
+    PAGES.map(([path, score]) => ({ url: `${origin}/belvoir-finance/${path}`, lhr: seo(score) }));
+  const table = (out: string) => out.split("\n").filter((l) => l.startsWith("| /") || l.includes("budget miss"));
+
+  it("reports collected on 4329 mark the exempt pages n/a and count 0 misses", () => {
+    const rows = table(runSummary(undefined, reportsAt(ORIGIN)));
+    expect(rows.find((r) => r.startsWith("| /belvoir-finance/404.html |"))).toContain("n/a (404)");
+    expect(rows.find((r) => r.startsWith("| /belvoir-finance/stories/demo-story/ (demo) |"))).toContain("n/a (demo)");
+    expect(rows.at(-1)).toContain(" 0 budget miss(es).");
+  });
+
+  it.each([["http://127.0.0.1:4339"], ["http://localhost:4339"], ["http://localhost:4329"]])(
+    "the same reports from %s give exactly the 4329 summary",
+    (origin) => {
+      expect(runSummary(undefined, reportsAt(origin))).toBe(runSummary(undefined, reportsAt(ORIGIN)));
+    },
+  );
+
+  it("a different path on another port is not matched: its SEO is asserted and misses", () => {
+    const rows = table(
+      runSummary(undefined, [{ url: "http://127.0.0.1:4339/belvoir-finance/404x.html", lhr: seo(0.69) }]),
+    );
+    expect(rows[0]).toMatch(/^\| \/belvoir-finance\/404x\.html \| 1 \| .*❌ 69/);
+    expect(rows.at(-1)).toContain(" 1 budget miss(es).");
+    // the exempt page's path outside the base path does not count either
+    const outside = table(runSummary(undefined, [{ url: "http://127.0.0.1:4339/404.html", lhr: seo(0.69) }]));
+    expect(outside.at(-1)).toContain(" 1 budget miss(es).");
   });
 });
