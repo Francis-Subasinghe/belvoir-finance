@@ -58,6 +58,7 @@
     "check:content": "node scripts/check-content.ts",
     "check:visual-baselines": "node scripts/check-visual-baselines.ts",
     "check:visual-tests": "node scripts/check-visual-tests.ts",
+    "check:workflows": "node scripts/check-workflows.ts",
     "visual:manifest": "node scripts/write-visual-manifest.ts",
     "visual:expected": "node scripts/print-visual-expected.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run check:content && npm run check:visual-tests && npm run build",

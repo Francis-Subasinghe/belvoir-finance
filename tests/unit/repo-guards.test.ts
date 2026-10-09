@@ -12,6 +12,8 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
+import { checkoutProblems, checkoutSteps, isCheckout } from "../../scripts/workflow-guards.ts";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
   scripts: Record<string, string>;
@@ -219,5 +221,94 @@ describe("F1-17 secrets hygiene", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("Repo guard: every actions/checkout sets persist-credentials: false", () => {
+  const FX = "tests/fixtures/workflows/checkout";
+  const parseFile = (path: string): unknown => parse(readFileSync(path, "utf8"));
+  const where = (file: string, job: string, i: number, uses = "actions/checkout") =>
+    `${file}: jobs.${job}.steps[${i}] (${uses}@3d3c42e5aac5ba805825da76410c181273ba90b1)`;
+
+  it("every current workflow passes, and each one checks out", () => {
+    const files = readdirSync(".github/workflows").filter((f) => /\.ya?ml$/.test(f));
+    expect(files.length).toBeGreaterThan(0);
+    let steps = 0;
+    for (const f of files) {
+      const doc = parseFile(join(".github/workflows", f));
+      expect(checkoutProblems(f, doc), f).toEqual([]);
+      expect(checkoutSteps(doc).length, f).toBeGreaterThan(0);
+      steps += checkoutSteps(doc).length;
+    }
+    expect(steps).toBe(6);
+  });
+
+  it("the positive fixture passes (two jobs, any key order; a reusable-workflow job has no steps)", () => {
+    const doc = parseFile(join(FX, "ok.yml"));
+    expect(checkoutProblems("ok.yml", doc)).toEqual([]);
+    expect(checkoutSteps(doc).map((s) => s.jobId)).toEqual(["a", "b"]);
+  });
+
+  it.each([
+    ["missing-with.yml", `${where("missing-with.yml", "a", 0)} has no \`with:\`; add persist-credentials: false`],
+    ["missing-key.yml", `${where("missing-key.yml", "a", 0)} does not set persist-credentials: false`],
+    ["true.yml", `${where("true.yml", "a", 0)} sets persist-credentials: true, expected false`],
+    [
+      "second-job.yml",
+      `${where("second-job.yml", "second", 1, "Actions/Checkout")} has no \`with:\`; add persist-credentials: false`,
+    ],
+    [
+      "string-false.yml",
+      `${where("string-false.yml", "a", 0)} sets persist-credentials to the string "false"; use the YAML boolean false (unquoted)`,
+    ],
+  ])("the negative fixture %s fails", (file, problem) => {
+    expect(checkoutProblems(file, parseFile(join(FX, file)))).toEqual([problem]);
+  });
+
+  it("only actions/checkout counts, at any ref; a workflow without jobs is a problem", () => {
+    expect(isCheckout("actions/checkout@v4")).toBe(true);
+    expect(isCheckout(" ACTIONS/CHECKOUT@abc ")).toBe(true);
+    expect(isCheckout("actions/checkout")).toBe(true);
+    expect(isCheckout("actions/checkout-extra@v1")).toBe(false);
+    expect(isCheckout("someone/actions/checkout@v1")).toBe(false);
+    expect(isCheckout(undefined)).toBe(false);
+    expect(checkoutProblems("x.yml", { name: "x" })).toEqual(["x.yml: no jobs mapping"]);
+  });
+
+  describe("the CLI (npm run check:workflows) and its CI step", () => {
+    const CLI = join(process.cwd(), "scripts/check-workflows.ts");
+    const runCli = (fixtures: string[]) => {
+      const dir = mkdtempSync(join(tmpdir(), "belvoir-workflows-"));
+      try {
+        mkdirSync(join(dir, ".github/workflows"), { recursive: true });
+        for (const f of fixtures) writeFileSync(join(dir, ".github/workflows", f), readFileSync(join(FX, f), "utf8"));
+        return spawnSync(process.execPath, [CLI], { cwd: dir, encoding: "utf8" });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    it("passes the positive fixture and fails each negative one with an ::error:: line", () => {
+      expect(runCli(["ok.yml"]).status).toBe(0);
+      for (const f of ["missing-with.yml", "missing-key.yml", "true.yml", "second-job.yml", "string-false.yml"]) {
+        const r = runCli(["ok.yml", f]);
+        expect(r.status, f).toBe(1);
+        expect(r.stderr, f).toMatch(new RegExp(`::error::\\.github/workflows/${f.replace(".", "\\.")}: jobs\\.`));
+      }
+    });
+
+    it("passes on the real workflows", () => {
+      const r = spawnSync(process.execPath, [CLI], { encoding: "utf8" });
+      expect(r.status, r.stderr).toBe(0);
+      expect(r.stdout).toContain("6 checkout step(s)");
+    });
+
+    it("is an npm script that CI runs right after npm ci", () => {
+      expect(pkg.scripts["check:workflows"]).toBe("node scripts/check-workflows.ts");
+      const ci = readFileSync(".github/workflows/ci.yml", "utf8");
+      expect(ci).toMatch(
+        /- name: Install\n {8}run: npm ci\n {6}- name: "Repo guard: every actions\/checkout sets persist-credentials: false"\n(?: {8}#.*\n)* {8}run: npm run check:workflows\n/,
+      );
+    });
   });
 });
