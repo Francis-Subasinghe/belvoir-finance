@@ -18,14 +18,19 @@ export const SHARED_CSS_GZIP_5FDC80E = 4_695;
 export const SHARED_CSS_ALLOWANCE = 1_024;
 
 const attrsOf = (attrs: string) => new Map(parseAttributes(attrs));
-/** Text nodes only (the segments between tags), whitespace collapsed as a browser does. */
-const text = (html: string) =>
-  [...html.matchAll(/(?:^|>)([^<]*)/g)]
-    .map((m) => m[1] ?? "")
-    .join(" ")
-    .replace(/&amp;/g, "&")
+/**
+ * Decodes the three entities Astro escapes in text. `&amp;` goes last, so an
+ * escaped entity such as `&amp;#39;` decodes once, to the literal `&#39;`
+ * (CodeQL js/double-escaping).
+ */
+export const decodeEntities = (s: string) =>
+  s
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
+/** Text nodes only (the segments between tags), whitespace collapsed as a browser does. */
+export const text = (html: string) =>
+  decodeEntities([...html.matchAll(/(?:^|>)([^<]*)/g)].map((m) => m[1] ?? "").join(" "))
     .replace(/\s+/g, " ")
     .trim();
 
