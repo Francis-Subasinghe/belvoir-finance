@@ -96,6 +96,10 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
+      - name: "Repo guard: every actions/checkout sets persist-credentials: false"
+        # Parses .github/workflows/*.yml with the yaml dev dependency, so it runs here after
+        # npm ci rather than in the dependency-free Repo guards job (scripts/workflow-guards.ts).
+        run: npm run check:workflows
       - name: Format check
         run: npm run format:check
       - name: Lint
