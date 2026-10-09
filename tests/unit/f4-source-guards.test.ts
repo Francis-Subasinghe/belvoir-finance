@@ -125,12 +125,23 @@ describe("F4 source scans: the real tree", () => {
 
 describe("F4-30 / F2-34 the one component script is an exact exception", () => {
   const TAG = '<script src="../../scripts/cash-vs-profit.ts"></script>';
+  /** Every script start tag, any letter case (HTML tag names are case-insensitive), as the F2-34 scanner reads them. */
+  const scriptStartTags = (text: string) => text.match(/<script\b[^>]*>/gi) ?? [];
+  const ONLY_TAG = ['<script src="../../scripts/cash-vs-profit.ts">'];
   const file = (path: string, body: string) => ({ path, text: `---\n---\n${body}\n` });
   it("F4-30 the real CashVsProfitScript.astro passes F2-34 and has exactly that one tag", () => {
     const path = "src/components/tools/CashVsProfitScript.astro";
     const text = read(path);
     expect(scanAstroDirectives([{ path, text }])).toEqual([]);
-    expect(text.match(/<script\b[^>]*>/g)).toEqual(['<script src="../../scripts/cash-vs-profit.ts">']);
+    expect(scriptStartTags(text)).toEqual(ONLY_TAG);
+  });
+  it("F4-30 the start-tag matcher is case-insensitive: an extra <SCRIPT> or <Script> in the component is caught", () => {
+    const real = read("src/components/tools/CashVsProfitScript.astro");
+    for (const extra of ["<SCRIPT>alert(1)</SCRIPT>", '<Script src="x.js"></Script>', "<sCrIpT\n>x()</script>"]) {
+      const tags = scriptStartTags(`${real}\n${extra}\n`);
+      expect(tags, extra).toHaveLength(2);
+      expect(tags, extra).not.toEqual(ONLY_TAG);
+    }
   });
   it.each([
     ["the same tag in another component", file("src/components/tools/Other.astro", TAG)],

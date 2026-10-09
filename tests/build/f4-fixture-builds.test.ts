@@ -61,7 +61,7 @@ describe("F4-30 assetsInlineLimit: 0 is what keeps a small script external", () 
   it("F4-30 (M-27) without the setting the small script is inlined, and the real dist check fails", () => {
     const { pages, js } = pagesOf(without);
     const tool = pages.find((p) => p.page === TOOL_PAGE)?.html ?? "";
-    expect(tool).toMatch(/<script type="module">[^<]+<\/script>/);
+    expect(tool).toMatch(/<script type="module">[^<]+<\/script>/i);
     expect(js).toEqual([]);
     expect(scriptPolicyProblems(pages, js).join("\n")).toContain('needs exactly one <script type="module" src=');
   });
