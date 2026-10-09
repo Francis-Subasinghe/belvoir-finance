@@ -1,0 +1,2 @@
+// F4-32 negative fixture.
+document.write("<p>£30,000</p>");

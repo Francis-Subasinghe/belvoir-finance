@@ -3,14 +3,22 @@
  * F2-27 text, email and number input. Label, hint and error are linked;
  * the error state sets aria-invalid and prefixes "Error:". "(required)" is
  * text. `demoState` adds the hover/focus look for the gallery only.
+ *
+ * F4-16 / F4-17 (D-2): `name={false}` renders no name attribute, `inputmode`
+ * and `spellcheck` are passed through, and `errorSlot` always renders the
+ * error element (hidden when there is no error) so a script can fill it in
+ * place; with `errorSlot` the error is described before the hint.
  */
 interface Props {
   id: string;
   label: string;
   type?: "text" | "email" | "number";
-  name?: string;
+  name?: string | false;
+  inputmode?: "decimal" | "numeric";
+  spellcheck?: boolean;
+  errorSlot?: boolean;
   hint?: string;
-  error?: string;
+  error?: string | undefined;
   required?: boolean;
   disabled?: boolean;
   value?: string;
@@ -21,6 +29,9 @@ const {
   label,
   type = "text",
   name = id,
+  inputmode,
+  spellcheck,
+  errorSlot = false,
   hint,
   error,
   required = false,
@@ -28,7 +39,10 @@ const {
   value,
   demoState,
 } = Astro.props;
-const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+const describedBy =
+  (errorSlot ? [error && `${id}-error`, hint && `${id}-hint`] : [hint && `${id}-hint`, error && `${id}-error`])
+    .filter(Boolean)
+    .join(" ") || undefined;
 ---
 
 <div class:list={["field", { "field-invalid": error, "field-disabled": disabled }]}>
@@ -41,18 +55,25 @@ const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolea
       {hint}
     </p>
   )}
-  {error && (
-    <p id={`${id}-error`} class="field-error">
-      <strong>Error:</strong> {error}
+  {errorSlot ? (
+    <p id={`${id}-error`} class="field-error" hidden={!error}>
+      <strong>Error:</strong> <span class="field-error-text">{error}</span>
     </p>
+  ) : (
+    error && (
+      <p id={`${id}-error`} class="field-error">
+        <strong>Error:</strong> {error}
+      </p>
+    )
   )}
   <input
     id={id}
-    name={name}
+    name={name === false ? undefined : name}
     type={type}
     class:list={["input", { numeric: type === "number", [`is-${demoState}`]: demoState }]}
     data-numeric={type === "number" ? "" : undefined}
-    inputmode={type === "number" ? "decimal" : undefined}
+    inputmode={inputmode ?? (type === "number" ? "decimal" : undefined)}
+    spellcheck={spellcheck === undefined ? undefined : spellcheck ? "true" : "false"}
     value={value}
     required={required}
     disabled={disabled}

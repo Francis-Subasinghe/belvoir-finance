@@ -19,7 +19,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import Markdoc from "@markdoc/markdoc";
 import { parseDocument } from "yaml";
-import { COLLECTIONS, type CollectionName, isPlaceholderUrl, SLUG_PATTERN } from "../content/schemas.ts";
+import {
+  COLLECTIONS,
+  type CollectionName,
+  isPlaceholderUrl,
+  SLUG_PATTERN,
+  VERIFIED_SOURCE_STATUS,
+} from "../content/schemas.ts";
 import { chartProblems } from "./markdoc-allowlist.ts";
 
 export type Severity = "error" | "warning";
@@ -340,6 +346,58 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
         );
       }
     });
+  }
+
+  // F4-44 (D-11, Q-10): an official-values tool cites a source and reviewer fit to use.
+  // A demo tool follows the demo rules instead: placeholder sources only (F3-34).
+  for (const t of entries.filter((x) => x.collection === "tools" && x.data)) {
+    const d = t.data as Record<string, unknown>;
+    const src = typeof d["sourceRecord"] === "string" ? get("sources", d["sourceRecord"]) : undefined;
+    const person = typeof d["reviewer"] === "string" ? get("people", d["reviewer"]) : undefined;
+    if (d["demo"] === true) {
+      // F4-44 v0.2: every cited Source is a labelled placeholder: demo: true,
+      // "(placeholder)" in the name and a placeholder-domain URL (F3-48).
+      const name = String(src?.raw["name"] ?? "");
+      const website = String(src?.raw["website"] ?? "");
+      if (src && (src.raw["demo"] !== true || !name.includes("(placeholder)") || !isPlaceholderUrl(website))) {
+        add(
+          "error",
+          t.file,
+          "sourceRecord",
+          "demo-source",
+          `until F5, demo tools cite only labelled placeholder (demo) sources (demo: true, "(placeholder)" in the name, a placeholder https URL); "${String(d["sourceRecord"])}" is not one`,
+        );
+      }
+      continue;
+    }
+    if (d["usesOfficialValues"] !== true) continue;
+    if (src && src.raw["demo"] === true) {
+      add(
+        "error",
+        t.file,
+        "sourceRecord",
+        "tool-official-source",
+        `CF-06: "${String(d["sourceRecord"])}" is a placeholder (demo) source; a tool that uses official values cites a real, active source`,
+      );
+    }
+    if (src && src.raw["status"] !== VERIFIED_SOURCE_STATUS) {
+      add(
+        "error",
+        t.file,
+        "sourceRecord",
+        "tool-official-source",
+        `CF-06: "${String(d["sourceRecord"])}" is ${String(src.raw["status"])}; a tool that uses official values cites an active source`,
+      );
+    }
+    if (person && person.raw["demo"] === true) {
+      add(
+        "error",
+        t.file,
+        "reviewer",
+        "tool-official-reviewer",
+        `CF-06: "${String(d["reviewer"])}" is a placeholder (demo) person; a tool that uses official values needs a real reviewer`,
+      );
+    }
   }
 
   // V1-54 / V1-44: chart tags are strictly validated, only appear in demo stories and cite a placeholder Source.

@@ -7,7 +7,7 @@ import { relative } from "node:path";
 import { gzipSync } from "node:zlib";
 import { beforeAll, describe, expect, it } from "vitest";
 import { requireBuild } from "../helpers/built-site";
-import { nonJsonLdScriptTags } from "../helpers/html";
+import { scriptPolicyProblems } from "../helpers/f4-dist";
 import { inlineSvgs } from "../helpers/svg-check";
 import {
   GZIP_GROWTH_CAP,
@@ -151,9 +151,13 @@ describe("V1-44 / V1-55 charts in demo stories", () => {
       }
     }
   });
-  it("V1-45 / F3-38 still no script but JSON-LD anywhere", () => {
-    expect(pages.flatMap((p) => nonJsonLdScriptTags(p.html))).toEqual([]);
-    expect(files.filter((f) => f.endsWith(".js"))).toEqual([]);
+  it("V1-45 / F3-38 still no script but JSON-LD anywhere, except the tool page's one module (F4-46, F4-59)", () => {
+    expect(
+      scriptPolicyProblems(
+        pages.map((p) => ({ page: p.rel, html: p.html })),
+        files.filter((f) => f.endsWith(".js")).map(rel),
+      ),
+    ).toEqual([]);
   });
 });
 

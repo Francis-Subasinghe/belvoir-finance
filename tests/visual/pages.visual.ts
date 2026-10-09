@@ -5,7 +5,7 @@
 // committed in #22 from CI run 37250633221 (see tests/visual/BASELINES.sha256 for the current
 // source). check:visual-baselines requires exactly one per VISUAL_PAGES entry and project.
 import { expect, test } from "@playwright/test";
-import { VISUAL_PAGES } from "../helpers/visual-pages";
+import { TOOL_ERROR_VALUES, VISUAL_PAGES } from "../helpers/visual-pages";
 
 for (const [name, path] of VISUAL_PAGES) {
   test(`F3-41 ${name} full page`, async ({ page }) => {
@@ -15,3 +15,34 @@ for (const [name, path] of VISUAL_PAGES) {
     await expect(page).toHaveScreenshot(`${name}.png`, { fullPage: true });
   });
 }
+
+// F4-55: the explorer after a commit with one error per field (focus blurred), and with JavaScript off.
+const TOOL = "tools/cash-vs-profit/";
+
+test("F4-55 tool-errors full page", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(TOOL);
+  await page.evaluate(() => document.fonts.ready);
+  // Enhanced: the script removed the fieldset's disabled attribute (toBeEnabled can't see a fieldset).
+  await expect(page.locator("[data-cvp-fields]")).not.toHaveAttribute("disabled");
+  await expect(page.locator("#cvp-sales")).toBeEnabled();
+  for (const [id, value] of Object.entries(TOOL_ERROR_VALUES)) await page.locator(`#cvp-${id}`).fill(value);
+  await page.getByRole("button", { name: "Update results" }).click();
+  await expect(page.getByTestId("explorer-summary")).toHaveText("Results not updated. 5 answers need fixing.");
+  await page.evaluate(() =>
+    document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined,
+  );
+  await expect(page).toHaveScreenshot("tool-errors.png", { fullPage: true });
+});
+
+test.describe("JavaScript off", () => {
+  test.use({ javaScriptEnabled: false });
+  test("F4-55 tool-nojs full page", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(TOOL);
+    await page.evaluate(() => document.fonts.ready).catch(() => undefined);
+    await expect(page.locator("[data-cvp-fields]")).toHaveAttribute("disabled");
+    await expect(page.locator("#cvp-sales")).toBeDisabled();
+    await expect(page).toHaveScreenshot("tool-nojs.png", { fullPage: true });
+  });
+});

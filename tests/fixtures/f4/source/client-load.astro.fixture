@@ -1,0 +1,5 @@
+---
+// F4-31 negative fixture: a framework island.
+import Explorer from "./Explorer.tsx";
+---
+<Explorer client:load />

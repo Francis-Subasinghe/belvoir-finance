@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+location.search = "?sales=20000";

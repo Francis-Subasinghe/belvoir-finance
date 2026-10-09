@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+history.pushState(null, "", "#results");

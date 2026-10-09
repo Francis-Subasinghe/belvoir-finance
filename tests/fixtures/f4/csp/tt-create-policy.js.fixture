@@ -1,0 +1,1 @@
+const p=window.trustedTypes.createPolicy("x",{createHTML:t=>t});document.body.innerHTML=p.createHTML("<b>x</b>");

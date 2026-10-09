@@ -1,0 +1,2 @@
+// F4-13 negative fixture: a second path from a number to money text.
+export const pounds = (pence: number): string => (pence / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" });

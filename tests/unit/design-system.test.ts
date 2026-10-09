@@ -222,19 +222,20 @@ describe("F2-32 motion", () => {
   });
 });
 
-describe("F2-33 CSP is unchanged from F1", () => {
-  it("CSP_DIRECTIVES deep-equals the F1 value", () => {
+describe("F2-33 CSP is the F1 value plus Aegis Q-9 (F4)", () => {
+  it("CSP_DIRECTIVES deep-equals the F1 value with connect-src 'none' and require-trusted-types-for 'script'", () => {
     expect(CSP_DIRECTIVES).toStrictEqual({
       "default-src": "'self'",
       "script-src": "'self'",
       "style-src": "'self'",
       "img-src": "'self'",
       "font-src": "'self'",
-      "connect-src": "'self'",
+      "connect-src": "'none'",
       "object-src": "'none'",
       "base-uri": "'self'",
       "form-action": "'self'",
       "upgrade-insecure-requests": "",
+      "require-trusted-types-for": "'script'",
     });
   });
 });

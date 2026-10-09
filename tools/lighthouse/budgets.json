@@ -14,12 +14,13 @@
   "imageTransferBytes": 102400,
   "$imageComment": "V1-33 (Q-3): images per URL <= 100 KB (resource-summary:image:size, transfer bytes). Inline SVG is HTML, not an image request, so this catches any served image.",
   "scriptTransferBytes": {
-    "editorial": 51200,
+    "editorial": 0,
+    "$editorialComment": "F4-46 (Q-6): every page but the tool page ships 0 bytes of JavaScript, so Lighthouse enforces 0 too.",
     "tools": [
       {
         "path": "/tools/cash-vs-profit/",
-        "max": 0,
-        "$comment": "F3: the tool page is a static shell with no JavaScript (F3-10, F3-38), so 0 bytes. F4 raises this to the TEST_STRATEGY ceiling of 122880 (120 KB)."
+        "max": 122880,
+        "$comment": "F4-45 (D-8): the explorer's one module script, at most 120 KB compressed (non-blocking target 10 KB)."
       }
     ]
   }

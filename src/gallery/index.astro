@@ -24,6 +24,8 @@ import PillarArt from "../components/art/PillarArt.astro";
 import Icon from "../components/art/Icon.astro";
 import StoryCover from "../components/art/StoryCover.astro";
 import Diagram from "../components/art/Diagram.astro";
+import CashVsProfitExplorer from "../components/tools/CashVsProfitExplorer.astro";
+import { JS_NOTE } from "../lib/cash-vs-profit/copy.ts";
 import "../styles/gallery.css";
 
 const day = new Date("2026-10-02T00:00:00Z");
@@ -55,6 +57,44 @@ const PILLAR_NAMES = [
 const LONG_OTHER = "Placeholder territory with a long sixty-character label text";
 const LONG_NAME = "Placeholder Reviewer Name Long Enough To Wrap At Small Width";
 const LIGHT = ["white", "alabaster"] as const;
+/** F4-58: the explorer's default, every error code, the JavaScript-off state and a negative result. */
+const EXPLORER_VARIANTS = [
+  {
+    id: "default",
+    label: "Default (enhanced)",
+    values: { sales: "£20,000", costs: "£15,000", customerDays: "60", supplierDays: "30", opening: "£10,000" },
+    disabled: false,
+    note: JS_NOTE,
+  },
+  {
+    id: "errors-a",
+    label: "Errors: blank, negative, notWhole, daysRange, invalid",
+    values: { sales: "", costs: "-5", customerDays: "30.5", supplierDays: "181", opening: "1e6" },
+    disabled: false,
+    note: JS_NOTE,
+  },
+  {
+    id: "errors-b",
+    label: "Errors: decimals, overMax, invalid days, blank days, invalid money",
+    values: { sales: "1.005", costs: "10000001", customerDays: "thirty", supplierDays: "", opening: "£" },
+    disabled: false,
+    note: JS_NOTE,
+  },
+  {
+    id: "nojs",
+    label: "JavaScript off (disabled)",
+    values: { sales: "£20,000", costs: "£15,000", customerDays: "60", supplierDays: "30", opening: "£10,000" },
+    disabled: true,
+    note: undefined,
+  },
+  {
+    id: "negative",
+    label: "Negative result (S3-04, loss-making)",
+    values: { sales: "10,000", costs: "12,000", customerDays: "30", supplierDays: "30", opening: "5,000" },
+    disabled: false,
+    note: JS_NOTE,
+  },
+] as const;
 const levels = [
   { value: "", label: "Choose a level" },
   { value: "beginner", label: "Beginner" },
@@ -341,6 +381,24 @@ const levels = [
           firstPublished={day}
         />
       </div>
+    </section>
+
+    <section id="explorer" aria-labelledby="h-explorer" class="gallery-section surface-white">
+      <h2 id="h-explorer">Cash-versus-profit explorer (F4-58)</h2>
+      <p>Static copies of the tool page's explorer: no script runs here, so the gallery stays at 0 KB of JavaScript.</p>
+      {EXPLORER_VARIANTS.map((v) => (
+        <div class="gallery-explorer" data-testid={`explorer-${v.id}`}>
+          <h3 class="gallery-label">{v.label}</h3>
+          <CashVsProfitExplorer
+            idPrefix={`g-${v.id}`}
+            values={v.values}
+            disabled={v.disabled}
+            note={v.note}
+            live={false}
+            headingLevel={3}
+          />
+        </div>
+      ))}
     </section>
 
     <section id="forms" aria-labelledby="h-forms" class="gallery-section">

@@ -1,0 +1,5 @@
+// Q-9 negative: a bundle that writes a string into an HTML sink. Served in place of the
+// tool module by tests/e2e/csp.spec.ts; Trusted Types must stop it in the browser.
+window.__sinkStarted = true;
+document.querySelector("[data-cvp-status]").innerHTML = "<b>injected</b>";
+window.__sinkFinished = true;

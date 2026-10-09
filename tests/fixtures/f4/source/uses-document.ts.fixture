@@ -1,0 +1,2 @@
+// F4-01 negative fixture: a tool module touching the DOM.
+export const read = (): string => document.title;

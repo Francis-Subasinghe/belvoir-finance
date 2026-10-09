@@ -1,0 +1,2 @@
+// F4-27 negative fixture: the inputs in the query string.
+history.replaceState(null, "", "?sales=20000");

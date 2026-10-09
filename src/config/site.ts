@@ -18,6 +18,8 @@ export const SITE_TAGLINE = "Business finance, made clear.";
  * X-Content-Type-Options are absent on the preview; ADR-0001 accepts this
  * for the preview only. `frame-ancestors` is ignored in a meta CSP, so it is
  * not listed here; it belongs in the D5 host's _headers file.
+ * Aegis Q-9 (F4) added connect-src 'none' and require-trusted-types-for
+ * 'script'; every other directive is the F1 value.
  */
 export const CSP_DIRECTIVES: Readonly<Record<string, string>> = {
   "default-src": "'self'",
@@ -26,11 +28,17 @@ export const CSP_DIRECTIVES: Readonly<Record<string, string>> = {
   // No data: images (Aegis L2). Fonts are self-hosted files and no CSS uses data: URLs.
   "img-src": "'self'",
   "font-src": "'self'",
-  "connect-src": "'self'",
+  // Aegis Q-9 (F4): the site makes no requests from script, so nothing may connect.
+  "connect-src": "'none'",
   "object-src": "'none'",
   "base-uri": "'self'",
   "form-action": "'self'",
   "upgrade-insecure-requests": "",
+  // Aegis Q-9 (F4): Trusted Types are required and no policy may exist, so
+  // every HTML or script string sink (innerHTML, eval-like, script URLs from
+  // strings) throws. No policy directive is listed and no policy is created in
+  // code; tests/unit/csp-q9.test.ts scans src/, scripts/ and dist/ for either.
+  "require-trusted-types-for": "'script'",
 };
 
 export function cspString(directives: Readonly<Record<string, string>> = CSP_DIRECTIVES): string {

@@ -1,0 +1,2 @@
+// F4-32 negative fixture.
+export const show = (el: Element, text: string): void => { el.outerHTML = text; };

@@ -362,12 +362,23 @@
   stroke: var(--color-chart-axis);
   stroke-width: 1;
 }
+/*
+ * F4-51 (D-9): chart labels are sized against the chart's own width, so their
+ * on-screen size stays readable. The SVG scales by W / 320 (viewBox width
+ * 320), so a label's effective size is font-size × W / 320. With 1cqi = W / 100:
+ * W 254 px (320 viewport) → 13 units → 10.3 px; W 294 → 11.9 px;
+ * W 646 (768 and up) → 6.5 units → 13.1 px; never below 9 px for W ≥ 222 px
+ * and never above 16 px. CSS only, so story pages keep 0 KB of JavaScript.
+ */
+.chart {
+  container-type: inline-size;
+}
 .chart-value,
 .chart-category {
   fill: var(--color-text);
   font-family: var(--font-mono);
   font-variant-numeric: var(--numeric);
-  font-size: 9px;
+  font-size: clamp(6.5px, calc(22px - 3cqi), 13px);
 }
 .table-scroll {
   overflow-x: auto;
@@ -825,4 +836,66 @@
       animation-range: entry 0% entry 60%;
     }
   }
+}
+
+/* ---------------------------------------------------------------- F4 cash-versus-profit explorer */
+.explorer {
+  margin-block: var(--space-5);
+}
+.explorer-note,
+.explorer-results {
+  max-width: var(--measure);
+}
+/*
+ * F4-36: the live note and an invisible copy of the server-rendered note share
+ * one grid cell, so the script swapping in the shorter note never changes the
+ * height. The copy is generated content with empty alternative text, so it
+ * isn't in the DOM text or the accessibility tree.
+ */
+.explorer-note {
+  display: grid;
+}
+.explorer-note-text,
+.explorer-note::after {
+  grid-area: 1 / 1;
+}
+.explorer-note::after {
+  content: attr(data-reserve) / "";
+  visibility: hidden;
+}
+.explorer-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.explorer-fields legend {
+  padding: 0;
+  font-weight: 600;
+}
+.explorer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.explorer-results {
+  margin-top: var(--space-4);
+}
+.explorer-summary {
+  font-weight: 600;
+}
+/* F4-15: an amount is one unbreakable unit, so a "-" never ends a line on its own
+   (the summary's amount spans and every results cell). */
+.money {
+  white-space: nowrap;
+}
+.explorer-caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: var(--space-1);
+}
+.explorer-small {
+  font-size: var(--step--1);
+  color: var(--color-text-muted);
 }

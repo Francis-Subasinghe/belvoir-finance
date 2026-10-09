@@ -74,8 +74,8 @@ Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by L
 | Largest Contentful Paint | < 2.5 s |
 | Cumulative Layout Shift | < 0.1 |
 | Total Blocking Time (lab proxy for INP) | < 200 ms |
-| JavaScript per editorial page (compressed) | ≤ 50 KB |
-| JavaScript on `/tools/cash-vs-profit` (compressed) | 0 KB in F3 (static shell, no script); ≤ 120 KB from F4, when the interactive tool lands |
+| JavaScript per editorial page (compressed) | 0 KB from F4 (F4-46, Q-6); only the tool page loads a script |
+| JavaScript on `/tools/cash-vs-profit` (compressed) | ≤ 120 KB from F4 (F4-45; target ≤ 10 KB); 0 KB in F3 (static shell, no script) |
 | Image transfer per URL (V1-33) | ≤ 100 KB (`resource-summary:image:size`; V1 ships no image files, all art is inline SVG) |
 | Inline SVG per page (V1-33, build test) | ≤ 40 KB of inline `<svg>` markup per site page, and ≤ 15 KB gzip growth over the page's F3 size |
 | Font swap (V1, layout-shift E2E) | CLS ≤ 0.1 at 360, 768 and 1280 px on every page with the web fonts held back; < 0.02 at 412 px |

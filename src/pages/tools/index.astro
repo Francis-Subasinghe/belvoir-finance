@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { toolHref, tools } from "../../lib/site-content";
-import Icon from "../../components/art/Icon.astro";
+import ToolIcon from "../../components/art/ToolIcon.astro";
 
 // F3-10: every Tool entry with its title, summary and a link.
 const all = await tools();
@@ -15,7 +15,7 @@ const all = await tools();
       <li>
         <article class="story-card surface-white" data-testid="tool-card">
           <h2 class="story-card-title with-icon">
-            {t.id === "cash-vs-profit" && <Icon name="cash-vs-profit" />}
+            <ToolIcon id={t.id} />
             <a href={toolHref(t.id)}>{t.data.title}</a>
           </h2>
           <p class="story-card-summary">{t.data.summary}</p>

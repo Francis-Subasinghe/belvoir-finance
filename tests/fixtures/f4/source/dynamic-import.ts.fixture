@@ -1,0 +1,2 @@
+// F4-27 negative fixture: a lazy chunk is another request.
+export const load = (): Promise<unknown> => import("./chart.ts");

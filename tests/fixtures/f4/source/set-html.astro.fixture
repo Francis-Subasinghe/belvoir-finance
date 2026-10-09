@@ -1,0 +1,5 @@
+---
+// F4-32 negative fixture: set:html in a tool component.
+const html = "<b>£30,000</b>";
+---
+<p set:html={html} />

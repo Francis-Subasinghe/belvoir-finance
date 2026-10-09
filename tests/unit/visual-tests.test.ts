@@ -22,14 +22,15 @@ describe("F3-41 visual suite can't be partial", () => {
       `Total: ${VISUAL_PROJECTS.length * VISUAL_SNAPSHOTS.length} tests in 2 files`,
     ].join("\n");
     expect(listCountProblems(full, VISUAL_PROJECTS, VISUAL_SNAPSHOTS.length)).toEqual([]);
-    const short = full.replace(line("visual-768", "page-home") + "\n", "").replace(/Total: \d+/, "Total: 29");
+    const short = full.replace(line("visual-768", "page-home") + "\n", "").replace(/Total: \d+/, "Total: 35");
     expect(listCountProblems(short, VISUAL_PROJECTS, VISUAL_SNAPSHOTS.length)).toEqual([
-      "playwright lists 29 visual tests; expected 30",
-      "visual-768: 9 tests listed; expected 10",
+      "playwright lists 35 visual tests; expected 36",
+      "visual-768: 11 tests listed; expected 12",
     ]);
   });
-  it("F3-41 the expected baseline set is the gallery plus nine pages in each of the three projects", () => {
-    expect(expectedBaselinePaths()).toHaveLength(30);
+  it("F3-41 / F4-55 the expected baseline set is the gallery, nine pages and the two tool states in each of the three projects", () => {
+    expect(expectedBaselinePaths()).toHaveLength(36);
+    expect(VISUAL_SNAPSHOTS.slice(-2)).toEqual(["tool-errors", "tool-nojs"]);
     expect(expectedBaselinePaths()).toContain("tests/visual/__screenshots__/visual-360/page-home-linux.png");
   });
 });

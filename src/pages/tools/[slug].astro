@@ -2,29 +2,44 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import StatusNotice from "../../components/StatusNotice.astro";
-import Icon from "../../components/art/Icon.astro";
+import ToolIcon from "../../components/art/ToolIcon.astro";
+import CashVsProfitExplorer from "../../components/tools/CashVsProfitExplorer.astro";
+import CashVsProfitScript from "../../components/tools/CashVsProfitScript.astro";
+import { HOW_HEADING, HOW_IT_WORKS } from "../../lib/cash-vs-profit/copy.ts";
 
-// F3-10 (Q-7): a static shell. No form controls and no script until the F4 explorer.
+// F3-10 / F4: the tool page. The cash-vs-profit explorer is server-rendered
+// with the worked example (D-3) and enhanced by one external module script
+// (D-1), which this page renders only for that tool (F4-46).
 export async function getStaticPaths() {
   return (await getCollection("tools")).map((tool) => ({ params: { slug: tool.id }, props: { tool } }));
 }
 const { tool } = Astro.props;
 const d = tool.data;
+const isExplorer = tool.id === "cash-vs-profit";
 ---
 
 <BaseLayout title={d.title} description={`${d.summary} Illustrative only.`} demo={d.demo}>
   <p class="eyebrow with-icon">
-    {tool.id === "cash-vs-profit" && <Icon name="cash-vs-profit" />}
+    <ToolIcon id={tool.id} />
     Tool
   </p>
   <h1>{d.title}</h1>
   <p class="page-intro prose">{d.summary}</p>
   <StatusNotice variant="info" title="Illustrative only">
     <p data-testid="illustrative-only">
-      Illustrative only. This tool uses no current tax values and is not advice. The interactive explorer arrives in a
-      later release.
+      Illustrative only. This tool uses no current tax values and is not advice. It collects no data, so nothing you
+      type leaves this page or is saved.
     </p>
   </StatusNotice>
+  {isExplorer && <CashVsProfitExplorer />}
+  {isExplorer && (
+    <section class="page-section prose" aria-labelledby="how-heading" data-testid="how-it-works">
+      <h2 id="how-heading">{HOW_HEADING}</h2>
+      {HOW_IT_WORKS.map((p) => (
+        <p>{p}</p>
+      ))}
+    </section>
+  )}
   {d.assumptions.length > 0 && (
     <section class="page-section" aria-labelledby="assumptions-heading">
       <h2 id="assumptions-heading">Assumptions</h2>
@@ -46,4 +61,5 @@ const d = tool.data;
       <p data-testid="limitations">{d.limitations}</p>
     </section>
   )}
+  {isExplorer && <CashVsProfitScript />}
 </BaseLayout>

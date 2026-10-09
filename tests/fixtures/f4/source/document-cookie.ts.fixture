@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+document.cookie = "inputs=1";

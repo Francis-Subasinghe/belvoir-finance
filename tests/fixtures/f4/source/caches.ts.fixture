@@ -1,0 +1,2 @@
+// F4-27 negative fixture.
+void caches.open("explorer");

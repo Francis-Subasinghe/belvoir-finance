@@ -1,0 +1,139 @@
+---
+/**
+ * F4 cash-versus-profit explorer: the server-rendered markup only (D-1, D-3).
+ * The results are pre-rendered by the same pure `view()` the browser script
+ * calls, so the page is complete with JavaScript off (F4-06, F4-35). There is
+ * no <form>, no input name and every button is type="button" (D-2, F4-37).
+ * The script lives in CashVsProfitScript.astro, which only the tool page
+ * renders, so the gallery's copies of this component load no JavaScript.
+ */
+import TextField from "../forms/TextField.astro";
+import Button from "../forms/Button.astro";
+import {
+  DISCLAIMER,
+  errorCountSentence,
+  EXPLORER_HEADING,
+  FIELDS,
+  FIELDSET_LEGEND,
+  FIX_ANSWERS,
+  monthName,
+  MONTH_HEADERS,
+  NOJS_NOTE,
+  RESET_LABEL,
+  RESULTS_HEADING,
+  ROUNDED_NOTE,
+  TABLE_CAPTION,
+  UPDATE_LABEL,
+} from "../../lib/cash-vs-profit/copy.ts";
+import { DEFAULTS } from "../../lib/cash-vs-profit/defaults.ts";
+import { MONTHS } from "../../lib/cash-vs-profit/calculate.ts";
+import { view, type RawInputs } from "../../lib/cash-vs-profit/view.ts";
+import { moneySegments } from "../../lib/cash-vs-profit/format.ts";
+
+interface Props {
+  /** Id prefix, so the gallery can show several explorers on one page. */
+  idPrefix?: string;
+  values?: RawInputs;
+  /** True on the tool page until the script enables it (D-3). */
+  disabled?: boolean;
+  note?: string | undefined;
+  /** The tool page's one results live region (F4-18). Gallery copies are static. */
+  live?: boolean;
+  headingLevel?: 2 | 3;
+}
+const {
+  idPrefix = "cvp",
+  values = DEFAULTS,
+  disabled = true,
+  note = NOJS_NOTE,
+  live = true,
+  headingLevel = 2,
+} = Astro.props;
+const v = view(values);
+const errorFor = (id: string) => (v.ok ? undefined : v.errors.find((e) => e.id === id)?.message);
+const H = `h${headingLevel}` as "h2" | "h3";
+const Hsub = `h${headingLevel + 1}` as "h3" | "h4";
+const COLS = ["profit", "cashIn", "cashOut", "closing"] as const;
+const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
+---
+
+<section class="explorer" aria-labelledby={`${idPrefix}-heading`} data-cvp={idPrefix} data-testid="explorer">
+  <H id={`${idPrefix}-heading`}>{EXPLORER_HEADING}</H>
+  {/* F4-36: the script swaps the live text; a CSS copy of it (data-reserve, empty alt text) keeps the line count. */}
+  <p class="explorer-note" data-reserve={note}>
+    <span class="explorer-note-text" data-cvp-note>
+      {note}
+    </span>
+  </p>
+  <div class="explorer-layout">
+    <fieldset class="explorer-fields" disabled={disabled} data-cvp-fields>
+      <legend>{FIELDSET_LEGEND}</legend>
+      {FIELDS.map((f) => (
+        <TextField
+          id={`${idPrefix}-${f.id}`}
+          label={f.label}
+          hint={f.hint}
+          name={false}
+          inputmode={f.kind === "money" ? "decimal" : "numeric"}
+          spellcheck={false}
+          errorSlot
+          error={errorFor(f.id)}
+          value={values[f.id]}
+        />
+      ))}
+      <div class="explorer-actions">
+        <Button type="button" action="update">
+          {UPDATE_LABEL}
+        </Button>
+        <Button type="button" variant="secondary" action="reset">
+          {RESET_LABEL}
+        </Button>
+      </div>
+    </fieldset>
+    <div class="explorer-results" data-testid="explorer-results">
+      <Hsub>{RESULTS_HEADING}</Hsub>
+      <p class="explorer-summary" role={live ? "status" : undefined} data-cvp-status data-testid="explorer-summary">
+        {v.ok
+          ? moneySegments(v.summary).map((s) => (s.money ? <span class="money">{s.text}</span> : s.text))
+          : errorCountSentence(v.errors.length)}
+      </p>
+      <div data-cvp-table hidden={!v.ok}>
+        <div class="table-scroll explorer-table" role="region" aria-labelledby={`${idPrefix}-caption`} tabindex="0">
+          <table class="data-table">
+            <caption id={`${idPrefix}-caption`} class="explorer-caption">
+              {TABLE_CAPTION}
+            </caption>
+            <thead>
+              <tr>
+                {MONTH_HEADERS.map((h, i) => (
+                  <th scope="col" class={i > 0 ? "data-table-num" : undefined}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {months.map((m) => (
+                <tr>
+                  <th scope="row">{monthName(m)}</th>
+                  {COLS.map((c) => (
+                    <td class="numeric data-table-num money" data-numeric="true" data-cvp-cell={`${m}-${c}`}>
+                      {v.ok ? v.rows[m - 1]?.[c] : ""}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="explorer-small">{ROUNDED_NOTE}</p>
+      </div>
+      <p class="explorer-fix" data-cvp-fix hidden={v.ok}>
+        {FIX_ANSWERS}
+      </p>
+      <p class="explorer-small explorer-disclaimer" data-testid="explorer-disclaimer">
+        {DISCLAIMER}
+      </p>
+    </div>
+  </div>
+</section>

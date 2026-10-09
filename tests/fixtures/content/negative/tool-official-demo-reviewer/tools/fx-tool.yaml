@@ -1,0 +1,11 @@
+title: Fixture tool
+summary: Fixture tool summary.
+assumptions:
+  - label: Fixture assumption
+    default: 30 days
+    explanation: Fixture explanation.
+limitations: Illustrative only.
+reviewer: fx-placeholder
+sourceRecord: fx-active
+usesOfficialValues: true
+demo: false
