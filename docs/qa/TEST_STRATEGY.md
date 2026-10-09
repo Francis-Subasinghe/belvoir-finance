@@ -96,12 +96,12 @@ Measured by Lighthouse (mobile preset, median of 3 runs) on the built site, by L
 | L1 Repo security | Settings checklist on the PR (owner settings) | Launchpad | Aegis |
 | L2 CI (ships inside the F1 PR) | `docs/qa/AC_F1_SCAFFOLD.md` (F1-18 to F1-21) | Launchpad | Sentinel, Aegis |
 | L3 Preview workflow | `docs/qa/AC_L3.md` (to write) | Launchpad | Sentinel (smoke test), Aegis (A3) |
-| L4 Feed-intake workflow | `docs/qa/AC_L4.md` (to write) | Aegis | Sentinel |
+| L4 Feed-intake workflow | [`docs/qa/AC_F5_SOURCES.md`](AC_F5_SOURCES.md) (F5-36 to F5-41; draft) | Aegis | Sentinel |
 | F1 Scaffold | `docs/qa/AC_F1_SCAFFOLD.md` | Sentinel | Aegis, Launchpad |
 | F2 Design system | [`docs/qa/AC_F2_DESIGN_SYSTEM.md`](AC_F2_DESIGN_SYSTEM.md) | Sentinel | Atlas (design fit, D12 wireframes) |
 | F3 Pages | [`docs/qa/AC_F3_PAGES.md`](AC_F3_PAGES.md) | Sentinel | Atlas, Aegis (rendering and CSP) |
 | F4 Cash-vs-profit explorer | [`docs/qa/AC_F4_TOOL.md`](AC_F4_TOOL.md) (includes the S3 calculation table; draft) | Sentinel | Aegis |
-| F5 Source registry and parser | `docs/qa/AC_F5.md` (to write) | Sentinel (failure modes) | Aegis (hardening fixtures) |
+| F5 Source registry and parser | [`docs/qa/AC_F5_SOURCES.md`](AC_F5_SOURCES.md) (draft) | Sentinel (failure modes) | Aegis (hardening fixtures) |
 | F6 Newsletter UI | `docs/qa/AC_F6.md` (to write) | Sentinel | Aegis |
 | F7 SEO | `docs/qa/AC_F7.md` (to write) | Sentinel | Atlas |
 | F8 "What changed" display | `docs/qa/AC_F8.md` (to write) | Sentinel | Atlas |
