@@ -78,7 +78,8 @@ describe("F1-09 other collections", () => {
     publisher: "p",
     category: "primary-official",
     jurisdiction: "UK",
-    website: "https://www.example.org/",
+    // F5-02: a non-demo source may not use a placeholder host; fixtures use the reserved .test TLD.
+    website: "https://www.fixture-source.test/",
     feedType: "none",
     updateFrequency: "weekly",
     rights: "unknown",
@@ -101,8 +102,9 @@ describe("F1-09 other collections", () => {
       sourceId: "s",
       title: "t",
       url: "https://www.example.org/x",
-      publishedAt: "2026-10-01",
-      fetchedAt: "2026-10-02",
+      // F5-06 (CF-07): full datetimes with an offset.
+      publishedAt: "2026-10-01T09:00:00Z",
+      fetchedAt: "2026-10-02T06:00:00+01:00",
       status: "queued",
     };
     expect(sourceItemSchema.safeParse(item).success).toBe(true);

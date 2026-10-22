@@ -140,9 +140,17 @@ describe("F3 committed content guards", () => {
     for (const f of walk("content", [".yaml", ".mdoc", ".json"]))
       expect(readFileSync(f, "utf8"), f).not.toMatch(/verified:\s*true/);
   });
-  it("F3-34 committed content never links to gov.uk, HMRC or ONS", () => {
-    for (const f of walk("content", [".yaml", ".mdoc", ".json"]))
-      expect(readFileSync(f, "utf8"), f).not.toMatch(/gov\.uk|hmrc|ons\.gov/i);
+  it("F3-34 / F5-05 committed content links to gov.uk, HMRC or ONS only as a non-demo Source's website or feedUrl (Q-3)", () => {
+    const nonDemoSources = new Set(
+      report.entries.filter((e) => e.collection === "sources" && e.raw.demo === false).map((e) => e.file),
+    );
+    for (const f of walk("content", [".yaml", ".mdoc", ".json"])) {
+      let text = readFileSync(f, "utf8");
+      // Q-3: the one exception; the dist/ scan (tests/build/f3-dist.test.ts) stays strict.
+      if (nonDemoSources.has(f)) text = text.replace(/^(?:website|feedUrl): .*$/gm, "");
+      expect(text, f).not.toMatch(/gov\.uk|hmrc|ons\.gov/i);
+    }
+    expect(report.errors.filter((e) => e.rule === "real-domain")).toEqual([]);
   });
   it("F3-34 every committed Person is demo with a displayName starting Placeholder, and has no placeholder key", () => {
     const people = report.entries.filter((e) => e.collection === "people");

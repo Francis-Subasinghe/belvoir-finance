@@ -4,8 +4,8 @@ category: primary-official
 topics:
   - fx-topic-a
 jurisdiction: UK
-website: "https://www.example.com/"
-feedUrl: "https://feed-marker-k3j.example.com/feed"
+website: "https://www.fixture-source.test/"
+feedUrl: "https://feed-marker-k3j.fixture-source.test/feed"
 feedType: rss
 updateFrequency: Monthly
 rights: titles-only

@@ -1,0 +1,17 @@
+name: Real Looking Source (placeholder)
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - fx-topic-a
+jurisdiction: UK
+website: "https://www.fixture-source.test/"
+feedType: none
+updateFrequency: Monthly
+rights: titles-only
+rightsNotes: ""
+role: primary
+owner: fx-reviewer
+lastChecked: 2026-09-01
+editorialNotes: ""
+demo: false
+status: paused

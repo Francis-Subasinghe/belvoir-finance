@@ -38,7 +38,7 @@ const F3_FIELDS: Record<string, string> = {
   tools: "title,summary,assumptions,limitations,reviewer,sourceRecord,usesOfficialValues,demo",
   newsletterCtas: "heading,valueProp,cadence,placement",
   sources:
-    "name,publisher,category,topics,jurisdiction,jurisdictionNote,website,feedUrl,feedType,updateFrequency,rights,rightsNotes,role,owner,lastChecked,editorialNotes,demo,status",
+    "name,publisher,category,topics,jurisdiction,jurisdictionNote,website,feedUrl,feedType,updateFrequency,rights,rightsNotes,role,owner,lastChecked,editorialNotes,demo,status,lastError,lastErrorAt,consecutiveFailures", // + F5-07 intake fields
   sourceItems: "sourceId,title,url,publishedAt,fetchedAt,excerpt,status,usedInStory",
 };
 
