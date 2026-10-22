@@ -111,6 +111,11 @@ describe("F4-45 script size", () => {
 });
 
 describe("F4-49 shared stylesheet size", () => {
+  it("F4-49 the pin is the measured gzip size of 5fdc80e's shared stylesheet (node zlib default level)", () => {
+    // tests/fixtures/f4/css/shared-5fdc80e.css is dist/_astro/BaseLayout.Cf8KGZb_.css built from 5fdc80e.
+    const css = readFileSync("tests/fixtures/f4/css/shared-5fdc80e.css");
+    expect(gzipSync(css).length).toBe(SHARED_CSS_GZIP_5FDC80E);
+  });
   it("F4-49 the shared stylesheet grew by at most 1 KB gzip over 5fdc80e, and the size is reported", () => {
     const css =
       jsFiles &&
