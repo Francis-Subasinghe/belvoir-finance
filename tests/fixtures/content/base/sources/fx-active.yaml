@@ -8,7 +8,7 @@ website: "https://www.fixture-source.test/"
 feedUrl: "https://feed-marker-k3j.fixture-source.test/feed"
 feedType: rss
 updateFrequency: Monthly
-rights: titles-only
+rights: titles-and-short-excerpt
 rightsNotes: RIGHTS-MARKER-K3J
 role: primary
 owner: owner-marker-q7x
