@@ -1,0 +1,60 @@
+name: Intake
+
+# L4 feed-intake skeleton (docs/qa/AC_F5_SOURCES.md F5-36 to F5-41, F5-53).
+# Manual trigger only, no schedule (Q-16). Fixtures only: the intake CLI runs on the
+# committed fixtures through its injected fixture resolver and transport and never
+# reaches the network (F5-53). The job is read-only, has no secrets and opens no PR,
+# issue or comment; its only output is the `intake-queue` artifact (Q-4, F5-37). A
+# person imports that artifact with `npm run intake:import` (F5-51) and opens the
+# review PR, which runs the same CI as any PR. Feed values never reach a `run:` script
+# or a `${{ }}` expression (F5-38). tests/unit/intake-workflow.test.ts pins all of this.
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: intake
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    name: Intake (fixtures only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Intake on the committed fixtures (no network)
+        run: npm run intake -- --fixtures tests/fixtures/f5 --out "$RUNNER_TEMP/intake"
+      - name: "F5-40 / F5-51: check the queue before upload"
+        # The same checks the import runs: path patterns, regular files only, size caps,
+        # canonical JSON and the schemas. Fails the job before anything is uploaded.
+        run: npm run intake:verify -- "$RUNNER_TEMP/intake"
+      - name: Run summary
+        # summary.txt is fixed-format (F5-35) and was checked by the step above.
+        run: |
+          {
+            echo "## Intake (fixtures only)"
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/intake/summary.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: intake-queue
+          path: ${{ runner.temp }}/intake/
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 7
