@@ -1,0 +1,18 @@
+name: Office for National Statistics announcements
+publisher: Office for National Statistics
+category: primary-official
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: https://www.gov.uk/government/organisations/office-for-national-statistics
+feedType: atom
+feedUrl: https://www.gov.uk/government/organisations/office-for-national-statistics.atom
+updateFrequency: Daily
+rights: unknown
+rightsNotes: Feed reachable on 2026-10-23; reuse terms not yet confirmed, so titles and links only until reviewed. Seed awaiting Francis (pre-launch list).
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: F5 seed. Paused until Francis approves the pre-launch list (Q-1) and rights (Q-2).
+demo: false
+status: paused
