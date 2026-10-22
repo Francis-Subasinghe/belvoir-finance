@@ -24,11 +24,15 @@ interface Lhr {
 
 const REPORT_DIR = ".lighthouseci/report";
 const budgets = readBudgets(join(import.meta.dirname, "budgets.json"));
-/** URL -> why SEO is not asserted ("demo", "404" or "placeholder"); same rule as the assertions. */
+/**
+ * URL pathname -> why SEO is not asserted ("demo", "404" or "placeholder"); same rule as the
+ * assertions. Keyed by pathname, not the full URL, so reports collected on another host or
+ * port (a local run off 4329) still match their built page.
+ */
 const seoExempt = new Map(
   (existsSync("dist-lhci") ? listPages("dist-lhci") : []).flatMap((p) => {
     const why = seoExemption(p);
-    return why ? [[p.url, why] as const] : [];
+    return why ? [[new URL(p.url).pathname, why] as const] : [];
   }),
 );
 /**
@@ -79,7 +83,7 @@ if (!existsSync(manifestPath)) {
     if (!first) continue;
     meta ||= `Lighthouse ${first.lighthouseVersion}, ${first.configSettings.formFactor} emulation, ${first.environment.hostUserAgent}`;
     const path = new URL(url).pathname;
-    const exempt = seoExempt.get(url);
+    const exempt = seoExempt.get(path);
     const cells = cats.map((c) => {
       if (exempt && c === "seo") return `n/a (${exempt})`;
       const score = Math.round(median(lhrs.map((l) => l.categories[c]?.score ?? 0)) * 100);
