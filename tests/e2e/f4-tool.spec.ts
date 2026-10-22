@@ -309,6 +309,38 @@ test.describe("F4-23 reflow and text spacing", () => {
   });
 });
 
+test.describe("F4-23 the Closing cash column fits at 320 and 360 px", () => {
+  // The viewport is set per test, so one project is enough.
+  test.skip(({ viewport }) => viewport?.width !== 360, "runs in mobile-360 only");
+  /** For each explorer table: how far the last column's right edge passes the region's right edge, in px. */
+  const overflow = (page: Page) =>
+    page.locator(".explorer-table").evaluateAll((els) =>
+      els
+        .filter((el) => el.getClientRects().length > 0)
+        .map((el) => {
+          const region = el.getBoundingClientRect();
+          const cells = [...el.querySelectorAll("tr > :last-child")];
+          const right = Math.max(...cells.map((c) => c.getBoundingClientRect().right));
+          return { over: Math.ceil(right - region.right), scroll: el.scrollWidth - el.clientWidth };
+        }),
+    );
+  for (const width of [320, 360]) {
+    test(`F4-23 at ${width} px the tool table and every gallery table show the whole Closing cash column`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await open(page);
+      await fillAll(page, S3_14);
+      await update(page);
+      expect(await overflow(page), "tool, S3-14").toEqual([{ over: 0, scroll: 0 }]);
+      await page.goto(GALLERY_PAGE);
+      const g = await overflow(page);
+      expect(g.length, "visible gallery tables").toBe(3);
+      expect(g, "gallery").toEqual(g.map(() => ({ over: 0, scroll: 0 })));
+    });
+  }
+});
+
 test.describe("F4-25 to F4-27 / F4-33 nothing leaves or stays", () => {
   test("F4-25 / F4-26 / F4-33 no request, navigation, storage, cookie, URL change, style attribute or CSP violation", async ({
     page,

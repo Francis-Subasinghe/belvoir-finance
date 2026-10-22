@@ -78,3 +78,13 @@
 .gallery-narrow {
   max-width: 20rem;
 }
+
+/* F4-23: below 30rem the explorer copies get the full width, as on the tool page. */
+#explorer.gallery-section {
+  padding-inline: 0;
+}
+@media (min-width: 30rem) {
+  #explorer.gallery-section {
+    padding-inline: var(--space-3);
+  }
+}

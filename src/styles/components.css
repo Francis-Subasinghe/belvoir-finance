@@ -895,6 +895,23 @@
   font-weight: 600;
   padding-bottom: var(--space-1);
 }
+/* F4-23: below 30rem the five columns fit, so Closing cash is never cut off:
+   tighter cell padding, 12 px figures; the shared table styles come back from 30rem. */
+.explorer-table .data-table th,
+.explorer-table .data-table td {
+  padding-inline: 2px;
+  font-size: 0.75rem;
+}
+.explorer-table thead th {
+  vertical-align: bottom;
+}
+@media (min-width: 30rem) {
+  .explorer-table .data-table th,
+  .explorer-table .data-table td {
+    padding-inline: var(--space-2);
+    font-size: inherit;
+  }
+}
 .explorer-small {
   font-size: var(--step--1);
   color: var(--color-text-muted);
