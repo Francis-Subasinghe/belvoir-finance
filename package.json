@@ -66,6 +66,7 @@
     "postbuild": "npm run test:build",
     "test:e2e": "npm run build:gallery && playwright test",
     "test:visual": "playwright test --config playwright.visual.config.ts",
-    "wireframes": "playwright test --config playwright.visual.config.ts --project wireframes"
+    "wireframes": "playwright test --config playwright.visual.config.ts --project wireframes",
+    "intake": "node scripts/intake.ts"
   }
 }

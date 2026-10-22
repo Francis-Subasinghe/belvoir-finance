@@ -12,6 +12,7 @@
  * - `sourceChangeProblems`: F5-33 / F5-51, only the intake fields may differ.
  */
 import { parseDocument } from "yaml";
+import { LAST_ERROR_PATTERN } from "./rules.ts";
 import {
   offsetDateTime,
   lastErrorField,
@@ -119,4 +120,59 @@ export function sourceChangeProblems(committedText: string, artifactText: string
     .filter((k) => !(SOURCE_INTAKE_FIELDS as readonly string[]).includes(k))
     .filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k]))
     .sort();
+}
+
+/**
+ * F5-34 / F5-35 / F5-50: the run summary grammar. Only source ids, E codes,
+ * counts, fixed drop reasons and `<item id> <host>` lines; never a title, URL,
+ * path or query.
+ */
+const SLUG = "[a-z0-9]+(?:-[a-z0-9]+)*";
+const HOST = "(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+export const SUMMARY_DROP_REASONS = ["missing-title", "missing-link", "bad-link", "bad-date", "duplicate"] as const;
+export const SUMMARY_LINE_PATTERNS = {
+  run: /^run (?:tls-override|sources=\d+ ok=\d+ failed=\d+ new-items=\d+ duplicates=\d+ invalid-sources=\d+|path-check-failed \d+)$/,
+  header: /^\[(?:failures|dropped|items)\]$/,
+  failure: new RegExp(`^${SLUG} (?:${LAST_ERROR_PATTERN.source.slice(4, -2)}) x[1-9]\\d*$`),
+  dropped: new RegExp(`^${SLUG} (?:${SUMMARY_DROP_REASONS.join("|")}) [1-9]\\d*$`),
+  item: new RegExp(`^[a-z0-9-]{1,64} ${HOST}$`),
+} as const;
+
+/**
+ * Problems with a summary.txt: any line outside the grammar, a section line in
+ * the wrong section, and (when `items` is given) any new item whose line is
+ * missing or whose host is not exactly its url's WHATWG hostname (F5-50).
+ */
+export function summaryProblems(text: string, items?: readonly { id: string; url: string }[]): string[] {
+  const problems: string[] = [];
+  let section: "run" | "failures" | "dropped" | "items" = "run";
+  const lines = text.endsWith("\n") ? text.slice(0, -1).split("\n") : text.split("\n");
+  const seen = new Map<string, string>();
+  lines.forEach((line, i) => {
+    const at = `line ${i + 1}`;
+    if (SUMMARY_LINE_PATTERNS.header.test(line)) {
+      section = line.slice(1, -1) as typeof section;
+      return;
+    }
+    const ok =
+      section === "run"
+        ? SUMMARY_LINE_PATTERNS.run.test(line)
+        : section === "failures"
+          ? SUMMARY_LINE_PATTERNS.failure.test(line)
+          : section === "dropped"
+            ? SUMMARY_LINE_PATTERNS.dropped.test(line)
+            : SUMMARY_LINE_PATTERNS.item.test(line);
+    if (!ok) problems.push(`${at}: not a ${section} line`);
+    if (ok && section === "items") {
+      const [id, host] = line.split(" ") as [string, string];
+      seen.set(id, host);
+    }
+  });
+  for (const it of items ?? []) {
+    const want = new URL(it.url).hostname;
+    const got = seen.get(it.id);
+    if (got === undefined) problems.push(`${it.id}: no item line`);
+    else if (got !== want) problems.push(`${it.id}: host ${got} is not the full host ${want}`);
+  }
+  return problems;
 }

@@ -18,3 +18,6 @@ tests/fixtures/html/script-*.html
 tests/fixtures/v1/
 # F4 negative fixtures are verbatim
 tests/fixtures/f4/
+
+# F5 feed, network and scan fixtures are verbatim
+tests/fixtures/f5/

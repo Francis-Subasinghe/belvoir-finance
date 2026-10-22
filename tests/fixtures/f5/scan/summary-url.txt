@@ -1,0 +1,5 @@
+run sources=1 ok=1 failed=0 new-items=1 duplicates=0 invalid-sources=0
+[failures]
+fx-rss http-500 https://feeds.fx-rss.test/rss?token=abc
+[dropped]
+[items]

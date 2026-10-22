@@ -1,0 +1,87 @@
+{
+  "dns": {
+    "feeds.fx-rss.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-atom.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-injection.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-failing.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-recovering.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-paused.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-retired.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-demo.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-api.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ],
+    "feeds.fx-rights-none.test": [
+      "192.0.2.10",
+      "2001:db8::10"
+    ]
+  },
+  "responses": {
+    "https://feeds.fx-rss.test/rss": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/rss+xml; charset=utf-8"
+      },
+      "body": "../feeds/rss2-valid.xml"
+    },
+    "https://feeds.fx-atom.test/rss": {
+      "status": 301,
+      "headers": {
+        "Location": "/atom.xml"
+      }
+    },
+    "https://feeds.fx-atom.test/atom.xml": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/atom+xml"
+      },
+      "body": "../feeds/atom-valid.xml"
+    },
+    "https://feeds.fx-injection.test/rss": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/rss+xml"
+      },
+      "body": "../feeds/injection.xml"
+    },
+    "https://feeds.fx-failing.test/rss": {
+      "status": 500,
+      "headers": {
+        "Content-Type": "text/plain"
+      },
+      "body": "error-500.txt"
+    },
+    "https://feeds.fx-recovering.test/rss": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/rss+xml"
+      },
+      "body": "../feeds/no-items.xml"
+    }
+  }
+}
