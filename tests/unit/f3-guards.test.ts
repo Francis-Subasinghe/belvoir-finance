@@ -170,8 +170,12 @@ describe("F3 committed content guards", () => {
   it("F3-20 every committed entry of a demo-bearing collection sets demo explicitly, and all are demo while D8 is open", () => {
     for (const e of report.entries.filter((x) =>
       ["stories", "topics", "tools", "people", "sources"].includes(x.collection),
-    ))
-      expect(e.raw.demo, e.file).toBe(true);
+    )) {
+      expect(typeof e.raw.demo, e.file).toBe("boolean");
+      // F5-01: the paused non-demo seed Sources are the one exception (Q-1, Q-2, awaiting Francis).
+      if (e.collection === "sources" && e.raw.demo === false) expect(e.raw.status, e.file).toBe("paused");
+      else expect(e.raw.demo, e.file).toBe(true);
+    }
   });
 });
 
