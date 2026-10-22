@@ -1,8 +1,8 @@
 # Acceptance criteria: V2 visual and UX refresh with motion
 
 **Task:** V2, Francis's request of 23 Oct 2026 for a refresh in the style of amadae.co (style only), as specified in `docs/design/V2_BRIEF.md` (PR #44, `8c90629`, on `main` `f12a177`).
-**Verifier:** Sentinel. **Also checked by:** Aegis (CSP, fonts, SVG, reference assets: V2-01 to V2-14), Launchpad (CSS pin, Lighthouse, visual gate: V2-40 to V2-49), Atlas (design fit, open questions).
-**Status:** Draft v0.1 (23 Oct 2026). Written from the brief at `8c90629` and Forge's implementation notes (input only; where the notes and the brief disagree, **the brief wins**, see Q-V2-1). Follows `AC_F2_DESIGN_SYSTEM.md`, `AC_F3_PAGES.md`, `AC_F4_TOOL.md`, `AC_V1_VISUAL.md`, `TEST_STRATEGY.md` and `AGENTS.md`.
+**Verifier:** Sentinel. **Also checked by:** Aegis (CSP, fonts, SVG, reference assets: V2-01 to V2-15, V2-36 to V2-39, V2-53 to V2-56), Launchpad (CSS pin, Lighthouse, visual gate: V2-40 to V2-49), Atlas (design fit, open questions).
+**Status:** Draft v0.2 (23 Oct 2026; v0.2 adds Aegis's font-integrity and SVG rules). Written from the brief at `8c90629` and Forge's implementation notes (input only; where the notes and the brief disagree, **the brief wins**, see Q-V2-1). Follows `AC_F2_DESIGN_SYSTEM.md`, `AC_F3_PAGES.md`, `AC_F4_TOOL.md`, `AC_V1_VISUAL.md`, `TEST_STRATEGY.md` and `AGENTS.md`.
 
 Check types and evidence are as in `AC_F4_TOOL.md`:
 
@@ -35,13 +35,14 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | V2-10 | **Licences committed.** Each shipped font family (Fraunces, Inter, IBM Plex Mono, and any other) has its OFL-1.1 licence text committed in the repo beside the font or in a `licenses/` path referenced from the font CSS/README, and the licence ships in `dist/` or the repo docs. | Build + Manual | Test maps each family in built `@font-face` to a committed licence file containing "SIL Open Font License". PASS: every family mapped. |
 | V2-11 | **No font loader script.** No Web Font Loader, `FontFace` JS API usage, `document.fonts` manipulation or font CDN. Only the hero weight (Fraunces 300) is preloaded, and only on pages that use it. | Build | Scan JS/HTML. PASS: 0 loader hits; ≤ 1 Fraunces preload per page, same-origin, `crossorigin` set. |
 | V2-12 | **Metric-matched fallback.** `font-fallbacks.css` defines `"Fraunces Fallback"` with `size-adjust` and `ascent-override` (and `descent-override`/`line-gap-override` as needed) and every Fraunces stack lists it before generic `serif`. | Unit | Token/CSS test. PASS: rule present and referenced. |
+| V2-53 | **Font files committed and hash-pinned (Aegis; resolves Q-V2-2).** Each font's licence file is committed in the repo (shipping it only from `node_modules` is a FAIL). If fonts come from an npm package (e.g. `@fontsource/fraunces@5.3.0`), the WOFF2 files used are copied into the repo, and the build serves those copies. A unit test pins the sha256 of every committed WOFF2 file in a manifest (`tests/fixtures/v2/font-hashes.json` or similar), and the built `dist/` font files match those hashes. | Unit + Build | Hash every committed `.woff2` and every font file in `dist/` against the manifest. Fixture `fonts-hash-mismatch/` (a WOFF2 whose bytes differ from its manifest entry) fails. PASS: all hashes match; every family has a committed licence. |
 | V2-13 | **Font-swap CLS.** With fonts delayed by 2 s (route interception) the layout shift from the swap is ≤ 0.1 at 360, 768 and 1280 on home, a story, `/tools/cash-vs-profit/`, and `/cookies/` at 360; target 0 (report any non-zero value in the PR). | E2E | `PerformanceObserver('layout-shift')`, sum excluding `hadRecentInput`. PASS: ≤ 0.1 everywhere; values listed. |
 
 ## 3. Reference assets (Amadae)
 
 | ID | Criterion | Check | Method and pass condition |
 | --- | --- | --- | --- |
-| V2-14 | **No Amadae assets, copy, fonts or code.** The diff adds no file copied from amadae.co, no Canela or Geist font file, no Amadae text, logo, wordmark, laurel ornament, icon, illustration or photo, and the string "amadae" appears only in `docs/` (as a style reference link). | Build + Manual | Test: `rg -i "amadae\|canela"` outside `docs/` = 0; no `*canela*`/`*geist*` font files. Manual: Aegis reviews every new image/SVG and copy string as our own. PASS: 0 hits and Aegis sign-off. |
+| V2-14 | **No Amadae assets, copy, fonts or code.** The diff adds no file copied from amadae.co, no Canela or Geist font file, no Amadae text, logo, wordmark, laurel ornament, icon, illustration or photo, and the string "amadae" appears only in `docs/` (as a style reference link). | Build + Manual | Test: `rg -i "amadae\|canela"` outside `docs/` = 0; no `*canela*`/`*geist*` font files. Manual: Aegis reviews every new image/SVG and copy string as our own. PASS: 0 hits and Aegis sign-off. **Note:** Aegis does the manual sign-off on every new SVG and every new piece of copy in the PR, recorded per file or string in the PR. |
 | V2-15 | **No reference captures committed.** No screenshot, video or computed-style dump of amadae.co (e.g. Forge's `ref/`, `cap.log`, `*.webm`) is in any commit of the PR, including intermediate commits. | Manual + Build | `git log -p main..HEAD --name-only` reviewed; new binaries limited to fonts, our SVGs and visual baselines of Belvoir pages. PASS: none found. |
 
 ## 4. Motion
@@ -83,6 +84,10 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | V2-38 | **No `<foreignObject>`.** | Build | Fixture `svg-foreignobject.svg` fails. PASS. |
 | V2-39 | **No external `href`/`xlink:href` or `url()`.** Only `#fragment` references. Every `<img>` of an SVG has `width`/`height`, and V1-11 byte caps apply. | Build | Fixtures `svg-external-href.svg`, `svg-xlink-href.svg`, `svg-url.svg` fail. PASS. |
 
+| V2-54 | **No unsafe link schemes in SVG `<a>`.** No `<a>` with `href`/`xlink:href` using `javascript:` or any other non-`https:` scheme (`data:`, `http:`, `vbscript:`, etc.). Same-file `#fragment` links are allowed. | Build | SVG scan. Fixture `svg-a-javascript.svg` (`<a href="javascript:…">`) fails. PASS. |
+| V2-55 | **No `<animate>`/`<set>` targeting links.** No `<animate>`, `<set>` or `<animateTransform>` with `attributeName="href"` or `attributeName="xlink:href"`. | Build | SVG scan. Fixture `svg-animate-href.svg` (`<set attributeName="href" to="javascript:…">`) fails. PASS. |
+| V2-56 | **No `<use>` pointing outside the file.** Every `<use>` `href`/`xlink:href` is a same-file `#fragment`. | Build | SVG scan. Fixture `svg-use-external.svg` (`<use href="other.svg#x">`) fails. PASS. |
+
 ## 7. Budgets, Lighthouse and the visual gate
 
 | ID | Criterion | Check | Method and pass condition |
@@ -104,7 +109,7 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | --- | --- | --- | --- |
 | V2-50 | **F2 to F5 and V1 ACs still pass.** All tests prefixed F1-, F2-, F3-, F4-, F5- and V1- are green; any test changed to accommodate V2 is listed in the PR with the reason and reviewed. | CI | Full gate. PASS: green, no skipped or deleted tests without sign-off. |
 | V2-51 | **Content rules hold.** No star ratings, savings claims, testimonials or urgency copy; email addresses only `example.org`/`.invalid`. | Build | Existing guards. PASS. |
-| V2-52 | **Per-AC status list in the PR body.** The PR body lists V2-01 to V2-52 each with PASS/FAIL/N/A, the test name or evidence link, and the commit tested. | Manual | PR review. PASS: complete list. |
+| V2-52 | **Per-AC status list in the PR body.** The PR body lists V2-01 to V2-56 each with PASS/FAIL/N/A, the test name or evidence link, and the commit tested. | Manual | PR review. PASS: complete list. |
 
 ## Negative fixtures (`tests/fixtures/v2/`)
 
@@ -120,7 +125,8 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | `js-tt-policy.js` (`trustedTypes.createPolicy`) | V2-05 |
 | `html-iframe.html`, `html-ga-pixel.html` | V2-06 |
 | `css-fontface-ttf.css`, `css-fontface-woff.css` | V2-09 |
-| `fonts-no-licence/` (woff2 without licence) | V2-10 |
+| `fonts-no-licence/` (woff2 without licence) | V2-10, V2-53 |
+| `fonts-hash-mismatch/` (woff2 not matching manifest) | V2-53 |
 | `js-fontloader.js` (`document.fonts.load`) | V2-11 |
 | `src-amadae-string.astro`, `font-canela.woff2` (dummy name) | V2-14 |
 | `css-keyframes-width.css`, `css-keyframes-filter.css`, `css-transition-all.css` | V2-16 |
@@ -136,9 +142,12 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | `svg-onload.svg`, `svg-onclick.svg` | V2-37 |
 | `svg-foreignobject.svg` | V2-38 |
 | `svg-external-href.svg`, `svg-xlink-href.svg`, `svg-url.svg` | V2-39 |
+| `svg-a-javascript.svg` | V2-54 |
+| `svg-animate-href.svg` | V2-55 |
+| `svg-use-external.svg` | V2-56 |
 | `playwright-visual-no-rm.ts` | V2-45 |
 
-44 negative fixtures. Each must fail the real check CI runs.
+48 negative fixtures. Each must fail the real check CI runs.
 
 ## Mutants (QA, manual, on a throwaway branch)
 
@@ -161,16 +170,22 @@ Every automated check that guards a rule has a **negative fixture** that must fa
 | M-15 | Raise the F4-49 allowance to 2 KB | V2-41 |
 | M-16 | Remove `reducedMotion` from the visual config | V2-45 |
 | M-17 | Add `transition: all 300ms` to cards | V2-16 |
+| M-18 | Swap a committed Fraunces WOFF2 for a different file (e.g. another weight or a re-downloaded build) without updating the manifest | V2-53 |
+| M-19 | Add `<a href="javascript:alert(1)">` to an SVG | V2-54 |
+| M-20 | Add `<set attributeName="href">` to an SVG | V2-55 |
+| M-21 | Add `<use href="https://example.org/x.svg#a">` to an SVG | V2-56 |
 
 ## Open questions
 
 - **Q-V2-1 (Atlas/Forge):** Forge's notes propose `fade-up` 12 px, hero 600 ms `cubic-bezier(.2,.7,.2,1)` with `animation-delay` staggers, and a 40 ms mobile-nav stagger. The brief (8 px, one easing, 150/300/500 ms, no `animation-delay`) wins and these ACs follow it. How is the hero stagger "by duration" done without `animation-delay` (150/300/500 per item)?
-- **Q-V2-2 (Atlas/Aegis):** The brief allows the licence "committed beside it **or** shipped from the pinned package". Aegis asked for it committed. V2-10 requires a committed file; confirm.
+- **Q-V2-2 (resolved by Aegis, v0.2):** Licence files must be committed in the repo. WOFF2 files from an npm package are copied into the repo and their sha256 hashes pinned by a test (V2-53).
 - **Q-V2-3 (Atlas):** The brief's reduced-motion reset uses `transition-duration: 0.01ms`, not zero. V2-19 accepts ≤ 0.01 ms transitions while requiring 0 animations; confirm.
 - **Q-V2-4 (Launchpad):** `AC_F5_SOURCES.md` is not on `main` `f12a177` (F5 is still being rebuilt), so V2-50 covers F5 tests only once F5 merges. Order of merge: F5 before V2?
 - **Q-V2-5 (Atlas):** Firefox is not a current Playwright project. V2-21 needs a Firefox project (E2E only, not visual). Agree adding it?
 - **Q-V2-6 (Launchpad):** The brief says Lighthouse 100 in all four categories; V2-43 keeps the F4-47 `robots-txt` skip as the only exception.
 
 ## Changelog
+
+- **v0.2** (23 Oct 2026): Aegis's additions. Q-V2-2 resolved: licences committed, npm WOFF2 files copied into the repo with sha256 pins (V2-53, mutant M-18). Three SVG rules: unsafe `<a>` schemes (V2-54), `<animate>`/`<set>` on href (V2-55), external `<use>` (V2-56), each with a fixture and mutant. V2-14 notes Aegis signs off every new SVG and copy string. 56 ACs, 48 negative fixtures, 21 mutants, 5 open questions.
 
 - **v0.1** (23 Oct 2026): V2-01 to V2-52, 44 negative fixtures, 17 mutants, 6 open questions. Written from `V2_BRIEF.md` at `8c90629`.
