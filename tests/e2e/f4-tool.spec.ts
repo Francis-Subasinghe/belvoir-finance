@@ -267,6 +267,27 @@ test.describe("F4-22 axe at every impact", () => {
     const r = await new AxeBuilder({ page }).withTags(AXE_TAGS).include("#explorer").analyze();
     expect(r.violations.map((v) => `${v.id} (${v.impact})`)).toEqual([]);
   });
+  test("F4-22 / F4-58 the five gallery explorers and their tables have unique accessible names (axe landmark-unique)", async ({
+    page,
+  }) => {
+    await page.goto(GALLERY_PAGE);
+    const r = await new AxeBuilder({ page }).withRules(["landmark-unique"]).include("#explorer").analyze();
+    expect(r.violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([]);
+    const names = (sel: string) =>
+      page.locator(`#explorer ${sel}`).evaluateAll((els) =>
+        els.map((el) =>
+          (el.getAttribute("aria-labelledby") ?? "")
+            .split(" ")
+            .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
+            .join(" "),
+        ),
+      );
+    for (const sel of ["section[data-cvp]", "[role=region].explorer-table"]) {
+      const n = await names(sel);
+      expect(n, sel).toHaveLength(5);
+      expect(new Set(n).size, `${sel}: ${n.join(" | ")}`).toBe(5);
+    }
+  });
 });
 
 test.describe("F4-23 reflow and text spacing", () => {

@@ -388,8 +388,11 @@ const levels = [
       <p>Static copies of the tool page's explorer: no script runs here, so the gallery stays at 0 KB of JavaScript.</p>
       {EXPLORER_VARIANTS.map((v) => (
         <div class="gallery-explorer" data-testid={`explorer-${v.id}`}>
-          <h3 class="gallery-label">{v.label}</h3>
+          <h3 class="gallery-label" id={`g-${v.id}-label`}>
+            {v.label}
+          </h3>
           <CashVsProfitExplorer
+            labelId={`g-${v.id}-label`}
             idPrefix={`g-${v.id}`}
             values={v.values}
             disabled={v.disabled}
