@@ -1,0 +1,21 @@
+# Positive: both jobs check out with persist-credentials: false (any ref, any key order).
+name: ok
+on: pull_request
+jobs:
+  a:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: echo hi
+  b:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+  reusable:
+    uses: ./.github/workflows/other.yml
