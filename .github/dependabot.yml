@@ -9,6 +9,9 @@ updates:
       # The site runs Node 24 (engines, .nvmrc). @types/node 25+ is for a newer Node.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # Remove when astro's version satisfies markdoc 2.1 peer range (#35 ERESOLVE)
+      - dependency-name: "@astrojs/markdoc"
+        versions: [">=2.1.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
