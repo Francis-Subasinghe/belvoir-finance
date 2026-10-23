@@ -93,6 +93,8 @@ export function intakeWorkflowProblems(text: string): string[] {
     let npmCi = false;
     let nodeFromNvmrc = false;
     let fixturesRun = false;
+    let fixturesDir: string | undefined;
+    let verifyRegistry: string | undefined;
     let verifyAt = -1;
     const uploads: number[] = [];
     steps.forEach((step: unknown, i: number) => {
@@ -121,13 +123,24 @@ export function intakeWorkflowProblems(text: string): string[] {
         const bad = FORBIDDEN_RUN.exec(run);
         if (bad) out.push(`F5-37/F5-53: ${where} run: uses "${bad[0].trim()}"`);
         if (run.trim() === "npm ci") npmCi = true;
-        if (/^npm run intake -- --fixtures \S+ --out "\$RUNNER_TEMP\/intake"$/.test(run.trim())) fixturesRun = true;
-        if (/^npm run intake:verify -- "\$RUNNER_TEMP\/intake"$/.test(run.trim())) verifyAt = i;
+        const fx = /^npm run intake -- --fixtures (\S+) --out "\$RUNNER_TEMP\/intake"$/.exec(run.trim());
+        if (fx) {
+          fixturesRun = true;
+          fixturesDir = fx[1];
+        }
+        // The verify reads the same registry intake ran on (`<fixtures>/registry`), never content/.
+        const vf = /^npm run intake:verify -- "\$RUNNER_TEMP\/intake" --registry (\S+)$/.exec(run.trim());
+        if (vf) {
+          verifyAt = i;
+          verifyRegistry = vf[1];
+        }
       }
     });
     if (!npmCi) out.push(`F5-39: ${at} has no plain "npm ci" step`);
     if (!nodeFromNvmrc) out.push(`F5-39: ${at} does not take Node from .nvmrc`);
     if (!fixturesRun) out.push(`F5-53: ${at} does not run intake on --fixtures into $RUNNER_TEMP/intake`);
+    if (verifyAt !== -1 && fixturesDir !== undefined && verifyRegistry !== `${fixturesDir}/registry`)
+      out.push(`F5-40: ${at} intake:verify --registry must be ${fixturesDir}/registry`);
     if (uploads.length !== 1)
       out.push(`F5-40: ${at} must have exactly one upload-artifact step (has ${uploads.length})`);
     else {

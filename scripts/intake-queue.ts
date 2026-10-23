@@ -19,25 +19,33 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
-import { parse } from "yaml";
+import { isAlias, visit } from "yaml";
+import { parseDocument } from "yaml";
+// F5-51: every schema, cap and grammar comes from Forge's one module (static import, so a
+// missing or renamed export fails typecheck and the import can't start without it).
 import {
-  ARTIFACT_DIRS,
   ARTIFACT_LIMITS,
+  ITEM_ID_PATTERN,
+  SOURCE_INTAKE_FIELDS,
+  readSourceYaml,
+  sourceChangeProblems,
+  summaryProblems,
+  validateSourceItemText,
+  validateSourceText,
+} from "../src/lib/sources/schema.ts";
+import {
   ArtifactError,
   capOf,
   decodeText,
+  isArtifactDir,
   kindOf,
   readArtifact,
   readCentralDirectory,
-  summaryProblems,
   type ArtifactEntry,
 } from "./intake-artifact.ts";
-import type { EntryValidators } from "./intake-schema.ts";
 
 /** A zip bigger than this can't hold a queue within ARTIFACT_LIMITS (8 MiB + headers). */
 export const ZIP_MAX_BYTES = 10 * 1024 * 1024;
-/** F5-33: the only Source fields the intake job may add, change or remove. */
-export const MUTABLE_SOURCE_FIELDS = ["lastError", "lastErrorAt", "consecutiveFailures"] as const;
 
 export type Action = "create" | "update" | "unchanged";
 export interface PlannedWrite {
@@ -87,17 +95,41 @@ function readNoFollow(p: string, max: number): Buffer {
 
 /** Drop the F5-33 lines so the rest of a Source file can be compared byte for byte. */
 export function withoutMutableFields(yamlText: string): string {
-  const re = new RegExp(`^(?:${MUTABLE_SOURCE_FIELDS.join("|")}):.*\\n?`, "gm");
+  const re = new RegExp(`^(?:${SOURCE_INTAKE_FIELDS.join("|")}):.*\\n?`, "gm");
   return yamlText.replace(re, "");
 }
 
-const parseYaml = (text: string): unknown => parse(text, { uniqueKeys: true, maxAliasCount: 0, prettyErrors: false });
+/** Kept on top of readSourceYaml: a Source written by intake never needs an anchor or alias. */
+function hasAlias(text: string): boolean {
+  let found = false;
+  visit(parseDocument(text, { version: "1.2", schema: "core" }), {
+    Alias() {
+      found = true;
+      return visit.BREAK;
+    },
+    Node(_k, n) {
+      if (isAlias(n) || (n as { anchor?: string }).anchor) {
+        found = true;
+        return visit.BREAK;
+      }
+      return undefined;
+    },
+  });
+  return found;
+}
+
+export interface CheckOptions {
+  /** Where the committed Sources live (default `<repo>/content/sources`; the fixture registry for verify). */
+  sourcesDir?: string;
+}
 
 /**
  * Check every queue entry against the schemas and the committed tree. Returns the plan;
  * throws ImportError listing every problem found (not just the first).
  */
-export function checkQueue(entries: ArtifactEntry[], repo: string, v: EntryValidators): Plan {
+export function checkQueue(entries: ArtifactEntry[], repo: string, opts: CheckOptions = {}): Plan {
+  const sourcesDir = opts.sourcesDir ?? join(repo, "content/sources");
+  const items: { id: string; url: string }[] = [];
   const problems: string[] = [];
   const writes: PlannedWrite[] = [];
   let summary: string | undefined;
@@ -116,9 +148,7 @@ export function checkQueue(entries: ArtifactEntry[], repo: string, v: EntryValid
       continue;
     }
     if (e.kind === "summary") {
-      const bad = summaryProblems(text);
-      if (bad.length > 0) problems.push(...bad.map((b) => `summary-format: ${b}`));
-      else summary = text;
+      summary = text;
       continue;
     }
     if (e.kind === "item") {
@@ -133,17 +163,26 @@ export function checkQueue(entries: ArtifactEntry[], repo: string, v: EntryValid
         problems.push(`item-json: ${e.name} is not a JSON object`);
         continue;
       }
-      const bad = v.item(value);
-      if (bad.length > 0) {
-        problems.push(...bad.map((b) => `item-schema: ${e.name}: ${b}`));
+      const id = e.name.slice("content/source-items/".length, -".json".length);
+      if (!ITEM_ID_PATTERN.test(id)) {
+        problems.push(`item-id: ${e.name} is not an ITEM_ID_PATTERN id`);
         continue;
       }
+      const r = validateSourceItemText(text);
+      if (!r.ok) {
+        problems.push(...r.problems.map((b) => `item-schema: ${e.name}: ${b}`));
+        continue;
+      }
+      items.push({ id, url: String(r.data["url"]) });
       const sourceId = (value as Record<string, unknown>)["sourceId"];
       if (typeof sourceId === "string") {
         const src = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(sourceId)
-          ? lstatOrNull(join(repo, "content/sources", `${sourceId}.yaml`))
+          ? lstatOrNull(join(sourcesDir, `${sourceId}.yaml`))
           : null;
-        if (!src?.isFile()) problems.push(`item-source: ${e.name} names a source that is not in content/sources/`);
+        if (!src?.isFile())
+          problems.push(
+            `item-source: ${e.name} names a source that is not in ${sourcesDir === join(repo, "content/sources") ? "content/sources/" : "the registry"}`,
+          );
       }
       // F5-24: items are create-only. Re-importing the same bytes is a no-op; anything else fails.
       if (existing) {
@@ -154,30 +193,36 @@ export function checkQueue(entries: ArtifactEntry[], repo: string, v: EntryValid
       continue;
     }
     // Source YAML: must already be committed; only the F5-33 fields may differ.
-    let value: unknown;
-    try {
-      value = parseYaml(text);
-    } catch {
+    const sourceTarget = join(sourcesDir, e.name.slice("content/sources/".length));
+    const committedSt = lstatOrNull(sourceTarget);
+    if (committedSt && !committedSt.isFile()) {
+      problems.push(`target-unsafe: ${e.name} is not a regular file in ${sourcesDir}`);
+      continue;
+    }
+    if (readSourceYaml(text).error !== undefined || hasAlias(text)) {
       problems.push(`source-yaml: ${e.name} is not valid YAML (or has duplicate keys or aliases)`);
       continue;
     }
-    const bad = v.source(value);
-    if (bad.length > 0) {
-      problems.push(...bad.map((b) => `source-schema: ${e.name}: ${b}`));
+    const r = validateSourceText(text);
+    if (!r.ok) {
+      problems.push(...r.problems.map((b) => `source-schema: ${e.name}: ${b}`));
       continue;
     }
-    if (!existing) {
+    if (!committedSt) {
       problems.push(`source-unknown: ${e.name} is not a committed Source (the intake job cannot add one)`);
       continue;
     }
-    const committed = readNoFollow(target, ARTIFACT_LIMITS.sourceYamlBytes * 4);
-    if (committed.equals(e.data)) writes.push({ name: e.name, action: "unchanged", data: e.data });
-    else if (withoutMutableFields(committed.toString("utf8")) === withoutMutableFields(text))
-      writes.push({ name: e.name, action: "update", data: e.data });
-    else problems.push(`source-changed: ${e.name} changes a field other than ${MUTABLE_SOURCE_FIELDS.join(", ")}`);
+    const committed = readNoFollow(sourceTarget, ARTIFACT_LIMITS.sourceYamlBytes * 4);
+    const changed = sourceChangeProblems(committed.toString("utf8"), text);
+    if (changed.length > 0) problems.push(`source-changed: ${e.name} changes ${changed.join(", ")}`);
+    else if (withoutMutableFields(committed.toString("utf8")) !== withoutMutableFields(text))
+      // Same data, other bytes (comments, quoting, order): still refused, so the diff stays reviewable.
+      problems.push(`source-changed: ${e.name} rewrites lines other than ${SOURCE_INTAKE_FIELDS.join(", ")}`);
+    else if (committed.equals(e.data)) writes.push({ name: e.name, action: "unchanged", data: e.data });
+    else writes.push({ name: e.name, action: "update", data: e.data });
   }
-  if (summary === undefined && !problems.some((p) => p.startsWith("summary-format")))
-    problems.push("summary-missing: the artifact has no summary.txt");
+  if (summary === undefined) problems.push("summary-missing: the artifact has no summary.txt");
+  else problems.push(...summaryProblems(summary, items).map((b) => `summary-format: summary.txt ${b}`));
   if (problems.length > 0) throw new ImportError("queue-invalid", problems);
   return { writes, summary: summary ?? "" };
 }
@@ -195,16 +240,15 @@ export function readQueueDir(dir: string): ArtifactEntry[] {
       const st = lstatSync(join(dir, r));
       if (st.isSymbolicLink()) throw new ArtifactError("entry-symlink", `${JSON.stringify(r)} is a symlink`);
       if (st.isDirectory()) {
-        if (!ARTIFACT_DIRS.includes(`${r}/`))
-          throw new ArtifactError("entry-name", `directory ${JSON.stringify(r)} is not allowed`);
+        if (!isArtifactDir(r)) throw new ArtifactError("entry-name", `directory ${JSON.stringify(r)} is not allowed`);
         walk(r);
         continue;
       }
       if (!st.isFile()) throw new ArtifactError("entry-special", `${JSON.stringify(r)} is not a regular file`);
       const kind = kindOf(r);
       if (kind === undefined) throw new ArtifactError("entry-name", `${JSON.stringify(r)} matches no F5-40 pattern`);
-      if (out.length >= ARTIFACT_LIMITS.entries)
-        throw new ArtifactError("too-many-entries", `more than ${ARTIFACT_LIMITS.entries} files`);
+      if (out.length >= ARTIFACT_LIMITS.maxEntries)
+        throw new ArtifactError("too-many-entries", `more than ${ARTIFACT_LIMITS.maxEntries} files`);
       if (st.size > capOf(kind))
         throw new ArtifactError("entry-too-large", `${r} is ${st.size} bytes, cap ${capOf(kind)}`);
       total += st.size;
@@ -262,6 +306,8 @@ export interface ImportOptions {
   /** The artifact zip (already on disk), or a queue directory with `fromDir`. */
   zip?: string;
   fromDir?: string;
+  /** verify only: compare Sources against this folder instead of content/sources (the fixture registry). */
+  sourcesDir?: string;
   dryRun?: boolean;
   log?: (line: string) => void;
 }
@@ -279,7 +325,7 @@ export function crossCheckWithUnzip(zipPath: string, names: string[]): void {
 }
 
 /** The whole import (or, with fromDir and dryRun, the pre-upload verify). */
-export function runImport(opts: ImportOptions, validators: EntryValidators): Plan {
+export function runImport(opts: ImportOptions): Plan {
   const log = opts.log ?? ((l: string) => console.log(l));
   const repo = realpathSync(opts.repo);
   let entries: ArtifactEntry[];
@@ -308,7 +354,9 @@ export function runImport(opts: ImportOptions, validators: EntryValidators): Pla
       entries = readQueueDir(opts.fromDir);
     } else throw new ImportError("usage", ["give a zip or a directory"]);
 
-    const plan = checkQueue(entries, repo, validators);
+    if (opts.sourcesDir !== undefined && !opts.dryRun)
+      throw new ImportError("usage", ["a registry other than content/sources is only for verify (dry run)"]);
+    const plan = checkQueue(entries, repo, opts.sourcesDir === undefined ? {} : { sourcesDir: opts.sourcesDir });
     for (const w of plan.writes) log(`${w.action.padEnd(9)} ${w.name}`);
     if (!opts.dryRun) applyPlan(plan, repo);
     return plan;

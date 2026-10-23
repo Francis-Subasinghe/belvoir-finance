@@ -26,24 +26,40 @@ demo: true
 status: paused
 `;
 /** The same Source after one failed run: only the F5-33 fields added. */
-export const SOURCE_FAILED = `${SOURCE_YAML}lastError: http-500\nlastErrorAt: 2026-10-09\nconsecutiveFailures: 1\n`;
+/** Written as Forge's intake writes it (scripts/intake.ts on tests/fixtures/f5): quoted UTC datetime. */
+export const SOURCE_FAILED = `${SOURCE_YAML}lastError: http-500\nlastErrorAt: "2026-10-23T00:00:00Z"\nconsecutiveFailures: 1\n`;
 
-export const ITEM_ID = "3f2a9c1e0b7d4a6f";
+/** Q-11: `<sourceId>-<first 12 hex of sha256(normalised url)>`, as Forge's parser derives it. */
+export const ITEM_ID = `${SOURCE_ID}-a1ac90ea1a7b`;
+export const ITEM_URL = "https://www.example.org/placeholder-item";
+export const ITEM_HOST = "www.example.org";
 export const ITEM_PATH = `content/source-items/${ITEM_ID}.json`;
 export const ITEM_JSON = `${JSON.stringify(
   {
     sourceId: SOURCE_ID,
     title: "Placeholder source item (demo)",
-    url: "https://www.example.org/placeholder-item",
-    publishedAt: "2026-10-01",
-    fetchedAt: "2026-10-09",
+    url: ITEM_URL,
+    publishedAt: "2026-10-01T09:00:00Z",
+    fetchedAt: "2026-10-23T00:00:00Z",
     status: "queued",
   },
   null,
   2,
 )}\n`;
-export const SUMMARY =
-  "run 2026-10-09 fixtures\nsources 1 ok 0 failed 1\nexample-official-statistics http-500 x1\nitems 1 queued 1\n";
+/** A summary in Forge's grammar (SUMMARY_LINE_PATTERNS) with one `[items]` line per item id. */
+export function summaryFor(ids: readonly string[]): string {
+  return [
+    `run sources=1 ok=0 failed=1 new-items=${ids.length} duplicates=0 invalid-sources=0`,
+    "[failures]",
+    `${SOURCE_ID} http-500 x1`,
+    "[dropped]",
+    "[items]",
+    ...ids.map((id) => `${id} ${ITEM_HOST}`),
+    "",
+  ].join("\n");
+}
+export const SUMMARY = summaryFor([ITEM_ID]);
+const ITEM_RE = /^content\/source-items\/([a-z0-9-]{1,64})\.json$/;
 
 const dirs: ZipEntrySpec[] = [{ name: "content/" }, { name: "content/source-items/" }, { name: "content/sources/" }];
 const ok: ZipEntrySpec[] = [
@@ -59,7 +75,8 @@ const withItem = (
 ): ZipEntrySpec[] => [
   { name: ITEM_PATH, data: ITEM_JSON },
   { name, data, ...extra },
-  { name: "summary.txt", data: SUMMARY },
+  // Every well-formed item gets its F5-50 summary line, so each fixture fails on its own rule only.
+  { name: "summary.txt", data: summaryFor([ITEM_ID, ...(ITEM_RE.exec(name)?.slice(1) ?? [])]) },
 ];
 
 export interface ArtifactFixture {
@@ -235,7 +252,7 @@ export const ARTIFACT_FIXTURES: Record<string, ArtifactFixture> = {
     why: "an item JSON that fails sourceItemSchema (javascript: url, published status)",
     specs: withItem(
       "content/source-items/abcd.json",
-      `${JSON.stringify({ sourceId: SOURCE_ID, title: "x", url: "javascript:alert(1)", publishedAt: "2026-10-01", fetchedAt: "2026-10-09", status: "published" }, null, 2)}\n`,
+      `${JSON.stringify({ sourceId: SOURCE_ID, title: "x", url: "javascript:alert(1)", publishedAt: "2026-10-01T09:00:00Z", fetchedAt: "2026-10-23T00:00:00Z", status: "published" }, null, 2)}\n`,
     ),
   },
   "item-unknown-source.zip": {

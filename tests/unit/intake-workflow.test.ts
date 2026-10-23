@@ -62,7 +62,7 @@ describe("F5-36 to F5-40 / F5-53 the real intake.yml", () => {
     expect(runs.slice(0, 3)).toEqual([
       "npm ci",
       'npm run intake -- --fixtures tests/fixtures/f5 --out "$RUNNER_TEMP/intake"',
-      'npm run intake:verify -- "$RUNNER_TEMP/intake"',
+      'npm run intake:verify -- "$RUNNER_TEMP/intake" --registry tests/fixtures/f5/registry',
     ]);
     expect(text).not.toMatch(/GITHUB_OUTPUT|GITHUB_ENV/);
   });
@@ -124,6 +124,7 @@ describe("F5-36 to F5-40 / F5-53 negative workflow fixtures fail the same check"
     "tls-override.yml": "F5-28: NODE_TLS_REJECT_UNAUTHORIZED",
     "upload-before-verify.yml": "F5-40: intake:verify must run before the upload",
     "upload-other-path.yml": "F5-40: the artifact must be exactly",
+    "verify-registry.yml": "F5-40: jobs.intake intake:verify --registry must be tests/fixtures/f5/registry",
   };
 
   it("every fixture file has an expectation, and vice versa", () => {

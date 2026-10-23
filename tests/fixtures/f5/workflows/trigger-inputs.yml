@@ -35,7 +35,7 @@ jobs:
       - name: "F5-40 / F5-51: check the queue before upload"
         # The same checks the import runs: path patterns, regular files only, size caps,
         # canonical JSON and the schemas. Fails the job before anything is uploaded.
-        run: npm run intake:verify -- "$RUNNER_TEMP/intake"
+        run: npm run intake:verify -- "$RUNNER_TEMP/intake" --registry tests/fixtures/f5/registry
       - name: Run summary
         # summary.txt is fixed-format (F5-35) and was checked by the step above.
         run: |

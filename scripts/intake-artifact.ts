@@ -6,26 +6,12 @@
 // memory, with the output capped at the entry's own size cap, so a zip bomb, a path
 // trick or a symlink never reaches the disk.
 import { crc32, inflateRawSync } from "node:zlib";
+// F5-40 / F5-51: the patterns, directories and caps are Forge's, never copied here.
+import { ARTIFACT_DIRS, ARTIFACT_LIMITS, ARTIFACT_PATH_PATTERNS, isArtifactPath } from "../src/lib/sources/schema.ts";
 
-/** F5-51 size caps, in bytes. Each cap is checked on the declared size and again after inflating. */
-export const ARTIFACT_LIMITS = Object.freeze({
-  itemJsonBytes: 16 * 1024,
-  sourceYamlBytes: 16 * 1024,
-  summaryBytes: 256 * 1024,
-  entries: 2000,
-  totalBytes: 8 * 1024 * 1024,
-});
-
-/** F5-40 entry patterns. Nothing else may be in the artifact. */
-export const ARTIFACT_PATTERNS = Object.freeze({
-  item: /^content\/source-items\/[a-z0-9-]{1,64}\.json$/,
-  source: /^content\/sources\/[a-z0-9]+(?:-[a-z0-9]+)*\.yaml$/,
-  summary: /^summary\.txt$/,
-});
-/** The only directory entries a zip may carry (upload-artifact may or may not write them). */
-export const ARTIFACT_DIRS: readonly string[] = ["content/", "content/source-items/", "content/sources/"];
-
-export type EntryKind = keyof typeof ARTIFACT_PATTERNS;
+/** The three F5-40 entry kinds, in the order of Forge's ARTIFACT_PATH_PATTERNS. */
+export const ENTRY_KINDS = ["item", "source", "summary"] as const;
+export type EntryKind = (typeof ENTRY_KINDS)[number];
 
 /** A fixed list of failure codes, so a test can pin which rule fired. */
 export type ArtifactCode =
@@ -58,8 +44,15 @@ export interface ArtifactEntry {
 }
 
 export function kindOf(name: string): EntryKind | undefined {
-  for (const [kind, re] of Object.entries(ARTIFACT_PATTERNS)) if (re.test(name)) return kind as EntryKind;
-  return undefined;
+  if (!isArtifactPath(name)) return undefined;
+  const i = ARTIFACT_PATH_PATTERNS.findIndex((re) => re.test(name));
+  return ENTRY_KINDS[i];
+}
+
+/** A zip directory entry ("content/source-items/") or a walked folder ("content/source-items") is allowed. */
+export function isArtifactDir(name: string): boolean {
+  const bare = name.endsWith("/") ? name.slice(0, -1) : name;
+  return (ARTIFACT_DIRS as readonly string[]).includes(bare);
 }
 
 export function capOf(kind: EntryKind): number {
@@ -112,8 +105,8 @@ export function readCentralDirectory(zip: Buffer): Central[] {
   if (disk !== 0 || cdDisk !== 0 || countHere !== count) fail("zip-unsupported", "multi-disk zip");
   if (eocd + 22 + commentLen !== zip.length) fail("zip-inconsistent", "bytes after the end record");
   if (cdOffset + cdSize !== eocd) fail("zip-inconsistent", "central directory does not end at the end record");
-  if (count > ARTIFACT_LIMITS.entries + ARTIFACT_DIRS.length)
-    fail("too-many-entries", `${count} entries, cap ${ARTIFACT_LIMITS.entries}`);
+  if (count > ARTIFACT_LIMITS.maxEntries + ARTIFACT_DIRS.length)
+    fail("too-many-entries", `${count} entries, cap ${ARTIFACT_LIMITS.maxEntries}`);
 
   const out: Central[] = [];
   const seen = new Set<string>();
@@ -156,7 +149,7 @@ export function readCentralDirectory(zip: Buffer): Central[] {
     if (type !== 0 && type !== S_IFREG && type !== S_IFDIR)
       fail("entry-special", `${shown(name)} has file type 0o${type.toString(8)}`);
     if (isDir) {
-      if (!ARTIFACT_DIRS.includes(name) || (type !== 0 && type !== S_IFDIR) || size !== 0)
+      if (!isArtifactDir(name) || (type !== 0 && type !== S_IFDIR) || size !== 0)
         fail("entry-name", `directory ${shown(name)} is not allowed`);
       out.push({ name, method, crc, compSize, size, localOffset, isDir });
       continue;
@@ -165,7 +158,7 @@ export function readCentralDirectory(zip: Buffer): Central[] {
     if (!/^[\x21-\x7e]+$/.test(name) || kind === undefined)
       fail("entry-name", `${shown(name)} matches no F5-40 pattern`);
     files++;
-    if (files > ARTIFACT_LIMITS.entries) fail("too-many-entries", `more than ${ARTIFACT_LIMITS.entries} files`);
+    if (files > ARTIFACT_LIMITS.maxEntries) fail("too-many-entries", `more than ${ARTIFACT_LIMITS.maxEntries} files`);
     if (size > capOf(kind as EntryKind))
       fail("entry-too-large", `${shown(name)} declares ${size} bytes, cap ${capOf(kind as EntryKind)}`);
     total += size;
@@ -242,20 +235,4 @@ export function decodeText(entry: { name: string; data: Buffer }): string {
   if (text.startsWith("\ufeff") || text.includes("\0"))
     throw new ArtifactError("entry-encoding", `${shown(entry.name)} has a BOM or a NUL byte`);
   return text;
-}
-
-/**
- * F5-35: summary.txt holds only ids, codes, counts and hosts. Checked as a character
- * set, so a title, a URL, a query string or a Markdown fence can't ride along into the
- * PR body or the job summary. The exact line grammar is Forge's (F5-35/F5-50).
- */
-export function summaryProblems(text: string): string[] {
-  const out: string[] = [];
-  text.split("\n").forEach((line, i) => {
-    const at = `summary.txt line ${i + 1}`;
-    if (line.length > 200) out.push(`${at} is longer than 200 characters`);
-    if (!/^[A-Za-z0-9 .,:;=()_+-]*$/.test(line)) out.push(`${at} has a character outside the fixed set`);
-    if (/:\/\/|\bwww\.|\?/.test(line)) out.push(`${at} looks like a URL`);
-  });
-  return out;
 }

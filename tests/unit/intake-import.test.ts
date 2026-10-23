@@ -4,10 +4,8 @@
  * CLI uses, against a throwaway repo, and every negative one must fail with its code and
  * write nothing.
  *
- * TEST_ONLY_VALIDATORS stands in for Forge's sourceItemSchema / sourceSchema so the rest of
- * the pipeline can be tested now. It is test code only: the shipped import loads the real
- * schemas from src/lib/sources/schema.ts (scripts/intake-schema.ts) and fails closed without
- * them. NOT READY until rebased on Forge's head (see the "real schema" block at the end).
+ * Everything runs against Forge's real schemas, caps and summary grammar from
+ * src/lib/sources/schema.ts (statically imported by the scripts): there is no test double.
  */
 import { spawnSync } from "node:child_process";
 import {
@@ -25,51 +23,36 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  ARTIFACT_DIRS,
   ARTIFACT_LIMITS,
-  ARTIFACT_PATTERNS,
-  ArtifactError,
-  readArtifact,
+  ARTIFACT_PATH_PATTERNS,
+  SOURCE_INTAKE_FIELDS,
   summaryProblems,
-} from "../../scripts/intake-artifact.ts";
+} from "../../src/lib/sources/schema.ts";
+import { ArtifactError, ENTRY_KINDS, kindOf, readArtifact } from "../../scripts/intake-artifact.ts";
 import {
   ImportError,
-  MUTABLE_SOURCE_FIELDS,
   applyPlan,
   crossCheckWithUnzip,
   readQueueDir,
   runImport,
   withoutMutableFields,
 } from "../../scripts/intake-queue.ts";
-import { SCHEMA_MODULE, loadValidators, type EntryValidators } from "../../scripts/intake-schema.ts";
 import {
   ARTIFACT_FIXTURES,
+  ITEM_HOST,
+  ITEM_ID,
   ITEM_JSON,
   ITEM_PATH,
   SOURCE_FAILED,
   SOURCE_PATH,
   SOURCE_YAML,
   SUMMARY,
+  summaryFor,
 } from "../fixtures/f5/artifact/fixtures.ts";
 import { buildZip, type ZipEntrySpec } from "../helpers/zip.ts";
 
 const FX = "tests/fixtures/f5/artifact";
-
-/** Test double only (see the header). Shape rules close to CONTENT_MODEL.md, nothing more. */
-const TEST_ONLY_VALIDATORS: EntryValidators = {
-  item(v) {
-    const o = v as Record<string, unknown>;
-    const out: string[] = [];
-    for (const k of ["sourceId", "title", "url", "publishedAt", "fetchedAt", "status"])
-      if (typeof o[k] !== "string") out.push(`${k}: required`);
-    if (typeof o["url"] === "string" && !o["url"].startsWith("https://")) out.push("url: must be https");
-    if (o["status"] !== "queued") out.push("status: must be queued");
-    return out;
-  },
-  source(v) {
-    const o = v as Record<string, unknown> | null;
-    return typeof o?.["name"] === "string" ? [] : ["name: required"];
-  },
-};
 
 let work: string;
 let repo: string;
@@ -111,8 +94,7 @@ const codeOf = (fn: () => unknown): string => {
   return "";
 };
 
-const importZip = (zip: string, dryRun = false) =>
-  runImport({ repo, zip, dryRun, log: () => {} }, TEST_ONLY_VALIDATORS);
+const importZip = (zip: string, dryRun = false) => runImport({ repo, zip, dryRun, log: () => {} });
 const writeZip = (name: string, specs: ZipEntrySpec[]) => {
   const p = join(work, name);
   writeFileSync(p, buildZip(specs));
@@ -138,21 +120,30 @@ describe("F5-40 / F5-51 pinned limits and patterns", () => {
       itemJsonBytes: 16384,
       sourceYamlBytes: 16384,
       summaryBytes: 262144,
-      entries: 2000,
+      maxEntries: 2000,
       totalBytes: 8388608,
     });
-    expect(Object.isFrozen(ARTIFACT_LIMITS)).toBe(true);
   });
 
-  it("F5-40 the three entry patterns are exactly the AC's", () => {
-    expect(ARTIFACT_PATTERNS.item.source).toBe("^content\\/source-items\\/[a-z0-9-]{1,64}\\.json$");
-    expect(ARTIFACT_PATTERNS.source.source).toBe("^content\\/sources\\/[a-z0-9]+(?:-[a-z0-9]+)*\\.yaml$");
-    expect(ARTIFACT_PATTERNS.summary.source).toBe("^summary\\.txt$");
-    for (const re of Object.values(ARTIFACT_PATTERNS)) expect(re.flags).toBe("");
+  it("F5-40 the three entry patterns are exactly the AC's, and kindOf maps them in order", () => {
+    expect(ARTIFACT_PATH_PATTERNS.map((re) => re.source)).toEqual([
+      "^content\\/source-items\\/[a-z0-9-]{1,64}\\.json$",
+      "^content\\/sources\\/[a-z0-9]+(?:-[a-z0-9]+)*\\.yaml$",
+      "^summary\\.txt$",
+    ]);
+    for (const re of ARTIFACT_PATH_PATTERNS) expect(re.flags).toBe("");
+    expect(ARTIFACT_DIRS).toEqual(["content", "content/source-items", "content/sources"]);
+    expect(ENTRY_KINDS).toEqual(["item", "source", "summary"]);
+    expect([ITEM_PATH, SOURCE_PATH, "summary.txt", "content/x.json"].map(kindOf)).toEqual([
+      "item",
+      "source",
+      "summary",
+      undefined,
+    ]);
   });
 
   it("F5-33 only lastError, lastErrorAt and consecutiveFailures may differ", () => {
-    expect(MUTABLE_SOURCE_FIELDS).toEqual(["lastError", "lastErrorAt", "consecutiveFailures"]);
+    expect(SOURCE_INTAKE_FIELDS).toEqual(["lastError", "lastErrorAt", "consecutiveFailures"]);
     expect(withoutMutableFields(SOURCE_FAILED)).toBe(SOURCE_YAML);
     expect(withoutMutableFields(SOURCE_FAILED.replace("status: paused", "status: active"))).not.toBe(SOURCE_YAML);
   });
@@ -207,7 +198,8 @@ describe("F5-51 caps on the whole artifact", () => {
   });
 
   it("F5-51 2,000 files pass the count cap; 2,001 fail with too-many-entries", () => {
-    const n2000 = [{ name: "summary.txt", data: SUMMARY }, ...Array.from({ length: 1999 }, (_, i) => item(i))];
+    const ids = Array.from({ length: 1999 }, (_, i) => `i${i}`);
+    const n2000 = [{ name: "summary.txt", data: summaryFor(ids) }, ...ids.map((_, i) => item(i))];
     expect(codeOf(() => importZip(writeZip("2000.zip", n2000), true))).toBe("");
     expect(codeOf(() => importZip(writeZip("2001.zip", [...n2000, item(5000)])))).toBe("too-many-entries");
   });
@@ -290,7 +282,7 @@ describe("F5-40 intake:verify on an output folder (the workflow step before uplo
     writeFileSync(join(q, "summary.txt"), SUMMARY);
     return q;
   }
-  const verify = (q: string) => runImport({ repo, fromDir: q, dryRun: true, log: () => {} }, TEST_ONLY_VALIDATORS);
+  const verify = (q: string) => runImport({ repo, fromDir: q, dryRun: true, log: () => {} });
 
   it("F5-40 a valid output folder passes and nothing is written", () => {
     const before = snapshot(repo);
@@ -340,7 +332,7 @@ describe("F5-40 intake:verify on an output folder (the workflow step before uplo
   });
 });
 
-describe("F5-35 summary.txt character set", () => {
+describe("F5-35 / F5-50 summary.txt uses Forge's grammar (summaryProblems)", () => {
   it.each([
     ["a URL", "see https://example.org/x"],
     ["a query string", "feed?token=abc"],
@@ -354,8 +346,20 @@ describe("F5-35 summary.txt character set", () => {
     expect(summaryProblems(`${SUMMARY}${line}\n`)).not.toEqual([]);
   });
 
-  it("F5-35 the fixture summary passes", () => {
-    expect(summaryProblems(SUMMARY)).toEqual([]);
+  it("F5-35 the fixture summary passes, with its item line", () => {
+    expect(summaryProblems(SUMMARY, [{ id: ITEM_ID, url: `https://${ITEM_HOST}/placeholder-item` }])).toEqual([]);
+  });
+
+  it("F5-50 an artifact whose summary misses an item, or shows a shortened host, fails summary-format", () => {
+    const short = SUMMARY.replace(`${ITEM_ID} ${ITEM_HOST}`, `${ITEM_ID} example.org`);
+    const none = SUMMARY.replace(`${ITEM_ID} ${ITEM_HOST}\n`, "");
+    for (const s of [short, none]) {
+      const zip = writeZip("s.zip", [
+        { name: ITEM_PATH, data: ITEM_JSON },
+        { name: "summary.txt", data: s },
+      ]);
+      expect(codeOf(() => importZip(zip))).toBe("summary-format");
+    }
   });
 });
 
@@ -368,23 +372,10 @@ describe("F5-51 the CLI (npm run intake:import / intake:verify)", () => {
     expect(cli("--artifact", "../1").status).toBe(2);
     expect(cli("a.zip", "b.zip").status).toBe(2);
   });
-
-  it("F5-51 without the real schema module the import fails closed (schema-unavailable, exit 2) and writes nothing", () => {
-    // NOT READY marker: on this base src/lib/sources/schema.ts does not exist yet. After the
-    // rebase onto Forge's head this test must be replaced by the "real schema" block below.
-    expect(existsSync(SCHEMA_MODULE)).toBe(false);
-    const r = cli("--dry-run", join(FX, "ok.zip"));
-    expect(r.status).toBe(2);
-    expect(r.stderr).toContain("schema-unavailable");
-  });
 });
 
-// The "real schema" block. Skipped on this base because src/lib/sources/schema.ts does not
-// exist yet; the NOT READY test above fails as soon as it does, so the switch can't be missed.
-// After the rebase onto Forge's head: delete that NOT READY test, and these run unskipped.
-describe.skipIf(!existsSync(SCHEMA_MODULE))("F5-51 against Forge's real schemas (src/lib/sources/schema.ts)", () => {
-  const realImport = async (zip: string) =>
-    runImport({ repo, zip, dryRun: true, log: () => {} }, await loadValidators(process.cwd()));
+describe("F5-51 against Forge's real schemas (src/lib/sources/schema.ts)", () => {
+  const realImport = async (zip: string) => runImport({ repo, zip, dryRun: true, log: () => {} });
 
   it("F5-51 ok.zip passes the real sourceItemSchema and sourceSchema", async () => {
     await expect(realImport(join(FX, "ok.zip"))).resolves.toBeTruthy();
@@ -418,5 +409,57 @@ describe("F5-24 / F5-51 write and second-parser guards", () => {
     const p = join(work, "not-a-zip.zip");
     writeFileSync(p, "PK\u0005\u0006 this is not a zip");
     expect(codeOf(() => crossCheckWithUnzip(p, []))).toBe("zip-inconsistent");
+  });
+});
+
+describe("F5-40 / F5-51 end to end: npm run intake on the fixtures, then intake:verify, then import", () => {
+  const node = (...args: string[]) => spawnSync(process.execPath, args, { encoding: "utf8" });
+  const REGISTRY = "tests/fixtures/f5/registry";
+
+  /** Every file under the intake output, as zip specs (what upload-artifact would hold). */
+  function zipSpecs(dir: string): ZipEntrySpec[] {
+    const out: ZipEntrySpec[] = [];
+    const walk = (rel: string) => {
+      for (const n of readdirSync(join(dir, rel)).sort()) {
+        const r = rel ? `${rel}/${n}` : n;
+        if (lstatSync(join(dir, r)).isDirectory()) walk(r);
+        else out.push({ name: r, data: readFileSync(join(dir, r)) });
+      }
+    };
+    walk("");
+    return out;
+  }
+
+  it("F5-40 the workflow's two commands pass on the committed fixtures, and the queue imports", () => {
+    const out = join(work, "intake");
+    const run = node("scripts/intake.ts", "--fixtures", "tests/fixtures/f5", "--out", out);
+    expect(run.status, run.stderr).toBe(0);
+    expect(existsSync(join(out, "summary.txt"))).toBe(true);
+
+    // The intake.yml verify step, word for word.
+    const ok = node("scripts/intake-import.ts", "--verify", out, "--registry", REGISTRY);
+    expect(ok.status, ok.stderr).toBe(0);
+    expect(ok.stdout).toMatch(/intake queue OK: \d+ file\(s\) checked/);
+    // Against content/sources the fixture Sources are unknown, so the registry flag is load-bearing.
+    expect(node("scripts/intake-import.ts", "--verify", out).status).toBe(1);
+
+    // The same queue as an artifact zip imports into a repo whose registry is the fixtures'.
+    for (const f of readdirSync(REGISTRY))
+      writeFileSync(join(repo, "content/sources", f), readFileSync(join(REGISTRY, f)));
+    const zip = writeZip("artifact.zip", zipSpecs(out));
+    const plan = runImport({ repo, zip, log: () => {} });
+    const items = plan.writes.filter((w) => w.name.startsWith("content/source-items/"));
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((w) => w.action === "create")).toBe(true);
+    for (const w of plan.writes) expect(readFileSync(join(repo, w.name))).toEqual(readFileSync(join(out, w.name)));
+  });
+
+  it("F5-40 --registry must be a folder inside the repo, and only with --verify", () => {
+    expect(node("scripts/intake-import.ts", "--verify", work, "--registry", tmpdir()).status).toBe(2);
+    expect(node("scripts/intake-import.ts", "--verify", work, "--registry", "no/such/dir").status).toBe(2);
+    expect(node("scripts/intake-import.ts", "--registry", REGISTRY, join(FX, "ok.zip")).status).toBe(2);
+    expect(() => runImport({ repo, zip: join(FX, "ok.zip"), sourcesDir: REGISTRY, log: () => {} })).toThrow(
+      /only for verify/,
+    );
   });
 });
