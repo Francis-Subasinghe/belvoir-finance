@@ -325,7 +325,7 @@ export function crossCheckWithUnzip(zipPath: string, names: string[]): void {
 }
 
 /** The whole import (or, with fromDir and dryRun, the pre-upload verify). */
-export function runImport(opts: ImportOptions): Plan {
+export async function runImport(opts: ImportOptions): Promise<Plan> {
   const log = opts.log ?? ((l: string) => console.log(l));
   const repo = realpathSync(opts.repo);
   let entries: ArtifactEntry[];
@@ -339,7 +339,7 @@ export function runImport(opts: ImportOptions): Plan {
       log(`artifact sha256 ${createHash("sha256").update(zip).digest("hex")} (${zip.length} bytes)`);
       const copy = join(tmp, "artifact.zip");
       writeExclusive(copy, zip);
-      const central = readArtifact(zip);
+      const central = await readArtifact(zip);
       crossCheckWithUnzip(
         copy,
         readCentralDirectory(zip).map((c) => c.name),

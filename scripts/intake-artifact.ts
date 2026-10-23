@@ -3,15 +3,62 @@
 // zips; scripts/intake-import.ts adds the download, `unzip -tq`, zipinfo and the copy.
 //
 // The zip is parsed here, not extracted by a tool: entries are only ever inflated into
-// memory, with the output capped at the entry's own size cap, so a zip bomb, a path
-// trick or a symlink never reaches the disk.
-import { crc32, inflateRawSync } from "node:zlib";
+// memory, streamed in INFLATE_CHUNK pieces and aborted as soon as the output passes the
+// entry's cap (or what is left of the total), so a zip bomb never holds more than
+// cap + one chunk, and a path trick or a symlink never reaches the disk.
+import { createInflateRaw, crc32 } from "node:zlib";
 // F5-40 / F5-51: the patterns, directories and caps are Forge's, never copied here.
 import { ARTIFACT_DIRS, ARTIFACT_LIMITS, ARTIFACT_PATH_PATTERNS, isArtifactPath } from "../src/lib/sources/schema.ts";
 
 /** The three F5-40 entry kinds, in the order of Forge's ARTIFACT_PATH_PATTERNS. */
 export const ENTRY_KINDS = ["item", "source", "summary"] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
+
+/** Output chunk size of the streaming inflate: the most it can read past a cap. */
+export const INFLATE_CHUNK = 16 * 1024;
+
+/** Test hook: counts the inflated bytes actually read from the stream. Never set by the CLI. */
+export interface InflateMeter {
+  bytes: number;
+}
+
+/**
+ * Inflate raw deflate data, reading at most `limit` bytes plus one INFLATE_CHUNK: the
+ * stream is destroyed on the first chunk that passes `limit`. Returns `over: true` then.
+ */
+export function inflateBounded(
+  body: Buffer,
+  limit: number,
+  meter?: InflateMeter,
+): Promise<{ data: Buffer; over: boolean }> {
+  return new Promise((resolve, reject) => {
+    const z = createInflateRaw({ chunkSize: INFLATE_CHUNK });
+    const chunks: Buffer[] = [];
+    let n = 0;
+    let done = false;
+    const finish = (over: boolean) => {
+      if (done) return;
+      done = true;
+      if (over) z.destroy();
+      resolve({ data: over ? Buffer.alloc(0) : Buffer.concat(chunks, n), over });
+    };
+    z.on("data", (c: Buffer) => {
+      if (done) return;
+      n += c.length;
+      if (meter) meter.bytes += c.length;
+      if (n > limit) finish(true);
+      else chunks.push(c);
+    });
+    z.on("end", () => finish(false));
+    z.on("error", (e) => {
+      if (!done) {
+        done = true;
+        reject(e);
+      }
+    });
+    z.end(body);
+  });
+}
 
 /** A fixed list of failure codes, so a test can pin which rule fired. */
 export type ArtifactCode =
@@ -174,7 +221,7 @@ export function readCentralDirectory(zip: Buffer): Central[] {
  * Read and check the whole artifact. Throws ArtifactError on the first problem; returns the
  * files (not directories) with their inflated bytes, sorted by name.
  */
-export function readArtifact(zip: Buffer): ArtifactEntry[] {
+export async function readArtifact(zip: Buffer, meter?: InflateMeter): Promise<ArtifactEntry[]> {
   const central = readCentralDirectory(zip);
   const out: ArtifactEntry[] = [];
   const spans: [number, number][] = [];
@@ -203,15 +250,23 @@ export function readArtifact(zip: Buffer): ArtifactEntry[] {
     const kind = kindOf(c.name) as EntryKind;
     const cap = capOf(kind);
     const body = zip.subarray(start, end);
+    // Never read past the entry's cap or what is left of the 8 MiB total (+1 chunk at most).
+    const left = ARTIFACT_LIMITS.totalBytes - total;
+    const limit = Math.min(cap, left);
     let data: Buffer;
-    try {
-      // Inflate into memory only, never past the cap (+1 to see an overrun).
-      data = c.method === 0 ? Buffer.from(body) : inflateRawSync(body, { maxOutputLength: cap + 1 });
-    } catch (e) {
-      const msg = (e as Error).message;
-      if (/maxOutputLength|buffer/i.test(msg)) fail("entry-too-large", `inflates past its cap of ${cap} bytes`);
-      fail("entry-corrupt", "does not inflate");
-      throw e; // unreachable
+    if (c.method === 0) data = Buffer.from(body);
+    else {
+      let r: { data: Buffer; over: boolean };
+      try {
+        r = await inflateBounded(body, limit, meter);
+      } catch {
+        fail("entry-corrupt", "does not inflate");
+        throw new Error("unreachable");
+      }
+      if (r.over && left < cap)
+        throw new ArtifactError("total-too-large", `more than ${ARTIFACT_LIMITS.totalBytes} bytes`);
+      if (r.over) fail("entry-too-large", `inflates past its cap of ${cap} bytes`);
+      data = r.data;
     }
     if (data.length > cap) fail("entry-too-large", `inflates past its cap of ${cap} bytes`);
     if (data.length !== c.size) fail("entry-corrupt", `inflates to ${data.length} bytes, declared ${c.size}`);

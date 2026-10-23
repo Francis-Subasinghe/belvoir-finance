@@ -131,6 +131,16 @@ describe("F5-36 to F5-40 / F5-53 negative workflow fixtures fail the same check"
     "verify-registry.yml": "F5-40: jobs.intake intake:verify --registry must be tests/fixtures/f5/registry",
   };
 
+  it.each(["content/sources", "tests/fixtures/f5/registry/..", "/etc", "tests/fixtures/f5"])(
+    "F5-40 a verify --registry of %s (not <fixtures>/registry) fails",
+    (reg) => {
+      const ok = readFileSync(join(FX, "ok.yml"), "utf8");
+      const bad = ok.replace("--registry tests/fixtures/f5/registry", `--registry ${reg}`);
+      expect(bad).not.toBe(ok);
+      expect(intakeWorkflowProblems(bad).join(" | ")).toContain("intake:verify --registry must be");
+    },
+  );
+
   it("every fixture file has an expectation, and vice versa", () => {
     const files = readdirSync(FX).filter((f) => f !== "ok.yml");
     expect(files.sort()).toEqual(Object.keys(EXPECT).sort());

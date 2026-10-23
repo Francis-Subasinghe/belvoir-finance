@@ -76,7 +76,7 @@ if (rest[0] === "--verify" && !dryRun && (rest.length === 2 || (rest.length === 
 }
 
 try {
-  const plan = runImport(opts);
+  const plan = await runImport(opts);
   if (opts.fromDir !== undefined) console.log(`intake queue OK: ${plan.writes.length} file(s) checked`);
   else if (dryRun) console.log("dry run: nothing written");
   else {
