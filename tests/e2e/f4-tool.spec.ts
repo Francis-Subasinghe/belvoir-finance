@@ -19,7 +19,14 @@ import {
 } from "../../src/lib/cash-vs-profit/copy";
 import { DEFAULTS } from "../../src/lib/cash-vs-profit/defaults";
 import { view, type RawInputs } from "../../src/lib/cash-vs-profit/view";
-import { AXE_TAGS, clippingProblems, focusStop, targetSizeProblems, TEXT_SPACING_CSS } from "../helpers/e2e-checks";
+import {
+  AXE_TAGS,
+  clippingProblems,
+  focusStop,
+  settleAnimations,
+  targetSizeProblems,
+  TEXT_SPACING_CSS,
+} from "../helpers/e2e-checks";
 import { GALLERY_PAGE } from "../helpers/e2e-urls";
 
 const TOOL = "tools/cash-vs-profit/";
@@ -54,6 +61,7 @@ const closings = (page: Page) => page.locator('[data-cvp-cell$="-closing"]').all
 
 /** F4-22: axe at any impact. */
 async function axeAll(page: Page): Promise<string[]> {
+  await settleAnimations(page);
   const r = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
   return r.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
 }

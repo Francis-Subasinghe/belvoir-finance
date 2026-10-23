@@ -56,7 +56,7 @@ const sources = (await verifiedSources()).filter((s) => s.data.topics.includes(t
   {featuredTool && (
     <section class="page-section" aria-labelledby="tools-heading">
       <h2 id="tools-heading">Tools</h2>
-      <article class="story-card surface-white" data-testid="topic-tool">
+      <article class="story-card surface-raised" data-testid="topic-tool">
         <h3 class="story-card-title with-icon">
           <ToolIcon id={featuredTool.id} />
           <a href={toolHref(featuredTool.id)}>{featuredTool.data.title}</a>

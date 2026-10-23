@@ -10,7 +10,13 @@ import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
-import { AXE_TAGS, overflowProblems, renderedGoldProblems, targetSizeProblems } from "../helpers/e2e-checks";
+import {
+  AXE_TAGS,
+  overflowProblems,
+  renderedGoldProblems,
+  settleAnimations,
+  targetSizeProblems,
+} from "../helpers/e2e-checks";
 import { sitePaths } from "../helpers/e2e-pages";
 import { SITE } from "../helpers/e2e-urls";
 import { astroBuild, makeSite, type Site } from "../helpers/fixture-build";
@@ -66,6 +72,7 @@ async function serve(page: Page, site: Site): Promise<void> {
 }
 
 async function a11y(page: Page): Promise<{ bad: string[]; region: number }> {
+  await settleAnimations(page);
   const r = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
   return {
     bad: r.violations

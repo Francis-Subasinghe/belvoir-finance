@@ -1,14 +1,33 @@
 /*
- * F2 component styles. Tokens only (tokens.css). Gold only under
- * .surface-navy / .surface-slate. Interactive boundaries use
+ * F2/V2 component styles. Tokens only (tokens.css). Gold-bright/gold-soft only
+ * under .surface-ink / .surface-green / .surface-green-deep (V2-28). Interactive boundaries use
  * --color-border-strong (>= 3:1); --color-border is for decorative dividers.
  * Hover/focus demo classes (.is-hover, .is-focus) exist so the gallery can
  * show those states statically; they mirror :hover and :focus-visible.
  */
 
 /* ---------------------------------------------------------------- header + nav (F2-20) */
+/* V2-31: sticky, fixed min height, canvas at 96% opacity; no backdrop-filter.
+ * The hairline under the header is a ::before layer; where scroll-driven
+ * animation is supported it fades in over the first 64 px of scroll
+ * (motion.css). It never changes the header's size. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-header-bg);
+}
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--border-width);
+  background: var(--color-border-strong);
+  pointer-events: none;
+}
 .site-header .container {
-  padding-block: var(--space-3);
+  min-height: var(--header-height);
+  padding-block: var(--space-2);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -16,11 +35,12 @@
   gap: var(--space-2) var(--space-4);
 }
 .site-header .brand {
-  font-family: var(--font-serif);
-  font-size: var(--step-1);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 400;
+  letter-spacing: -0.02em;
   text-decoration: none;
-  color: var(--color-text-on-dark);
+  color: var(--color-ink);
   display: inline-block;
   min-height: var(--target-min);
 }
@@ -37,16 +57,19 @@
   align-items: center;
   min-height: var(--target-min);
   min-width: var(--target-min);
-  padding: var(--space-1) var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-ink);
   text-decoration: none;
-  border-bottom: var(--border-width-strong) solid transparent;
+  border-radius: var(--radius-pill);
 }
 .site-nav a:hover {
-  text-decoration: underline;
+  background: var(--color-surface);
+  color: var(--color-ink);
 }
-/* Current page: a shape cue (underline bar) plus aria-current, not colour alone. */
-.surface-navy .site-nav a[aria-current="page"] {
-  border-bottom-color: var(--color-gold);
+/* Current page: a shape cue (filled pill) plus aria-current, not colour alone. */
+.site-nav a[aria-current="page"] {
+  background: var(--color-ink);
+  color: var(--color-text-on-dark);
   font-weight: 600;
 }
 
@@ -55,7 +78,18 @@
   font-size: var(--step--1);
 }
 .site-footer-inner {
-  padding-block: var(--space-4);
+  padding-block: var(--space-6) var(--space-5);
+}
+.site-footer-brand {
+  margin: 0 0 var(--space-4);
+}
+.site-footer-brand .brand-accent {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 /* A grid, not a wrapping row: in a flex row each link's place depends on the
  * widths of the links before it, so when the web font replaced the fallback a
@@ -81,7 +115,6 @@
 .notice {
   background: var(--color-notice-bg);
   color: var(--color-notice-text);
-  border-block: var(--border-width) solid var(--color-border);
   font-size: var(--step--1);
 }
 .notice p {
@@ -105,7 +138,7 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 @media (min-width: 48rem) {
   .story-list {
@@ -117,14 +150,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* V2 cards: surface fill, 16 px radius, no border, no resting shadow. Hover
+ * and focus-within lift the card 2 px (motion.css). */
 .story-card {
-  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
-  padding: var(--space-3);
+  padding: var(--space-4);
   height: 100%;
 }
 .story-card-title {
-  font-size: var(--step-1);
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   margin: 0 0 var(--space-2);
 }
 .story-card-title a {
@@ -132,8 +170,13 @@
   display: inline-block;
   min-height: var(--target-min);
 }
-.surface-navy .story-card-title a,
-.surface-slate .story-card-title a {
+.story-card-title a {
+  text-decoration: none;
+}
+.story-card-title a:hover {
+  text-decoration: underline;
+}
+:is(.surface-ink, .surface-green, .surface-green-deep) .story-card-title a {
   color: var(--color-text-on-dark);
 }
 .story-card-summary {
@@ -146,6 +189,7 @@
   gap: var(--space-1) var(--space-3);
   margin: 0;
   font-size: var(--step--1);
+  color: var(--color-text-muted);
 }
 .story-card-meta div,
 .article-meta div {
@@ -183,8 +227,8 @@
 /* ---------------------------------------------------------------- article header (F2-23) */
 .article-header {
   max-width: var(--measure);
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
   border-bottom: var(--border-width) solid var(--color-border);
 }
 .article-summary {
@@ -196,7 +240,7 @@
   margin: 0 0 var(--space-3);
   padding: var(--space-1) var(--space-2);
   border: var(--border-width) solid var(--color-border-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   font-weight: 600;
 }
 
@@ -217,10 +261,10 @@
 
 /* ---------------------------------------------------------------- callouts (F2-25) */
 .callout {
-  border: var(--border-width) solid var(--color-border-strong);
+  border: 0;
   border-left: var(--space-1) solid var(--color-border-strong);
   border-radius: var(--radius);
-  background: var(--color-white);
+  background: var(--color-surface);
   color: var(--color-text);
   padding: var(--space-3);
   margin-block: var(--space-4);
@@ -311,7 +355,8 @@
 
 /* ---------------------------------------------------------------- chart wrapper (F2-26) */
 .chart {
-  margin: var(--space-4) 0;
+  margin: var(--space-5) 0;
+  /* 16 px at phone widths so the plot keeps its F4-51 label size; 24 px from 48rem. */
   padding: var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
@@ -328,8 +373,8 @@
 .chart-title {
   font-family: var(--font-serif);
   font-size: var(--step-1);
-  font-weight: 700;
-  color: var(--color-navy);
+  font-weight: 400;
+  color: var(--color-ink);
 }
 .chart-legend {
   list-style: none;
@@ -372,6 +417,11 @@
  */
 .chart {
   container-type: inline-size;
+}
+@media (min-width: 48rem) {
+  .chart {
+    padding: var(--space-4);
+  }
 }
 .chart-value,
 .chart-category {
@@ -430,9 +480,9 @@
   padding: var(--space-2);
   font: inherit;
   color: var(--color-text);
-  background: var(--color-white);
-  border: var(--border-width-strong) solid var(--color-border-strong);
-  border-radius: var(--radius);
+  background: var(--color-canvas);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
 }
 .input:hover,
 .input.is-hover {
@@ -443,6 +493,7 @@
 .button.is-focus {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);
+  box-shadow: 0 0 0 var(--focus-inner-width) var(--color-focus-inner);
 }
 .field-invalid .input,
 .input[aria-invalid="true"] {
@@ -469,7 +520,7 @@
   height: var(--target-min);
   margin: 0;
   flex: none;
-  accent-color: var(--color-navy);
+  accent-color: var(--color-ink);
 }
 .checkbox.is-hover {
   box-shadow: 0 0 0 var(--border-width-strong) var(--color-border-strong);
@@ -482,16 +533,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(var(--target-min) + var(--space-3));
+  gap: var(--space-2);
+  min-height: var(--button-min);
   min-width: var(--target-min);
-  padding: var(--space-2) var(--space-4);
+  padding: 0.75rem var(--space-4);
   font: inherit;
   font-weight: 600;
-  border-radius: var(--radius);
-  border: var(--border-width-strong) solid var(--color-button-primary-bg);
+  line-height: 1.2;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  border: var(--border-width-button) solid var(--color-button-primary-bg);
   cursor: pointer;
 }
-.button-primary {
+.button-primary,
+.button-primary:hover {
   background: var(--color-button-primary-bg);
   color: var(--color-button-primary-text);
 }
@@ -500,9 +555,11 @@
   background: var(--color-button-primary-hover-bg);
   border-color: var(--color-button-primary-hover-bg);
 }
-.button-secondary {
-  background: var(--color-white);
-  color: var(--color-navy);
+.button-secondary,
+.button-secondary:hover {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-ink);
 }
 .button-secondary:hover,
 .button-secondary.is-hover {
@@ -519,15 +576,22 @@
   margin-bottom: var(--space-4);
 }
 .page-section {
-  margin-block: var(--space-5);
+  margin-block: var(--section-y);
 }
 .page-section > h2 {
   margin-top: 0;
 }
 .feature-band {
-  border-radius: var(--radius);
-  padding: var(--space-4);
-  margin-block: var(--space-5);
+  border-radius: var(--radius-lg);
+  padding: var(--band-y) var(--gutter);
+  margin-block: var(--section-y);
+}
+.feature-band h2 {
+  margin-top: 0;
+  max-width: 20ch;
+}
+.feature-band > p {
+  max-width: var(--measure);
 }
 .feature-band > :last-child {
   margin-bottom: 0;
@@ -545,7 +609,7 @@
   gap: var(--space-1) var(--space-3);
 }
 .link-list a,
-.page-links a {
+.page-links a:not(.button) {
   display: inline-block;
   min-height: var(--target-min);
   padding-block: var(--space-1);
@@ -563,12 +627,12 @@
   gap: var(--space-3);
 }
 .source-entry {
-  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
-  padding: var(--space-3);
+  padding: var(--space-4);
 }
 .source-entry h2 {
   font-size: var(--step-1);
+  font-weight: 400;
   margin: 0 0 var(--space-2);
 }
 .source-entry a {
@@ -595,50 +659,52 @@
   font-weight: 600;
 }
 
-/* ---------------------------------------------------------------- V1 motion guard (V1-23, V1-24)
- * Buttons keep their F2-32 transition timing, now on transform only and only
- * when motion is allowed (the F2 background-colour transitions were removed:
- * V1 animates transform and opacity only). */
-@media (prefers-reduced-motion: no-preference) {
-  .button {
-    transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-}
-
-/* ================================================================ V1 visual layer
+/* ================================================================ V1/V2 art layer
  * Art colours come only from token classes (V1-14): inline SVGs carry these
- * classes or currentColor, never literal colours. Gold is used only under a
- * navy/slate surface (F2-06, V1-15); every art panel and cover is
- * .surface-navy. */
+ * classes or currentColor, never literal colours. V2 line art: every art panel
+ * and cover is .surface-raised, drawn in green and ink with canvas fills; the
+ * accent is gold-on-light (never gold-bright on a light surface, V2-28). On a
+ * dark band the accent switches to gold-bright. */
 .art-f-light {
-  fill: var(--color-alabaster);
+  fill: var(--color-canvas);
 }
 .art-f-slate {
-  fill: var(--color-slate);
+  fill: var(--color-green);
 }
 .art-f-teal {
-  fill: var(--color-chart-series-2);
+  fill: var(--color-sand);
 }
 .art-s-light {
-  stroke: var(--color-alabaster);
+  stroke: var(--color-green);
 }
 .art-s-slate {
-  stroke: var(--color-slate);
+  stroke: var(--color-green);
 }
 .art-s-teal {
-  stroke: var(--color-chart-series-2);
+  stroke: var(--color-ink);
 }
 .art-s-line {
   stroke: var(--color-border-strong);
 }
-.surface-navy .art-f-gold {
-  fill: var(--color-gold);
-}
-.surface-navy .art-s-gold {
-  stroke: var(--color-gold);
-}
+:is(.surface-raised, .surface-canvas, .surface-white) .art-f-gold,
 .surface-white .art-f-gold-light {
   fill: var(--color-gold-on-light);
+}
+:is(.surface-raised, .surface-canvas, .surface-white) .art-s-gold {
+  stroke: var(--color-gold-on-light);
+}
+:is(.surface-ink, .surface-green-deep) .art-f-gold {
+  fill: var(--color-gold-bright);
+}
+:is(.surface-ink, .surface-green-deep) .art-s-gold {
+  stroke: var(--color-gold-bright);
+}
+/* A light panel nested in a dark band goes back to gold-on-light (V2-28). */
+:is(.surface-ink, .surface-green-deep) :is(.surface-raised, .surface-canvas, .surface-white) .art-f-gold {
+  fill: var(--color-gold-on-light);
+}
+:is(.surface-ink, .surface-green-deep) :is(.surface-raised, .surface-canvas, .surface-white) .art-s-gold {
+  stroke: var(--color-gold-on-light);
 }
 .surface-white .art-s-white {
   stroke: var(--color-white);
@@ -646,7 +712,7 @@
 
 /* ---------------------------------------------------------------- art panels (V1-01, V1-35) */
 .art-panel {
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   line-height: 0;
 }
@@ -684,10 +750,76 @@
   }
 }
 
+/* ---------------------------------------------------------------- V2 home hero, chips, bands */
+.home-hero {
+  padding-block: var(--space-4) var(--space-5);
+}
+.home-hero h1 {
+  font-size: var(--step-display);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  max-width: 16ch;
+}
+.home-hero .page-intro {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.home-hero > .art-panel {
+  max-width: none;
+  padding: var(--space-3);
+}
+@media (min-width: 64rem) {
+  .home-hero {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+/* Pill chips for page and topic links (24 px targets, ink on surface 17.16:1). */
+.chip-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: 0;
+}
+.chip-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.chip-list a:hover {
+  background: var(--color-surface);
+}
+.band {
+  border-radius: var(--radius-lg);
+  padding: var(--band-y) var(--gutter);
+  margin-block: var(--section-y);
+}
+.band > h2 {
+  margin-top: 0;
+}
+.band > :last-child {
+  margin-bottom: 0;
+}
+
 /* ---------------------------------------------------------------- covers (V1-42) */
 .story-cover {
   aspect-ratio: 320 / 120;
-  border-radius: var(--radius);
+  border-radius: var(--radius-cover);
   overflow: hidden;
   line-height: 0;
   margin-bottom: var(--space-2);
@@ -764,78 +896,11 @@
 .story-card.is-focus .story-card-title a {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);
+  box-shadow: 0 0 0 var(--focus-inner-width) var(--color-focus-inner);
 }
 /* V1-61: byline terms ("Reviewed by") never wrap mid-label. */
 .article-meta dt {
   white-space: nowrap;
-}
-
-/* ---------------------------------------------------------------- motion (V1-23 to V1-31, V1-57)
- * Only decorative art fades (covers and pillar art), never text, so contrast
- * checks never see a part-faded word. The hero art, the h1 (LCP) and the demo
- * banner are never animated (V1-29). The stagger comes from duration, not
- * delay, so nothing appears and then drops back to 0 (V1-57). No fill-mode:
- * after the animation the base opacity (1) applies, and with
- * `animation: none` everything is fully visible (V1-26). */
-@keyframes belvoir-art-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-/* Transform-only, so a scroll-driven run (inactive outside its range, no fill)
- * can never drop opacity when the element enters the range (V1-57). */
-@keyframes belvoir-rise {
-  from {
-    transform: translateY(12px);
-  }
-}
-@keyframes belvoir-bar-draw {
-  from {
-    transform: scaleY(0);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .story-list > li:nth-child(1) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-1) var(--motion-ease-out);
-  }
-  .story-list > li:nth-child(2) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-2) var(--motion-ease-out);
-  }
-  .story-list > li:nth-child(3) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-3) var(--motion-ease-out);
-  }
-  .story-list > li:nth-child(4) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-4) var(--motion-ease-out);
-  }
-  .story-list > li:nth-child(5) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-5) var(--motion-ease-out);
-  }
-  .story-list > li:nth-child(n + 6) :is(.story-cover, .art-panel-card) {
-    animation: belvoir-art-enter var(--motion-duration-stagger-6) var(--motion-ease-out);
-  }
-  /* V1-30: a lift of 4 px on hover, and the same for keyboard focus inside the card. */
-  .story-card {
-    transition: transform var(--motion-duration-lift) var(--motion-ease-standard);
-  }
-  .story-card:hover,
-  .story-card:focus-within,
-  .story-card.is-hover,
-  .story-card.is-focus {
-    transform: translateY(-4px);
-  }
-  /* V1-31: bars grow from the baseline; values and the table are static text. */
-  .chart-bar {
-    animation: belvoir-bar-draw var(--motion-duration-draw) var(--motion-ease-out);
-  }
-  /* Scroll-driven rise for the story cover, only where supported (no opacity). */
-  @supports (animation-timeline: view()) {
-    .story-cover-page {
-      animation: belvoir-rise var(--motion-duration-reveal) linear;
-      animation-timeline: view();
-      animation-range: entry 0% entry 60%;
-    }
-  }
 }
 
 /* ---------------------------------------------------------------- F4 cash-versus-profit explorer */
@@ -915,4 +980,22 @@
 .explorer-small {
   font-size: var(--step--1);
   color: var(--color-text-muted);
+}
+/* V2 tool panel: surface panel, inputs on canvas, results header on surface-2. */
+.explorer-layout {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  /* Below 30rem the panel bleeds 8 px into the page gutter instead of padding
+   * inwards, so the five-column table keeps F4-23's full width at 320 px. */
+  margin-inline: calc(-1 * var(--space-2));
+  padding: var(--space-4) var(--space-2);
+}
+@media (min-width: 30rem) {
+  .explorer-layout {
+    margin-inline: 0;
+    padding: var(--space-4) var(--gutter);
+  }
+}
+.data-table thead th {
+  background: var(--color-surface-2);
 }

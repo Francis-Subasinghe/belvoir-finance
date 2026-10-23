@@ -14,10 +14,13 @@ export const TOOL_SCRIPT_TAG = /^<script type="module" src="\/belvoir-finance\/_
 export const TOOL_JS_MAX_GZIP = 122_880;
 export const TOOL_JS_TARGET_GZIP = 10_240;
 /**
- * F4-49: the shared stylesheet on 5fdc80e (gzip, node zlib default level) and the F4 allowance.
- * Measured: 4,677 B (tests/fixtures/f4/css/shared-5fdc80e.css); the AC's 4,695 was not node zlib.
+ * F4-49 / V2-40: the shared stylesheet pin (gzip, node zlib default level), reset to the V2
+ * build's own stylesheet (tests/fixtures/f4/css/shared-v2.css): 26,632 B raw, 5,513 B gzip.
+ * Before (73287b4, PR #43): 23,173 B raw, 4,929 B gzip; the original 5fdc80e pin was 4,677 B.
+ * The V2 redesign replaces the palette, type and components wholesale, so the pin is re-based
+ * on it; the 1 KB allowance is unchanged (V2-41).
  */
-export const SHARED_CSS_GZIP_5FDC80E = 4_677;
+export const SHARED_CSS_GZIP_PIN = 5_513;
 export const SHARED_CSS_ALLOWANCE = 1_024;
 
 const attrsOf = (attrs: string) => new Map(parseAttributes(attrs));

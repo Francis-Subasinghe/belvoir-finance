@@ -36,7 +36,7 @@ const anchor = (id: string) => `topic-${id}`;
     Every published story, grouped by topic. Each card shows its format and level. Search arrives later.
   </p>
   <nav aria-label="Topics on this page">
-    <ul class="link-list">
+    <ul class="link-list chip-list">
       {groups.map((g) => (
         <li>
           <a href={`#${anchor(g.id)}`}>{g.title}</a>

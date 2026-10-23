@@ -46,7 +46,7 @@ for (const url of PAGES) {
       await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
     });
 
-    test("F2-09: gold only on navy/slate, #7E6026 only on light (rendered)", async ({ page }) => {
+    test("F2-09 / V2-28: gold only on dark surfaces, gold-on-light only on light (rendered)", async ({ page }) => {
       await page.goto(url);
       expect(await renderedGoldProblems(page)).toEqual([]);
     });
@@ -97,7 +97,7 @@ test.describe("gallery page", () => {
     }
     await expect(page.getByTestId("status-notice")).toHaveCount(8);
     await expect(page.getByTestId("demo-banner")).toHaveCount(1);
-    for (const s of ["white", "alabaster", "navy", "slate"]) {
+    for (const s of ["white", "canvas", "raised", "ink"]) {
       expect(await page.locator(`[data-surface="${s}"]`).count(), s).toBeGreaterThan(0);
     }
     for (const t of ["text", "email", "number"]) {
@@ -122,12 +122,12 @@ test.describe("gallery page", () => {
     }
   });
 
-  test("F2-09: a light card nested in a navy band resets gold to #7E6026", async ({ page }) => {
+  test("F2-09 (V2-28): a light card nested in an ink band resets to the light link colour", async ({ page }) => {
     const link = page.getByTestId("light-in-dark").locator(".story-card-title a");
-    await expect(link).toHaveCSS("color", "rgb(126, 96, 38)");
-    const bandLink = page.locator('[data-surface="navy"] .story-card.surface-slate .story-card-title a');
-    await expect(bandLink).toHaveCSS("color", "rgb(248, 250, 252)");
-    await expect(page.locator(".site-header .site-nav a").first()).toHaveCSS("color", "rgb(197, 160, 89)");
+    await expect(link).toHaveCSS("color", "rgb(44, 95, 52)");
+    const bandLink = page.locator('[data-surface="ink"] .story-card.surface-ink .story-card-title a');
+    await expect(bandLink).toHaveCSS("color", "rgb(251, 251, 249)");
+    await expect(page.locator(".site-header .site-nav a").first()).toHaveCSS("color", "rgb(10, 10, 10)");
   });
 
   test("F2-13: serif headings, sans text, mono figures", async ({ page }) => {
@@ -280,7 +280,7 @@ test.describe("gallery page", () => {
       .locator("button.button-primary")
       .first()
       .evaluate((el) => getComputedStyle(el).transitionDuration);
-    expect(d).toBe("0.12s");
+    expect(d).toBe("0.15s"); // V2 --motion-fast
   });
 
   test("F2-30 / F2-37: every focus stop is visible (>= 2px, >= 3:1), unobscured, in visual order, with no trap", async ({

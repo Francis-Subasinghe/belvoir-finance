@@ -4,7 +4,7 @@
  * outline. The title link is the card's only interactive element. Format,
  * level, a non-UK jurisdiction (F3-22) and demo status are always text,
  * never colour alone.
- * Surfaces: white (default), alabaster, slate.
+ * Surfaces: raised (default), canvas, ink.
  * V1-42: every card shows the story's derived cover (decorative, first in the
  * card visually, outside the heading and link so reading and tab order keep F3's).
  */
@@ -25,7 +25,7 @@ interface Props {
   jurisdiction?: string | undefined;
   jurisdictionNote?: string | undefined;
   headingLevel?: 2 | 3 | 4;
-  surface?: "white" | "alabaster" | "slate";
+  surface?: "raised" | "canvas" | "ink";
   /** Gallery only: show the hover or focus state (V1-49), like the form controls' .is-hover/.is-focus. */
   state?: "hover" | "focus" | undefined;
 }
@@ -42,7 +42,7 @@ const {
   jurisdiction,
   jurisdictionNote,
   headingLevel = 2,
-  surface = "white",
+  surface = "raised",
   state,
 } = Astro.props;
 const place = jurisdictionLabel(jurisdiction, jurisdictionNote);

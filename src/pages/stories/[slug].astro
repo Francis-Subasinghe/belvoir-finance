@@ -83,7 +83,7 @@ const jsonLd = {
   <div class="prose">
     <Content />
     {tools.map((t) => (
-      <aside class="story-card surface-white" aria-labelledby={`try-${t.id}`} data-testid="try-it">
+      <aside class="story-card surface-raised" aria-labelledby={`try-${t.id}`} data-testid="try-it">
         <p class="eyebrow">Try it</p>
         <h2 id={`try-${t.id}`} class="story-card-title">
           <a href={toolHref(t.id)}>{t.data.title}</a>

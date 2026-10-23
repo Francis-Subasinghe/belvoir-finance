@@ -32,33 +32,72 @@ const nf = new Intl.NumberFormat("en-GB");
 const max = Math.max(1, ...series.flatMap((s) => s.values));
 const W = 320;
 const H = 180;
-const top = 22;
 const bottom = 24;
 const groupW = W / categories.length;
 const barW = Math.min(36, (groupW - 12) / series.length);
-const plotH = H - top - bottom;
 /*
  * F4-51: labels are positioned so the widest a label can render stays inside
  * the viewBox. The CSS caps label size at 13 units; hinted mono advances reach
  * about 0.66 em at small on-screen sizes, so 0.7 em per character is the
  * worst case. A label near either edge moves inward just enough; the rest
  * stay centred on their bar or category.
+ *
+ * V2 (Firefox 360 px overlap of "9,100" and "11,600"): collision handling is
+ * done here in viewBox units against the same worst case, so it doesn't depend
+ * on any engine's text metrics. Two value labels in one category whose
+ * worst-case boxes overlap horizontally are kept at least LABEL_GAP apart
+ * vertically (the higher one moves up), and the plot top grows if a moved
+ * label would leave the viewBox.
  */
 const LABEL_MAX_UNITS = 13;
 const LABEL_ADVANCE_EM = 0.7;
+const LABEL_GAP = 20; // > 1.5 em at 13 units: line box plus clearance in any engine
+const LABEL_TOP_MIN = 15; // baseline needs ~1.15 em of room above it
 const labelX = (centre: number, text: string): number => {
   const half = (text.length * LABEL_ADVANCE_EM * LABEL_MAX_UNITS) / 2;
   const x = Math.min(W - half, Math.max(half, centre));
   return Math.round(x * 100) / 100;
 };
-const bars = categories.flatMap((cat, ci) =>
-  series.map((s, si) => {
-    const v = s.values[ci] ?? 0;
-    const h = (v / max) * plotH;
-    const x = ci * groupW + (groupW - barW * series.length) / 2 + si * barW;
-    return { key: `${cat}-${si}`, x, y: top + plotH - h, h, v, si };
-  }),
-);
+const halfW = (text: string) => (text.length * LABEL_ADVANCE_EM * LABEL_MAX_UNITS) / 2;
+const layout = (top: number) => {
+  const plotH = H - top - bottom;
+  const bars = categories.flatMap((cat, ci) =>
+    series.map((s, si) => {
+      const v = s.values[ci] ?? 0;
+      const h = (v / max) * plotH;
+      const x = ci * groupW + (groupW - barW * series.length) / 2 + si * barW;
+      const label = nf.format(v);
+      return {
+        key: `${cat}-${si}`,
+        x,
+        y: top + plotH - h,
+        h,
+        v,
+        si,
+        label,
+        lx: labelX(x + barW / 2, label),
+        ly: top + plotH - h - 4,
+      };
+    }),
+  );
+  for (let ci = 0; ci < categories.length; ci++) {
+    const [a, b] = bars.slice(ci * series.length, ci * series.length + series.length);
+    if (!a || !b) continue;
+    const xOverlap = Math.abs(a.lx - b.lx) < halfW(a.label) + halfW(b.label);
+    if (xOverlap && Math.abs(a.ly - b.ly) < LABEL_GAP) {
+      const [hi, lo] = a.ly <= b.ly ? [a, b] : [b, a];
+      hi.ly = lo.ly - LABEL_GAP;
+    }
+  }
+  return { plotH, bars };
+};
+let top = 22;
+let { plotH, bars } = layout(top);
+const highest = Math.min(...bars.map((b) => b.ly));
+if (highest < LABEL_TOP_MIN) {
+  top += LABEL_TOP_MIN - highest;
+  ({ plotH, bars } = layout(top));
+}
 ---
 
 <figure class="chart surface-white" data-testid="chart">
@@ -92,11 +131,11 @@ const bars = categories.flatMap((cat, ci) =>
         <text
           class="chart-value numeric"
           data-numeric="true"
-          x={labelX(b.x + barW / 2, nf.format(b.v))}
-          y={b.y - 4}
+          x={b.lx}
+          y={Math.round(b.ly * 100) / 100}
           text-anchor="middle"
         >
-          {nf.format(b.v)}
+          {b.label}
         </text>
       </g>
     ))}

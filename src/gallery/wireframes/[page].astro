@@ -91,14 +91,14 @@ const filters = [
             <StoryCard {...card(4, "topic")} headingLevel={3} />
           </li>
         </ul>
-        <div class="surface-navy wireframe-block">
-          <p class="wireframe-block-label">Featured tool (navy band)</p>
+        <div class="surface-ink wireframe-block">
+          <p class="wireframe-block-label">Featured tool (ink band)</p>
           <h2>Cash versus profit explorer</h2>
           <p>
             Placeholder tool pitch. <a href={wfHref("tool")}>Try the explorer</a>
           </p>
         </div>
-        <div class="wireframe-block surface-white">
+        <div class="wireframe-block surface-raised">
           <p class="wireframe-block-label">Newsletter (F6)</p>
           <h2>Placeholder newsletter pitch</h2>
           <form aria-label="Newsletter signup (wireframe)">
@@ -113,7 +113,7 @@ const filters = [
     {slug === "explore" && (
       <>
         <h1>Explore</h1>
-        <form class="wireframe-block surface-white" aria-label="Filters (wireframe)">
+        <form class="wireframe-block surface-raised" aria-label="Filters (wireframe)">
           <p class="wireframe-block-label">Filters and search (F4, F9)</p>
           <TextField id="wf-explore-search" label="Search stories" />
           <SelectField id="wf-explore-topic" label="Topic" options={filters} />
@@ -179,7 +179,7 @@ const filters = [
           <Callout type="example">
             <p>Placeholder worked example.</p>
           </Callout>
-          <div class="wireframe-block surface-white">
+          <div class="wireframe-block surface-raised">
             <p class="wireframe-block-label">Try it card</p>
             <p>
               <a href={wfHref("tool")}>Open the cash versus profit explorer</a>
@@ -223,7 +223,7 @@ const filters = [
         <DemoBanner />
         <h1>Cash versus profit explorer</h1>
         <p class="prose">Placeholder: what the tool shows and what it does not.</p>
-        <form class="wireframe-block surface-white" aria-label="Explorer inputs (wireframe)">
+        <form class="wireframe-block surface-raised" aria-label="Explorer inputs (wireframe)">
           <p class="wireframe-block-label">Inputs (F4)</p>
           <TextField id="wf-tool-sales" type="number" label="Monthly sales (£)" value="20000" />
           <TextField id="wf-tool-days" type="number" label="Days to get paid" value="60" hint="Placeholder hint." />
@@ -247,7 +247,7 @@ const filters = [
         <h1>Source library</h1>
         <p class="prose">Placeholder: what each source is used for.</p>
         {[1, 2, 3].map((n) => (
-          <div class="wireframe-block surface-white">
+          <div class="wireframe-block surface-raised">
             <h2>Placeholder source {n}</h2>
             <p>Placeholder role, rights and update frequency.</p>
             <SourceNote

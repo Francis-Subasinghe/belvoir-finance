@@ -21,6 +21,7 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
 
 <BaseLayout
   title={SITE_NAME}
+  preloadDisplayFont
   description="Belvoir Finance explains business finance for UK founders and operators, one clear idea at a time."
 >
   <div class="page-hero home-hero">
@@ -31,6 +32,20 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
         Belvoir Finance explains business finance for UK founders and operators. Belvoir Finance is the publisher. The
         stories here are demo content while the publication is being built.
       </p>
+      <ul class="hero-actions" data-testid="hero-actions">
+        <li>
+          <a class="button button-primary" href={withBase("/explore/")}>
+            Explore stories
+          </a>
+        </li>
+        {featuredTool && (
+          <li>
+            <a class="button button-secondary" href={toolHref(featuredTool.id)}>
+              Try the tool
+            </a>
+          </li>
+        )}
+      </ul>
     </div>
     <HeroArt />
   </div>
@@ -47,7 +62,7 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
     <ul class="story-list">
       {allTopics.map((t) => (
         <li>
-          <article class="story-card surface-white" data-testid="topic-card">
+          <article class="story-card surface-raised" data-testid="topic-card">
             <PillarArt pillar={t.data.pillar} size="card" />
             <h3 class="story-card-title with-icon">
               <Icon name={t.data.pillar} />
@@ -62,7 +77,7 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
   </section>
 
   {featuredTool && (
-    <section class="feature-band surface-navy" aria-labelledby="tool-heading" data-testid="featured-tool">
+    <section class="feature-band reveal surface-ink" aria-labelledby="tool-heading" data-testid="featured-tool">
       <p class="eyebrow with-icon">
         <ToolIcon id={featuredTool.id} />
         Featured tool
@@ -76,12 +91,14 @@ const cta = (await getCollection("newsletterCtas")).sort((a, b) => (a.id < b.id 
   )}
 
   {cta && (
-    <section class="page-section" aria-labelledby="newsletter-heading" data-testid="newsletter-cta">
+    <section class="band reveal surface-sand" aria-labelledby="newsletter-heading" data-testid="newsletter-cta">
       <h2 id="newsletter-heading">{cta.data.heading}</h2>
       <p>{cta.data.valueProp}</p>
       <p>Cadence: {cta.data.cadence}</p>
       <p class="page-links">
-        <a href={withBase("/newsletter/")}>About the newsletter</a>
+        <a class="button button-primary" href={withBase("/newsletter/")}>
+          About the newsletter
+        </a>
       </p>
     </section>
   )}
