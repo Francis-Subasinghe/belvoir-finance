@@ -522,6 +522,68 @@ const levels = [
       <DemoBanner />
     </section>
 
+    <section id="v2-components" aria-labelledby="h-v2-components" class="gallery-section surface-canvas">
+      <h2 id="h-v2-components">V2 hero, band and chips</h2>
+      {[
+        { motion: "full", label: "Hero, motion on (eyebrow and CTAs fade up 150/300/500 ms; the title never moves)" },
+        { motion: "reduce", label: "Hero, reduced motion (the static end state: nothing animates)" },
+      ].map((v) => (
+        <div class="gallery-surface surface-canvas" data-testid={`v2-hero-${v.motion}`} data-motion={v.motion}>
+          <p class="gallery-label">{v.label}</p>
+          <div class="page-hero home-hero">
+            <div>
+              <p class="eyebrow">Placeholder eyebrow</p>
+              <h2 class="gallery-hero-title">Placeholder display headline</h2>
+              <p class="page-intro prose">Placeholder lead paragraph for the hero.</p>
+              <ul class="hero-actions">
+                <li>
+                  <a class="button button-primary" href="#v2-components">
+                    Primary action
+                  </a>
+                </li>
+                <li>
+                  <a class="button button-secondary" href="#v2-components">
+                    Secondary action
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      ))}
+      {[
+        { surface: "ink", motion: "full", label: "Feature band on ink, scroll reveal on (rises 8 px where supported)" },
+        { surface: "sand", motion: "reduce", label: "Band on sand, reduced motion (static)" },
+      ].map((b) => (
+        <section
+          class={`band reveal surface-${b.surface}`}
+          aria-label={b.label}
+          data-testid={`v2-band-${b.surface}`}
+          data-motion={b.motion}
+        >
+          <p class="gallery-label">{b.label}</p>
+          <h2 class="gallery-hero-title">Placeholder band heading</h2>
+          <p>
+            Placeholder band text with <a href="#v2-components">a link</a>.
+          </p>
+        </section>
+      ))}
+      <nav aria-label="Chip list example" data-testid="v2-chips">
+        <p class="gallery-label">Chip list (topic jump links)</p>
+        <ul class="link-list chip-list">
+          <li>
+            <a href="#v2-components">Placeholder topic one</a>
+          </li>
+          <li>
+            <a href="#v2-components">Placeholder topic two with a longer label</a>
+          </li>
+          <li>
+            <a href="#v2-components">Topic three</a>
+          </li>
+        </ul>
+      </nav>
+    </section>
+
     <section id="type" aria-labelledby="h-type" class="gallery-section surface-raised">
       <h2 id="h-type">Type and figures</h2>
       <h3>Heading level 3</h3>

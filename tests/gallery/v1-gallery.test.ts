@@ -50,3 +50,22 @@ describe("V1-13 gallery build SVG check", () => {
     for (const id of ["card-hover", "card-focus", "card-long-other", "person-variant"]) expect(g, id).toContain(id);
   });
 });
+
+describe("V2 gallery entries (brief §10)", () => {
+  it("V2 the gallery shows the hero, band and chip components in both motion states", () => {
+    const g = pages.find((p) => p.rel === "design/index.html")?.html ?? "";
+    for (const id of ["v2-hero-full", "v2-hero-reduce", "v2-band-ink", "v2-band-sand", "v2-chips"])
+      expect(g, id).toContain(`data-testid="${id}"`);
+    expect(g).toMatch(/data-testid="v2-hero-full"[^>]*data-motion="full"/);
+    expect(g).toMatch(/data-testid="v2-hero-reduce"[^>]*data-motion="reduce"/);
+    // The gallery adds no second h1 (the hero title is an h2 in display style).
+    expect(g.match(/<h1\b/g)?.length).toBe(1);
+    expect(g).toMatch(/class="link-list chip-list"/);
+  });
+  it("V2 the reduced-motion variant is static: gallery.css turns animation and transition off under it", () => {
+    const css = readFileSync("src/styles/gallery.css", "utf8");
+    expect(css).toMatch(
+      /\[data-motion="reduce"\],\s*\[data-motion="reduce"\] \* \{\s*animation-name: none !important;\s*transition-property: none !important;/,
+    );
+  });
+});

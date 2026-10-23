@@ -340,3 +340,21 @@ test.describe("gallery page", () => {
     }
   });
 });
+
+test.describe("V2 gallery motion states", () => {
+  test.use({ reducedMotion: "no-preference" });
+  test("V2 the motion-on hero animates its eyebrow and CTAs; the reduced variant and both titles never animate", async ({
+    page,
+  }) => {
+    await page.goto(GALLERY_PAGE);
+    const count = (sel: string) =>
+      page.locator(sel).evaluateAll((els) => els.reduce((n, e) => n + e.getAnimations({ subtree: true }).length, 0));
+    expect(await count('[data-testid="v2-hero-reduce"]')).toBe(0);
+    expect(await count('[data-testid="v2-band-sand"]')).toBe(0);
+    expect(await count(".gallery-hero-title")).toBe(0);
+    const full = await page
+      .locator('[data-testid="v2-hero-full"] .eyebrow')
+      .evaluate((e) => getComputedStyle(e).animationName);
+    expect(full).toBe("fade-up");
+  });
+});
