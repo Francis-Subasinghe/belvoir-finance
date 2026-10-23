@@ -151,7 +151,7 @@ test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'non
     expect(await page.locator("[data-cvp-status] b").count()).toBe(0);
     const v = await w.violations();
     expect(v.map((x) => x.directive)).toContain("require-trusted-types-for");
-    expect(w.pageErrors.join(" | ")).toMatch(/TrustedHTML/);
+    expect(w.pageErrors.join(" | ")).toMatch(/TrustedHTML|Sink type mismatch/); // Chromium | Firefox wording
   });
 
   test("F4-34 negative: a string sink from page script throws, on every sink kind", async ({ page }) => {
