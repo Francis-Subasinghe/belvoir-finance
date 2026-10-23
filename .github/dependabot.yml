@@ -13,6 +13,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # CodeQL init/analyze/upload-sarif must move together; split PRs fail CI.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
   - package-ecosystem: npm
     directory: /tools/lighthouse
     schedule:
