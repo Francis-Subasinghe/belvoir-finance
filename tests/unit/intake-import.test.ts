@@ -396,7 +396,31 @@ describe("F5-51 against Forge's real schemas (src/lib/sources/schema.ts)", () =>
   });
 });
 
+describe("F5-33 Source rewrites", () => {
+  it("F5-33 a Source that changes status names the field (sourceChangeProblems)", () => {
+    const zip = writeZip("st.zip", [
+      { name: SOURCE_PATH, data: SOURCE_FAILED.replace("status: paused", "status: active") },
+      { name: "summary.txt", data: summaryFor([]) },
+    ]);
+    expect(() => importZip(zip)).toThrow(/source-changed: \S+ changes status/);
+  });
+
+  it("F5-33 a Source with the same data but other bytes (an added comment) is refused", () => {
+    const zip = writeZip("cm.zip", [
+      { name: SOURCE_PATH, data: `# injected comment\n${SOURCE_FAILED}` },
+      { name: "summary.txt", data: summaryFor([]) },
+    ]);
+    expect(() => importZip(zip)).toThrow(/source-changed: \S+ rewrites lines other than/);
+  });
+});
+
 describe("F5-24 / F5-51 write and second-parser guards", () => {
+  it("F5-51 zipinfo listing other names than this parser fails with zip-inconsistent", () => {
+    expect(codeOf(() => crossCheckWithUnzip(join(FX, "ok.zip"), ["content/sources/other.yaml"]))).toBe(
+      "zip-inconsistent",
+    );
+  });
+
   it("F5-24 a create that finds the file already there (a race after planning) fails and leaves it untouched", () => {
     writeFileSync(join(repo, ITEM_PATH), "raced");
     expect(() =>

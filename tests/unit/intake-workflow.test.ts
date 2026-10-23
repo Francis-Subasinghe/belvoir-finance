@@ -65,6 +65,8 @@ describe("F5-36 to F5-40 / F5-53 the real intake.yml", () => {
       'npm run intake:verify -- "$RUNNER_TEMP/intake" --registry tests/fixtures/f5/registry',
     ]);
     expect(text).not.toMatch(/GITHUB_OUTPUT|GITHUB_ENV/);
+    // F5-28: no trust-store override reaches the job (intake would stop on it anyway).
+    expect(text).not.toMatch(/NODE_EXTRA_CA_CERTS|NODE_OPTIONS|--use-openssl-ca|--use-system-ca/);
   });
 
   it("F5-39 pinned SHAs as in ci.yml, ubuntu-24.04, timeout <= 10, concurrency without cancel, Node from .nvmrc", () => {
@@ -122,6 +124,8 @@ describe("F5-36 to F5-40 / F5-53 negative workflow fixtures fail the same check"
     "live-env.yml": "F5-53: jobs.intake selects the live transport",
     "live-url.yml": "F5-53: jobs.intake contains an http(s) URL",
     "tls-override.yml": "F5-28: NODE_TLS_REJECT_UNAUTHORIZED",
+    "tls-ca-certs.yml": "F5-28: NODE_EXTRA_CA_CERTS is set or mentioned",
+    "tls-node-options.yml": "F5-28: NODE_OPTIONS is set",
     "upload-before-verify.yml": "F5-40: intake:verify must run before the upload",
     "upload-other-path.yml": "F5-40: the artifact must be exactly",
     "verify-registry.yml": "F5-40: jobs.intake intake:verify --registry must be tests/fixtures/f5/registry",

@@ -53,6 +53,9 @@ export function intakeWorkflowProblems(text: string): string[] {
     out.push("F5-37: top-level permissions must be {}");
   if (/secrets\./.test(text)) out.push("F5-37: references secrets.");
   if (/NODE_TLS_REJECT_UNAUTHORIZED/.test(text)) out.push("F5-28: NODE_TLS_REJECT_UNAUTHORIZED is set or mentioned");
+  // F5-28: no trust-store override either; intake refuses to run with one (src/lib/intake/run.ts).
+  if (/NODE_EXTRA_CA_CERTS/.test(text)) out.push("F5-28: NODE_EXTRA_CA_CERTS is set or mentioned");
+  if (/NODE_OPTIONS/.test(text)) out.push("F5-28: NODE_OPTIONS is set (could add --use-openssl-ca or --use-system-ca)");
 
   // F5-38: expressions.
   // Parsed values only, so a comment that mentions the syntax doesn't count.
