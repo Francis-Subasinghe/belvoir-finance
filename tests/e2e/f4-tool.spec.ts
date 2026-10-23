@@ -379,12 +379,7 @@ test.describe("F4-35 / F4-37 JavaScript off", () => {
 
   test("F4-37 with the fieldset forced on, Enter and both buttons change no URL and make no request", async ({
     page,
-    browserName,
   }) => {
-    test.skip(
-      browserName === "firefox",
-      "V2-21: page.evaluate(document.fonts.ready) never settles in Firefox on this route-rewritten page (30 s timeout)",
-    );
     await page.route(`**/${TOOL}`, async (route) => {
       const res = await route.fetch();
       const body = (await res.text()).replace(
@@ -394,8 +389,11 @@ test.describe("F4-35 / F4-37 JavaScript off", () => {
       await route.fulfill({ response: res, body });
     });
     await page.goto(TOOL);
+    // V2-21: JavaScript is off, so page.evaluate(document.fonts.ready) cannot run in
+    // Firefox. Wait for the self-hosted font fetches from the network side instead,
+    // so they settle before the no-request window opens.
     await page.waitForLoadState("load");
-    await page.evaluate(() => document.fonts.ready);
+    await page.waitForLoadState("networkidle");
     const url = page.url();
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));

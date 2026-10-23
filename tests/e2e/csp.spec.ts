@@ -148,10 +148,15 @@ test.describe("F4-34 (Q-9) the explorer under Trusted Types and connect-src 'non
     await expect.poll(() => page.evaluate(() => window.__sinkStarted === true)).toBe(true);
     await settle(page);
     expect(await page.evaluate(() => window.__sinkFinished)).toBeUndefined();
+    // The sink never ran: no injected markup in the status region.
     expect(await page.locator("[data-cvp-status] b").count()).toBe(0);
+    await expect(page.locator("[data-cvp-status]")).not.toContainText("injected");
     const v = await w.violations();
     expect(v.map((x) => x.directive)).toContain("require-trusted-types-for");
-    expect(w.pageErrors.join(" | ")).toMatch(/TrustedHTML|Sink type mismatch/); // Chromium | Firefox wording
+    // Exactly one of the two engines' Trusted Types messages (Chromium | Firefox).
+    expect(w.pageErrors.join(" | ")).toMatch(
+      /This document requires 'TrustedHTML' assignment|Element\.innerHTML setter: Sink type mismatch violation blocked by CSP/,
+    );
   });
 
   test("F4-34 negative: a string sink from page script throws, on every sink kind", async ({ page }) => {
