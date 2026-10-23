@@ -34,7 +34,7 @@ interface Props {
    * from SEO by exact path instead.
    */
   placeholder?: boolean;
-  /** V2-11: preload the hero weight (Fraunces 300). Home only. */
+  /** V2-11: preload the H1 weight (Fraunces 300). On by default (every page's H1 is Fraunces 300; Lighthouse perf 100, V2-43). */
   preloadDisplayFont?: boolean;
   /** Override the main nav (used only by the dev-only D12 wireframes). */
   nav?: NavItem[];
@@ -45,7 +45,7 @@ const {
   noindex = false,
   demo = false,
   placeholder = false,
-  preloadDisplayFont = false,
+  preloadDisplayFont = true,
 } = Astro.props;
 const robots = PREVIEW || noindex || demo || placeholder ? "noindex, nofollow" : "index, follow";
 const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;

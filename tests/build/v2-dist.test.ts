@@ -89,9 +89,10 @@ describe("V2 dist: fonts", () => {
     expect(fonts).toHaveLength(5);
     expect(builtFontProblems(files, manifest)).toEqual([]);
   });
-  it("V2-11 at most one font preload per page: Fraunces 300, same-origin, crossorigin; home has it", () => {
+  it("V2-11 exactly one font preload per page: Fraunces 300 (the H1 weight), same-origin, crossorigin", () => {
     expect(pages.flatMap((p) => preloadProblems(p.rel, p.html))).toEqual([]);
-    expect(pages.find((p) => p.rel === "index.html")?.html).toMatch(/rel="preload"[^>]*fraunces-latin-300/);
+    // Every page preloads it: Lighthouse perf is 100 only with the H1 face fetched early (V2-43).
+    expect(pages.filter((p) => !/rel="preload"[^>]*fraunces-latin-300/.test(p.html)).map((p) => p.rel)).toEqual([]);
   });
   it("V2-12 the built CSS keeps the Fraunces Fallback before serif", () => {
     expect(fallbackProblems("dist", css.map((c) => c.text).join("\n"))).toEqual([]);
