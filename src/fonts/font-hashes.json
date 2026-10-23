@@ -1,0 +1,37 @@
+[
+  {
+    "file": "src/fonts/fraunces/fraunces-latin-300-normal.woff2",
+    "family": "Fraunces",
+    "sha256": "eb7978600911337e093a9b339e355a5493c4a2a6609af2839e8298c0b5444174",
+    "licence": "src/fonts/fraunces/OFL.txt (SIL Open Font License 1.1)",
+    "source": "@fontsource/fraunces@5.3.0 files/fraunces-latin-300-normal.woff2"
+  },
+  {
+    "file": "src/fonts/fraunces/fraunces-latin-400-normal.woff2",
+    "family": "Fraunces",
+    "sha256": "e558f39453a9c611908be04294b50dea5f21ae6c49b41c6e47f4115e91f90209",
+    "licence": "src/fonts/fraunces/OFL.txt (SIL Open Font License 1.1)",
+    "source": "@fontsource/fraunces@5.3.0 files/fraunces-latin-400-normal.woff2"
+  },
+  {
+    "file": "src/fonts/ibm-plex-mono/ibm-plex-mono-latin-400-normal.woff2",
+    "family": "IBM Plex Mono",
+    "sha256": "08949f728dc52d528e69b1667d15c89a5686a4ee9a296ff90983985f99c380f7",
+    "licence": "src/fonts/ibm-plex-mono/OFL.txt (SIL Open Font License 1.1)",
+    "source": "@fontsource/ibm-plex-mono@5.3.0 files/ibm-plex-mono-latin-400-normal.woff2"
+  },
+  {
+    "file": "src/fonts/inter/inter-latin-400-normal.woff2",
+    "family": "Inter",
+    "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
+    "licence": "src/fonts/inter/OFL.txt (SIL Open Font License 1.1)",
+    "source": "@fontsource/inter@5.3.0 files/inter-latin-400-normal.woff2"
+  },
+  {
+    "file": "src/fonts/inter/inter-latin-600-normal.woff2",
+    "family": "Inter",
+    "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
+    "licence": "src/fonts/inter/OFL.txt (SIL Open Font License 1.1)",
+    "source": "@fontsource/inter@5.3.0 files/inter-latin-600-normal.woff2"
+  }
+]

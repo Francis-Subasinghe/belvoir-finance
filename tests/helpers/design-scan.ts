@@ -172,14 +172,34 @@ function withoutNot(selector: string): string {
 
 export type Surface = "dark" | "light" | "none";
 
+/**
+ * V2-28 (ADR-0003): the dark surfaces are ink, green and green-deep; the light
+ * ones canvas, raised (surface), white and sand. The F2 names (navy/slate,
+ * white/alabaster) stay recognised so the F2-07 fixtures keep failing.
+ */
+export const DARK_SURFACES: ReadonlySet<string> = new Set([
+  "surface-ink",
+  "surface-green",
+  "surface-green-deep",
+  "surface-navy",
+  "surface-slate",
+]);
+export const LIGHT_SURFACES: ReadonlySet<string> = new Set([
+  "surface-canvas",
+  "surface-raised",
+  "surface-white",
+  "surface-sand",
+  "surface-alabaster",
+]);
+
 /** The surface a selector targets: decided by the LAST surface class in it. */
 export function surfaceOf(selector: string): Surface {
   const cleaned = withoutNot(selector);
   let last: Surface = "none";
   selectorParser((root) => {
     root.walkClasses((c) => {
-      if (c.value === "surface-navy" || c.value === "surface-slate") last = "dark";
-      else if (c.value === "surface-white" || c.value === "surface-alabaster") last = "light";
+      if (DARK_SURFACES.has(c.value)) last = "dark";
+      else if (LIGHT_SURFACES.has(c.value)) last = "light";
     });
   }).processSync(cleaned);
   return last;
@@ -209,8 +229,12 @@ function declSelectors(decl: Declaration): string[] | null {
 
 // ---------------------------------------------------------------- gold rule
 
-const GOLD_LITERAL = /#c5a059(?:ff)?\b|rgba?\(\s*197\s*,\s*160\s*,\s*89\s*(?:,\s*(?:1|1\.0|100%)\s*)?\)/i;
-const GOLD_ON_LIGHT_LITERAL = /#7e6026(?:ff)?\b|rgba?\(\s*126\s*,\s*96\s*,\s*38\s*(?:,\s*(?:1|1\.0|100%)\s*)?\)/i;
+/** Dark-only golds: F2 #C5A059 and V2 gold-bright #F2C94C / gold-soft #D4C098 (V2-28). */
+const GOLD_LITERAL =
+  /#(?:c5a059|f2c94c|d4c098)(?:ff)?\b|rgba?\(\s*(?:197\s*,\s*160\s*,\s*89|242\s*,\s*201\s*,\s*76|212\s*,\s*192\s*,\s*152)\s*(?:,\s*(?:1|1\.0|100%)\s*)?\)/i;
+/** Light-only golds: F2 #7E6026 and V2 #7A5A0A. */
+const GOLD_ON_LIGHT_LITERAL =
+  /#(?:7e6026|7a5a0a)(?:ff)?\b|rgba?\(\s*(?:126\s*,\s*96\s*,\s*38|122\s*,\s*90\s*,\s*10)\s*(?:,\s*(?:1|1\.0|100%)\s*)?\)/i;
 
 const varRefs = (value: string): string[] => [...value.matchAll(/var\(\s*(--[\w-]+)/g)].map((m) => m[1] ?? "");
 
@@ -254,7 +278,11 @@ export function scanGold(files: SourceFile[], opts: GoldScanOptions = {}): Probl
   const problems: Problem[] = [];
   const parsed = [...files, ...(opts.aliasSources ?? [])].map((f) => ({ f, chunks: parseChunks(f) }));
   const allRoots = parsed.flatMap((p) => p.chunks.map((c) => c.root));
-  const goldAliases = aliasesOf(allRoots, "--color-gold", GOLD_LITERAL);
+  const goldAliases = new Set([
+    ...aliasesOf(allRoots, "--color-gold", GOLD_LITERAL),
+    ...aliasesOf(allRoots, "--color-gold-bright", GOLD_LITERAL),
+    ...aliasesOf(allRoots, "--color-gold-soft", GOLD_LITERAL),
+  ]);
   const lightAliases = aliasesOf(allRoots, "--color-gold-on-light", GOLD_ON_LIGHT_LITERAL);
 
   for (const file of files) {
@@ -518,7 +546,7 @@ export function scanMotion(files: SourceFile[]): Problem[] {
         const durations = v.match(/(?<![\w-])\d*\.?\d+m?s\b/g) ?? [];
         if (
           durations.length ||
-          ((d.prop === "transition" || d.prop === "animation") && !/var\(--motion-duration-/.test(v))
+          ((d.prop === "transition" || d.prop === "animation") && !/var\(--motion-(?:fast|base|slow)\)/.test(v))
         ) {
           problems.push({
             path: file.path,

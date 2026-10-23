@@ -254,31 +254,25 @@ describe("F2-15 fonts stay self-hosted", () => {
   });
   const fam = (face: string) => /font-family:\s*["']?([^;"']+)/.exec(face)?.[1]?.trim() ?? "";
   const faces = () => css().flatMap((c) => c.match(/@font-face\s*\{[^}]*\}/g) ?? []);
-  it("only the three F1 families and F1 weights are shipped", () => {
+  it("only the three ADR-0003 families and weights are shipped (V2: Fraunces replaces Source Serif 4)", () => {
     // A shipped face downloads a file (url()); metric-matched fallback faces are local()-only (next test).
     const shipped = faces().filter((f) => /url\(/.test(f));
-    expect([...new Set(shipped.map(fam))].sort()).toEqual(["IBM Plex Mono", "Inter", "Source Serif 4"]);
+    expect([...new Set(shipped.map(fam))].sort()).toEqual(["Fraunces", "IBM Plex Mono", "Inter"]);
     expect([...new Set(shipped.map((f) => `${fam(f)} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`))].sort()).toEqual([
+      "Fraunces 300",
+      "Fraunces 400",
       "IBM Plex Mono 400",
       "Inter 400",
       "Inter 600",
-      "Source Serif 4 600",
-      "Source Serif 4 700",
     ]);
   });
   it("PR #22 CLS fix: fallback faces only rescale local fonts: no url(), named '<F1 family> Fallback', F1 weights only", () => {
     const fallback = faces().filter((f) => !/url\(/.test(f));
     expect(fallback.length).toBeGreaterThan(0);
-    const weights = new Set([
-      "IBM Plex Mono 400",
-      "Inter 400",
-      "Inter 600",
-      "Source Serif 4 600",
-      "Source Serif 4 700",
-    ]);
+    const weights = new Set(["Fraunces 300", "Fraunces 400", "IBM Plex Mono 400", "Inter 400", "Inter 600"]);
     for (const f of fallback) {
       const name = fam(f);
-      expect(name, f).toMatch(/^(Inter|Source Serif 4|IBM Plex Mono) Fallback$/);
+      expect(name, f).toMatch(/^(Inter|Fraunces|IBM Plex Mono) Fallback$/);
       expect(weights.has(`${name.replace(/ Fallback$/, "")} ${/font-weight:\s*(\d+)/.exec(f)?.[1]}`), f).toBe(true);
       const src = /src:\s*([^;]+)/.exec(f)?.[1] ?? "";
       expect(

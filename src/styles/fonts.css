@@ -1,0 +1,42 @@
+/*
+ * Self-hosted web fonts (V2-09, V2-10, V2-53). The WOFF2 files are copied from
+ * the pinned @fontsource packages into src/assets/fonts/, each family beside
+ * its SIL Open Font License (OFL.txt), and their sha256 hashes are pinned in
+ * tests/fixtures/v2/font-hashes.json. No font CDN and no font-loader script.
+ * Fraunces: latin 300 (display) and 400 (headings) only, no italics.
+ */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url("../fonts/fraunces/fraunces-latin-300-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../fonts/fraunces/fraunces-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../fonts/inter/inter-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("../fonts/inter/inter-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../fonts/ibm-plex-mono/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}

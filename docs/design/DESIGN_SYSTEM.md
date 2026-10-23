@@ -19,7 +19,7 @@ The E2E checks use the gallery **test build**, never `astro dev`, because the de
 
 ## Tokens
 
-The palette and fonts come from [ADR-0002](../decisions/ADR-0002-brand-colour-type.md); a unit test fails if the brand hex values or font weights drift from it. All tokens are defined once, in `:root` in `src/styles/tokens.css` (F2-03). No other file declares a custom property, and every `var()` must resolve to a token (F2-05). No colour literal appears anywhere else under `src/` (F2-04).
+The palette and fonts come from [ADR-0003](../decisions/ADR-0003-v2-palette-type.md) (V2, superseding the palette and fonts of [ADR-0002](../decisions/ADR-0002-brand-colour-type.md)); a unit test fails if the brand hex values or font weights drift from it. All tokens are defined once, in `:root` in `src/styles/tokens.css` (F2-03). No other file declares a custom property, and every `var()` must resolve to a token (F2-05). No colour literal appears anywhere else under `src/` (F2-04).
 
 | Group | Tokens |
 | --- | --- |
@@ -152,7 +152,7 @@ Restyle only: wording and behaviour stay in F10. The demo banner (`role="note"`,
 
 ## Typography
 
-Headings, card titles and the article title use `--font-serif`. Body, navigation and forms use `--font-sans`. Figures (`.numeric`, `.metric`, chart values, figure tables and number inputs) use `--font-mono` with `font-variant-numeric: var(--numeric)`. The gallery marks figures with `data-numeric`, and E2E checks that each one computes `tabular-nums` (F2-14). Body text is 1rem with line-height 1.6. Fonts are self-hosted through `@fontsource`, with exactly the families and weights in ADR-0002 (Source Serif 4 600 and 700, Inter 400 and 600, IBM Plex Mono 400) and `font-display: swap` (F2-15). The favicon is a self-hosted SVG at `/belvoir-finance/favicon.svg`.
+H1/H2, card titles and the article title use `--font-display` (Fraunces; `--font-serif` is an alias); H3 and below use Inter. Body, navigation and forms use `--font-sans`. Figures (`.numeric`, `.metric`, chart values, figure tables and number inputs) use `--font-mono` with `font-variant-numeric: var(--numeric)`. The gallery marks figures with `data-numeric`, and E2E checks that each one computes `tabular-nums` (F2-14). Body text is 1rem with line-height 1.6. Fonts are self-hosted from WOFF2 files committed in `src/fonts/` (copied from the pinned `@fontsource` packages, hash-pinned, each beside its OFL licence), with exactly the families and weights in ADR-0003 (Fraunces 300 and 400, Inter 400 and 600, IBM Plex Mono 400) and `font-display: swap` (F2-15). The favicon is a self-hosted SVG at `/belvoir-finance/favicon.svg`.
 
 ## Focus
 

@@ -14,6 +14,8 @@ import { withBase } from "../lib/paths";
 import SiteNav, { type NavItem } from "../components/SiteNav.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import DemoBanner from "../components/DemoBanner.astro";
+// V2-11: the committed Fraunces 300 file (same asset the @font-face uses), preloaded only where asked.
+import displayFont from "../fonts/fraunces/fraunces-latin-300-normal.woff2?url";
 
 interface Props {
   title: string;
@@ -32,10 +34,19 @@ interface Props {
    * from SEO by exact path instead.
    */
   placeholder?: boolean;
+  /** V2-11: preload the hero weight (Fraunces 300). Home only. */
+  preloadDisplayFont?: boolean;
   /** Override the main nav (used only by the dev-only D12 wireframes). */
   nav?: NavItem[];
 }
-const { title, description = SITE_TAGLINE, noindex = false, demo = false, placeholder = false } = Astro.props;
+const {
+  title,
+  description = SITE_TAGLINE,
+  noindex = false,
+  demo = false,
+  placeholder = false,
+  preloadDisplayFont = false,
+} = Astro.props;
 const robots = PREVIEW || noindex || demo || placeholder ? "noindex, nofollow" : "index, follow";
 const pageTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
 // The CSP is emitted in production builds only; Astro's dev server injects
@@ -59,13 +70,14 @@ const footer: NavItem[] = FOOTER_NAV.map((n) => ({ href: withBase(n.path), label
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {preloadDisplayFont && <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />}
     <slot name="head" />
   </head>
   <body>
     <a class="skip-link" href="#main">
       Skip to main content
     </a>
-    <header class="site-header surface-navy">
+    <header class="site-header surface-canvas">
       <div class="container">
         <a class="brand" href={withBase("/")}>
           {SITE_NAME}

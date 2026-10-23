@@ -8,9 +8,9 @@
   },
   "dependencies": {
     "@astrojs/markdoc": "2.0.9",
+    "@fontsource/fraunces": "5.3.0",
     "@fontsource/ibm-plex-mono": "5.3.0",
     "@fontsource/inter": "5.3.0",
-    "@fontsource/source-serif-4": "5.3.0",
     "@markdoc/markdoc": "0.5.10",
     "astro": "7.3.5"
   },

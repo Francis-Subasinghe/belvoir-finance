@@ -1,59 +1,71 @@
 /*
- * Design tokens (F1-22, F1-23, F2-03). Palette, gold rule and fonts:
- * docs/decisions/ADR-0002-brand-colour-type.md (the source of truth; a unit
- * test checks the brand hex values and font weights against it).
+ * Design tokens (F1-22, F1-23, F2-03, V2). Palette, gold rule and fonts:
+ * docs/decisions/ADR-0003-v2-palette-type.md (supersedes the palette and font
+ * parts of ADR-0002; a unit test checks the hex values against it).
  * This is the ONLY file that declares
- * --color-*, --font-*, --step-*, --space-*, --radius*, --motion-* (and the
- * layout tokens). Contrast for every pair used is listed in
+ * --color-*, --font-*, --step-*, --space-*, --radius*, --shadow-*, --motion-*
+ * (and the layout tokens). Contrast for every pair used is listed in
  * docs/design/CONTRAST.md and asserted in tests/unit/design-tokens.test.ts.
  *
- * GOLD RULE (ADR-0002; thresholds from TEST_STRATEGY.md):
- * --color-gold (#C5A059) and its alias --color-focus-on-dark may only be
- * used in rules scoped under .surface-navy or .surface-slate. Gold text or
- * UI on light surfaces uses --color-gold-on-light (#7E6026), which is never
- * used on a dark surface (2.58:1 on slate). Enforced by
- * tests/helpers/design-scan.ts (source, F2-06/07), tests/build and tests/gallery
- * (compiled CSS, F2-08) and tests/e2e (rendered, F2-09).
+ * GOLD RULE (ADR-0003, V2-28): --color-gold-bright (#F2C94C, 1.53:1 on canvas)
+ * and --color-gold-soft (and their alias --color-focus-on-dark) may only be
+ * used in rules scoped under .surface-ink, .surface-green or
+ * .surface-green-deep. Gold text or marks on light surfaces use
+ * --color-gold-on-light (#7A5A0A), which is never used on a dark surface.
+ * Enforced by tests/helpers/design-scan.ts (source and compiled CSS) and the
+ * rendered-page check in tests/e2e.
  *
- * BREAKPOINTS (F2-17): custom properties can't be used inside @media, so the
- * allowed values are listed here and in docs/design/DESIGN_SYSTEM.md, and
- * enforced by a unit scan. Mobile-first, min-width only:
- *   30rem (480px)  small: reserved for small-screen tweaks (none used yet)
- *   48rem (768px)  medium: two-up story cards and gallery grids
- *   64rem (1024px) large: three-up story cards, two-column gallery forms
+ * BREAKPOINTS (F2-17, V2-49): custom properties can't be used inside @media,
+ * so the allowed values are listed here and in docs/design/DESIGN_SYSTEM.md,
+ * and enforced by a unit scan. Mobile-first, min-width only:
+ *   30rem (480px)  small: tool table spacing
+ *   48rem (768px)  medium: two-up cards, hero and band columns
+ *   64rem (1024px) large: three-up cards, full nav
  */
 :root {
-  /* Brand */
-  --color-navy: #0b132b;
-  --color-slate: #1c2541;
-  --color-gold: #c5a059;
-  --color-gold-on-light: #7e6026;
-  --color-alabaster: #f8fafc;
+  /* Brand (ADR-0003) */
+  --color-canvas: #fbfbf9;
+  --color-surface: #efefea;
+  --color-surface-2: #e6e6e0;
+  --color-sand: #d4c4a8;
+  --color-ink: #0a0a0a;
+  --color-ink-muted: #4a4a45;
+  --color-ink-subtle: #6b6b64;
+  --color-green: #2c5f34;
+  --color-green-deep: #1f4426;
+  --color-gold-bright: #f2c94c;
+  --color-gold-soft: #d4c098;
+  --color-gold-on-light: #7a5a0a;
   --color-white: #ffffff;
+  /* Sticky header: canvas at 96% (V2-31: >= 0.92, no backdrop-filter). */
+  --color-header-bg: rgb(251 251 249 / 0.96);
 
   /* Text, links and focus */
-  --color-text: #1c2541; /* slate on light surfaces */
-  --color-text-muted: #4a5568;
-  --color-text-on-dark: #f8fafc;
-  --color-link: #7e6026;
-  --color-focus: #7e6026;
-  --color-focus-on-dark: #c5a059; /* alias of gold: dark surfaces only */
+  --color-text: #0a0a0a; /* ink */
+  --color-text-muted: #4a4a45; /* ink-muted */
+  --color-text-on-dark: #fbfbf9; /* canvas */
+  --color-link: #2c5f34; /* green */
+  --color-link-hover: #1f4426; /* green-deep */
+  /* Two-tone focus ring (V2-29, V2-30): 3 px ink outline + 2 px canvas inner ring. */
+  --color-focus: #0a0a0a;
+  --color-focus-inner: #fbfbf9;
+  --color-focus-on-dark: #f2c94c; /* alias of gold-bright: dark surfaces only */
 
-  /* Borders. --color-border is decorative only (1.48:1); UI boundaries use --color-border-strong. */
-  --color-border: #cbd5e1;
-  --color-border-strong: #64748b;
+  /* Borders. --color-border is decorative only; UI boundaries use --color-border-strong (>= 3:1). */
+  --color-border: #e6e6e0;
+  --color-border-strong: #6b6b64;
 
   /* Interactive states */
-  --color-hover-bg: #f1f5f9;
-  --color-disabled-bg: #eef1f5;
-  --color-disabled-text: #4a5568;
-  --color-button-primary-bg: #0b132b;
-  --color-button-primary-hover-bg: #1c2541;
-  --color-button-primary-text: #f8fafc;
+  --color-hover-bg: #efefea;
+  --color-disabled-bg: #e6e6e0;
+  --color-disabled-text: #4a4a45;
+  --color-button-primary-bg: #0a0a0a;
+  --color-button-primary-hover-bg: #1f4426;
+  --color-button-primary-text: #fbfbf9;
 
-  /* Not-advice notice (warm surface) */
-  --color-notice-bg: #fff8e6;
-  --color-notice-text: #5c4511;
+  /* Not-advice notice */
+  --color-notice-bg: #efefea;
+  --color-notice-text: #0a0a0a;
 
   /* Status notice variants (F2-28) */
   --color-status-info-bg: #eef4fa;
@@ -69,29 +81,34 @@
   --color-error: #a12b2b;
 
   /* Callout type accents (F2-25), always paired with a text label */
-  --color-callout-fact: #0b132b;
-  --color-callout-estimate: #7e6026;
+  --color-callout-fact: #0a0a0a;
+  --color-callout-estimate: #7a5a0a;
   --color-callout-example: #1d5f66;
   --color-callout-opinion: #6b3e75;
 
   /* Chart (F2-26), on a white chart background */
   --color-chart-bg: #ffffff;
-  --color-chart-series-1: #0b132b;
+  --color-chart-series-1: #2c5f34;
   --color-chart-series-2: #1d5f66;
-  --color-chart-axis: #64748b;
+  --color-chart-axis: #6b6b64;
 
-  /* Typography (ADR-0002): self-hosted via @fontsource; no third-party font origin */
-  --font-serif: "Source Serif 4", "Source Serif 4 Fallback", Georgia, "Times New Roman", serif;
+  /* Typography (ADR-0003): self-hosted WOFF2 committed in src/assets/fonts/ */
+  --font-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-display);
   --font-sans: "Inter", "Inter Fallback", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --numeric: tabular-nums;
 
-  --step--1: 0.875rem;
-  --step-0: 1rem;
+  --step-display: clamp(2.75rem, 1rem + 6vw, 6rem);
+  --step-5: clamp(2.25rem, 1.6rem + 2.9vw, 4rem);
+  --step-4: clamp(1.875rem, 1.5rem + 1.6vw, 2.75rem);
+  --step-3: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
+  --step-2: 1.5rem;
   --step-1: 1.25rem;
-  --step-2: 1.563rem;
-  --step-3: 1.953rem;
-  --step-4: 2.441rem;
+  --step-0: 1rem;
+  --step-prose: 1.0625rem;
+  --step--1: 0.875rem;
+  --step-eyebrow: 0.75rem;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -99,41 +116,38 @@
   --space-4: 1.5rem;
   --space-5: 2.5rem;
   --space-6: 4rem;
+  --space-7: 6rem;
+  --space-8: 8rem;
+  --section-y: clamp(3rem, 2rem + 4vw, 6rem);
+  --band-y: clamp(4rem, 3rem + 4vw, 6rem);
 
   /* Layout */
-  /* 68 Inter "0" advances at 16px. Not 68ch: ch follows the "0" of whichever
-     face is painting, so the metric fallback and Inter gave different widths and
-     every prose paragraph re-wrapped when the web font arrived (D-3, V1-36;
-     tests/e2e/layout-shift.spec.ts). */
+  /* 68 Inter "0" advances at 16px (not 68ch, which follows the painting face; V1-36). */
   --measure: 42.5rem;
-  --container-max: 72rem;
-  --gutter: var(--space-3);
+  --container-max: 80rem;
+  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
   --target-min: 1.5rem; /* 24px, WCAG 2.5.8 */
+  --button-min: 2.75rem; /* 44px */
+  --header-height: 4.5rem;
 
-  --radius: 4px;
+  --radius-sm: 4px;
+  --radius: 16px;
+  --radius-cover: 12px;
+  --radius-lg: 24px;
   --radius-pill: 999px;
 
   --border-width: 1px;
+  --border-width-button: 1.5px;
   --border-width-strong: 2px;
   --focus-width: 3px;
+  --focus-inner-width: 2px;
   --focus-offset: 2px;
 
-  /* Motion (F2-32). Short, never looping; disabled by prefers-reduced-motion. */
-  --motion-duration-fast: 120ms;
-  --motion-duration-base: 200ms;
-  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  /* V1 motion (Q-4, D-5): transform and opacity only, all under the
-     prefers-reduced-motion: no-preference guard. The load stagger comes from
-     duration, never delay, so nothing blinks (V1-57): 6 steps, each <= 400 ms,
-     all done by 400 ms (< the 800 ms cap). */
-  --motion-duration-lift: 160ms;
-  --motion-duration-stagger-1: 200ms;
-  --motion-duration-stagger-2: 240ms;
-  --motion-duration-stagger-3: 280ms;
-  --motion-duration-stagger-4: 320ms;
-  --motion-duration-stagger-5: 360ms;
-  --motion-duration-stagger-6: 400ms;
-  --motion-duration-draw: 600ms;
-  --motion-duration-reveal: 400ms;
-  --motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  /* Motion (V2-16 to V2-18): one easing, three durations, transform/opacity only. */
+  --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-fast: 150ms;
+  --motion-base: 300ms;
+  --motion-slow: 500ms;
+  /* Reduced-motion reset only (V2-19): 0s, so no transition object is ever created (Atlas allowed up to 0.01 ms). */
+  --motion-none: 0s;
 }

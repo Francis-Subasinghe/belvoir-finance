@@ -31,14 +31,12 @@ export interface SourceProblem {
  * `@import`, which the build scan checks) and are the only ones allowed.
  */
 export const IMPORT_ALLOWLIST: readonly string[] = [
-  '"@fontsource/source-serif-4/latin-600.css"',
-  '"@fontsource/source-serif-4/latin-700.css"',
-  '"@fontsource/inter/latin-400.css"',
-  '"@fontsource/inter/latin-600.css"',
-  '"@fontsource/ibm-plex-mono/latin-400.css"',
+  // V2 (ADR-0003): the @fontsource imports became the committed-file faces in ./fonts.css (V2-53).
+  '"./fonts.css"',
   '"./font-fallbacks.css"',
   '"./tokens.css"',
   '"./components.css"',
+  '"./motion.css"',
 ];
 
 /** The only absolute URLs allowed in CSS or SVG: the two namespace declarations (A-2). */
@@ -180,17 +178,17 @@ export function contentSvgValueProblems(file: string, text: string): SourceProbl
 
 /* ------------------------------------------------------------------ V1-36 */
 
-/** Atlas-approved faces: the F1 three (F2-15) and the local-only F3 metric fallbacks. */
+/** Atlas-approved faces: Fraunces 300/400 (V2-09, replacing Source Serif 4), Inter, Plex Mono and the local-only metric fallbacks. */
 export const APPROVED_FONT_FACES: readonly string[] = [
-  "Source Serif 4/600",
-  "Source Serif 4/700",
+  "Fraunces/300",
+  "Fraunces/400",
   "Inter/400",
   "Inter/600",
   "IBM Plex Mono/400",
   "Inter Fallback/400",
   "Inter Fallback/600",
-  "Source Serif 4 Fallback/600",
-  "Source Serif 4 Fallback/700",
+  "Fraunces Fallback/300",
+  "Fraunces Fallback/400",
   "IBM Plex Mono Fallback/400",
 ];
 

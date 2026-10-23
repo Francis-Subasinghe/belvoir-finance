@@ -1,18 +1,16 @@
 /*
- * Global styles (F1, F2). Every value comes from tokens.css. Gold rule
- * (ADR-0002): --color-gold and its aliases appear only
- * in rules scoped under .surface-navy or .surface-slate; light surfaces
- * nested inside a dark band are reset to --color-gold-on-light below.
+ * Global styles (F1, F2, V2). Every value comes from tokens.css. Gold rule
+ * (ADR-0003, V2-28): --color-gold-bright / --color-gold-soft and their aliases
+ * appear only in rules scoped under .surface-ink, .surface-green or
+ * .surface-green-deep; light surfaces nested inside a dark band are reset to
+ * the light-surface colours below.
  * Breakpoints: 30rem, 48rem, 64rem (min-width only, see tokens.css).
  */
-@import "@fontsource/source-serif-4/latin-600.css";
-@import "@fontsource/source-serif-4/latin-700.css";
-@import "@fontsource/inter/latin-400.css";
-@import "@fontsource/inter/latin-600.css";
-@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "./fonts.css";
 @import "./font-fallbacks.css";
 @import "./tokens.css";
 @import "./components.css";
+@import "./motion.css";
 
 *,
 *::before,
@@ -24,8 +22,9 @@ html {
   font-family: var(--font-sans);
   font-size: 100%;
   line-height: 1.6;
+  letter-spacing: -0.01em;
   color: var(--color-text);
-  background: var(--color-alabaster);
+  background: var(--color-canvas);
   scroll-behavior: auto;
 }
 
@@ -41,38 +40,58 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-serif);
   line-height: 1.25;
-  color: var(--color-navy);
+  color: var(--color-ink);
   overflow-wrap: break-word;
 }
 
+/* Display serif (Fraunces) for H1/H2; Inter for H3 and below (brief §4). */
+h1,
+h2 {
+  font-family: var(--font-display);
+}
+
 h1 {
-  font-size: var(--step-4);
-  margin-block: var(--space-3);
+  font-size: var(--step-5);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-block: var(--space-3) var(--space-4);
 }
 h2 {
-  font-size: var(--step-3);
+  font-size: var(--step-4);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 h3 {
+  font-family: var(--font-sans);
   font-size: var(--step-2);
+  font-weight: 600;
+  line-height: 1.33;
 }
 h4 {
+  font-family: var(--font-sans);
   font-size: var(--step-1);
+  font-weight: 600;
 }
 
 a {
   color: var(--color-link);
   text-decoration-line: underline;
-  text-underline-offset: 0.15em;
+  text-decoration-thickness: var(--border-width);
+  text-underline-offset: 0.2em;
 }
 a:hover {
+  color: var(--color-link-hover);
   text-decoration-thickness: var(--border-width-strong);
 }
 
+/* V2-29: two-tone ring, 3 px ink outline plus a 2 px canvas inner ring. */
 :focus-visible {
   outline: var(--focus-width) solid var(--color-focus);
   outline-offset: var(--focus-offset);
+  box-shadow: 0 0 0 var(--focus-inner-width) var(--color-focus-inner);
 }
 
 .numeric,
@@ -98,12 +117,12 @@ a:hover {
   left: var(--space-3);
   top: calc(-1 * var(--space-6));
   padding: var(--space-2) var(--space-3);
-  background: var(--color-white);
-  color: var(--color-navy);
-  z-index: 10;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  z-index: 20;
 }
 .skip-link:focus {
-  top: var(--space-2);
+  top: var(--space-1);
 }
 
 .container {
@@ -113,7 +132,7 @@ a:hover {
 
 main {
   flex: 1;
-  padding-block: var(--space-5);
+  padding-block: var(--space-5) var(--section-y);
 }
 
 .prose {
@@ -121,70 +140,89 @@ main {
 }
 
 /* ---- Surfaces ---- */
+.surface-canvas {
+  background: var(--color-canvas);
+  color: var(--color-text);
+}
+.surface-raised {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
 .surface-white {
   background: var(--color-white);
   color: var(--color-text);
 }
-.surface-alabaster {
-  background: var(--color-alabaster);
+.surface-sand {
+  background: var(--color-sand);
   color: var(--color-text);
 }
-.surface-navy {
-  background: var(--color-navy);
+.surface-ink {
+  background: var(--color-ink);
   color: var(--color-text-on-dark);
 }
-.surface-slate {
-  background: var(--color-slate);
+.surface-green {
+  background: var(--color-green);
   color: var(--color-text-on-dark);
 }
-.surface-navy :is(h1, h2, h3, h4),
-.surface-slate :is(h1, h2, h3, h4) {
+.surface-green-deep {
+  background: var(--color-green-deep);
+  color: var(--color-text-on-dark);
+}
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(h1, h2, h3, h4) {
   color: var(--color-text-on-dark);
 }
 
-/* Dark surfaces: the only places --color-gold may be used. */
-.surface-navy a,
-.surface-slate a,
-.surface-navy .eyebrow,
-.surface-slate .eyebrow,
-.surface-navy .brand-accent,
-.surface-slate .brand-accent {
-  color: var(--color-gold);
+/* Dark surfaces: canvas links with a gold-soft underline; gold only here. */
+:is(.surface-ink, .surface-green, .surface-green-deep) a {
+  color: var(--color-text-on-dark);
+  text-decoration-color: var(--color-gold-soft);
 }
-.surface-navy :focus-visible,
-.surface-slate :focus-visible,
-.surface-navy .is-focus,
-.surface-slate .is-focus {
+/* Muted text (card meta) on dark is the full on-dark colour. */
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(.story-card-meta, .article-meta) {
+  color: var(--color-text-on-dark);
+}
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(.eyebrow, .brand-accent) {
+  color: var(--color-gold-soft);
+}
+/* On dark, the outline is gold-bright (12.48:1 on ink, 6.92:1 on green-deep) and the inner ring ink. */
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(:focus-visible, .is-focus) {
   outline-color: var(--color-focus-on-dark);
+  box-shadow: 0 0 0 var(--focus-inner-width) var(--color-ink);
 }
 
 /* Light surfaces nested in a dark band go back to the light-surface colours. */
-:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(h1, h2, h3, h4) {
-  color: var(--color-navy);
+:is(.surface-ink, .surface-green, .surface-green-deep)
+  :is(.surface-raised, .surface-canvas, .surface-white)
+  :is(h1, h2, h3, h4) {
+  color: var(--color-ink);
 }
-:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(a, .eyebrow) {
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(.surface-raised, .surface-canvas, .surface-white) a {
+  color: var(--color-link);
+  text-decoration-color: currentColor;
+}
+:is(.surface-ink, .surface-green, .surface-green-deep)
+  :is(.surface-raised, .surface-canvas, .surface-white)
+  :is(.story-card-meta, .article-meta) {
+  color: var(--color-text-muted);
+}
+:is(.surface-ink, .surface-green, .surface-green-deep) :is(.surface-raised, .surface-canvas, .surface-white) .eyebrow {
   color: var(--color-gold-on-light);
 }
-:is(.surface-navy, .surface-slate) :is(.surface-white, .surface-alabaster) :is(:focus-visible, .is-focus) {
+:is(.surface-ink, .surface-green, .surface-green-deep)
+  :is(.surface-raised, .surface-canvas, .surface-white)
+  :is(:focus-visible, .is-focus) {
   outline-color: var(--color-focus);
+  box-shadow: 0 0 0 var(--focus-inner-width) var(--color-focus-inner);
 }
 
-/* Light-surface accents use the darker gold. */
+/* Eyebrow: small tracked uppercase label in gold-on-light (6.15:1 on canvas)
+ * with our own short rule ornament (no laurel). */
 .eyebrow {
   color: var(--color-gold-on-light);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: var(--step--1);
-  margin-block: 0 var(--space-1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
+  letter-spacing: 0.12em;
+  font-size: var(--step-eyebrow);
+  line-height: 1.3;
+  margin-block: 0 var(--space-2);
 }
