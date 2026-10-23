@@ -1,0 +1,18 @@
+name: HM Revenue & Customs announcements
+publisher: HM Revenue & Customs
+category: primary-official
+topics:
+  - make-better-decisions
+jurisdiction: UK
+website: https://www.gov.uk/government/organisations/hm-revenue-customs
+feedType: atom
+feedUrl: https://www.gov.uk/government/organisations/hm-revenue-customs.atom
+updateFrequency: Several a week
+rights: unknown
+rightsNotes: Feed reachable on 2026-10-23; reuse terms not yet confirmed, so titles and links only until reviewed. Seed awaiting Francis (pre-launch list).
+role: primary
+owner: fx-reviewer
+lastChecked: 2026-10-23
+editorialNotes: See www.gov.uk/hmrc for the release calendar.
+demo: false
+status: paused

@@ -194,6 +194,13 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
   "source-url-port": ["F5-49", "schema", "feedUrl", /port 443 only/],
   "real-domain-story-body": ["F5-05", "real-domain", "body", /only as the website or feedUrl of a non-demo Source/],
   "real-domain-demo-source": ["F5-05", "real-domain", "website", /only as the website or feedUrl of a non-demo Source/],
+  // M-32: a non-demo Source is exempt only in website and feedUrl, not in every field.
+  "real-domain-nondemo-other-field": [
+    "F5-05",
+    "real-domain",
+    "editorialNotes",
+    /only as the website or feedUrl of a non-demo Source/,
+  ],
   "real-domain-demo-story-source": [
     "F5-05",
     "real-domain",
