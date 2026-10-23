@@ -28,6 +28,8 @@ export interface RunOptions extends FetchDeps {
   outDir: string;
   fetchedAt: string;
   env: Record<string, string | undefined>;
+  /** Test seam only; defaults to fetchFeed. */
+  fetch?: typeof fetchFeed;
 }
 export interface RunResult {
   exitCode: number;
@@ -128,15 +130,15 @@ export async function runIntake(o: RunOptions): Promise<RunResult> {
     }
     if (isFetchable(data)) runList.push({ file, doc, data });
   }
-  // F5-26: the allowed set is every feedUrl selected for this run; a redirect may
-  // only land on one of them. Paused, retired, rights-none or invalid Sources' URLs
-  // are never in it.
+  // F5-26: the allowed set limits which starting URLs can be fetched: every feedUrl
+  // selected for this run, never a paused, retired, rights-none or invalid Source's.
+  // Redirects are not checked against it; fetch.ts holds every hop to the same host (F5-27).
   const allowed = allowedFeedUrls(runList.map((r) => r.data));
   for (const { file, doc, data } of runList) {
     selected += 1;
     const feedUrl = String(data["feedUrl"]);
     // One request per source, one after another (F5-30).
-    const fetched = await fetchFeed(feedUrl, allowed, o);
+    const fetched = await (o.fetch ?? fetchFeed)(feedUrl, allowed, o);
     const parsed = fetched.ok
       ? parseFeed(fetched.body, {
           source: { id: file.id, rights: String(data["rights"]) },

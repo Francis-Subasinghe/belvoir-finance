@@ -328,6 +328,23 @@ describe("F5-26 the allowed set is every feedUrl selected for the run", () => {
     expect(r).toEqual({ ok: false, code: "not-in-registry" });
     expect([lookups, requests]).toEqual([0, 0]);
   });
+  it("F5-26 inside runIntake, a paused Source's feedUrl as a start URL is not-in-registry; another selected feed isn't", async () => {
+    // Captures the allowed set runIntake hands to fetchFeed, then starts fetches from it directly.
+    const sets: ReadonlySet<string>[] = [];
+    const net = fixtureNet(join(F5, "net", "script.json"));
+    await fixtureRun(fresh("allowed-seam"), {
+      fetch: (url, allowed, deps) => (sets.push(allowed), fetchFeed(url, allowed, deps)),
+    });
+    expect(sets.length).toBe(5);
+    for (const allowed of sets) {
+      expect(await fetchFeed("https://feeds.fx-paused.test/rss", allowed, net)).toEqual({
+        ok: false,
+        code: "not-in-registry",
+      });
+      // A per-source set (new Set([feedUrl])) would refuse this for every source but fx-atom.
+      expect((await fetchFeed("https://feeds.fx-atom.test/rss", allowed, net)).ok).toBe(true);
+    }
+  });
   it("F5-26 a run fetches each selected Source with the whole set (two selected feeds both succeed)", async () => {
     const r = await fixtureRun(fresh("allowed-run"));
     expect(r.summary).toMatch(/^run sources=5 ok=4 failed=1 /);
