@@ -67,9 +67,25 @@ export const YAML_OUT = { lineWidth: 0 } as const;
 const fallbackKey = (sourceId: string, title: string, publishedAt: string) =>
   `${sourceId}\u0000${title}\u0000${publishedAt}`;
 
+/**
+ * F5-28: any environment setting that disables verification or swaps the trust
+ * store (NODE_EXTRA_CA_CERTS, or --use-openssl-ca / --use-system-ca in NODE_OPTIONS).
+ */
+export function tlsOverridden(env: Readonly<Record<string, string | undefined>>): boolean {
+  if (env["NODE_TLS_REJECT_UNAUTHORIZED"] !== undefined) return true;
+  if (env["NODE_EXTRA_CA_CERTS"] !== undefined) return true;
+  const opts = env["NODE_OPTIONS"] ?? "";
+  return /(^|\s)--use-(openssl|system)-ca(?=\s|=|$)/.test(opts);
+}
+
+/** F5-26: the URLs a run may fetch: every feedUrl of the Sources selected for it. */
+export function allowedFeedUrls(selected: readonly Record<string, unknown>[]): ReadonlySet<string> {
+  return new Set(selected.filter(isFetchable).map((d) => String(d["feedUrl"])));
+}
+
 export async function runIntake(o: RunOptions): Promise<RunResult> {
   // F5-28: verification can't be turned off; stop before any request.
-  if (o.env["NODE_TLS_REJECT_UNAUTHORIZED"] !== undefined) {
+  if (tlsOverridden(o.env)) {
     mkdirSync(o.outDir, { recursive: true });
     writeFileSync(join(o.outDir, "summary.txt"), "run tls-override\n");
     return { exitCode: 1, summary: "run tls-override\n" };
@@ -98,6 +114,11 @@ export async function runIntake(o: RunOptions): Promise<RunResult> {
   let invalid = 0;
   let duplicates = 0;
   const sorted = [...o.registry].sort((a, b) => (a.id < b.id ? -1 : 1));
+  const runList: {
+    file: (typeof sorted)[number];
+    doc: ReturnType<typeof parseDocument>;
+    data: Record<string, unknown>;
+  }[] = [];
   for (const file of sorted) {
     const doc = parseDocument(file.text, { version: "1.2", schema: "core", uniqueKeys: true });
     const data = doc.errors.length === 0 ? (doc.toJS() as Record<string, unknown>) : undefined;
@@ -105,11 +126,17 @@ export async function runIntake(o: RunOptions): Promise<RunResult> {
       invalid += 1;
       continue;
     }
-    if (!isFetchable(data)) continue;
+    if (isFetchable(data)) runList.push({ file, doc, data });
+  }
+  // F5-26: the allowed set is every feedUrl selected for this run; a redirect may
+  // only land on one of them. Paused, retired, rights-none or invalid Sources' URLs
+  // are never in it.
+  const allowed = allowedFeedUrls(runList.map((r) => r.data));
+  for (const { file, doc, data } of runList) {
     selected += 1;
     const feedUrl = String(data["feedUrl"]);
     // One request per source, one after another (F5-30).
-    const fetched = await fetchFeed(feedUrl, new Set([feedUrl]), o);
+    const fetched = await fetchFeed(feedUrl, allowed, o);
     const parsed = fetched.ok
       ? parseFeed(fetched.body, {
           source: { id: file.id, rights: String(data["rights"]) },

@@ -16,10 +16,17 @@ import { join, relative } from "node:path";
 import { format } from "prettier";
 import { afterAll, describe, expect, it } from "vitest";
 import { parseDocument } from "yaml";
-import { type FetchDeps } from "../../../src/lib/intake/fetch.ts";
+import { type FetchDeps, fetchFeed } from "../../../src/lib/intake/fetch.ts";
 import { fixtureNet } from "../../../src/lib/intake/fixture-net.ts";
 import { itemId, parseFeed } from "../../../src/lib/intake/parse/parse.ts";
-import { artifactTreeProblems, isFetchable, runIntake, YAML_OUT } from "../../../src/lib/intake/run.ts";
+import {
+  allowedFeedUrls,
+  artifactTreeProblems,
+  isFetchable,
+  runIntake,
+  tlsOverridden,
+  YAML_OUT,
+} from "../../../src/lib/intake/run.ts";
 import { serialiseItem, writeItem } from "../../../src/lib/intake/write.ts";
 import {
   ARTIFACT_LIMITS,
@@ -291,6 +298,43 @@ describe("F5-21 dedupe against the existing queue", () => {
   });
 });
 
+describe("F5-26 the allowed set is every feedUrl selected for the run", () => {
+  const registry = () =>
+    readdirSync(join(F5, "registry")).map(
+      (f) => parseDocument(readFileSync(join(F5, "registry", f), "utf8")).toJS() as Record<string, unknown>,
+    );
+  it("F5-26 the set holds exactly the active, rights-allowing, non-demo feedUrls", () => {
+    expect([...allowedFeedUrls(registry())].sort()).toEqual([
+      "https://feeds.fx-atom.test/rss",
+      "https://feeds.fx-failing.test/rss",
+      "https://feeds.fx-injection.test/rss",
+      "https://feeds.fx-recovering.test/rss",
+      "https://feeds.fx-rss.test/rss",
+    ]);
+  });
+  it.each([
+    "https://feeds.fx-paused.test/rss",
+    "https://feeds.fx-retired.test/rss",
+    "https://feeds.fx-rights-none.test/rss",
+    "https://feeds.fx-rss.test/other",
+  ])("F5-26 %s, outside the set, is not-in-registry with 0 lookups and 0 requests", async (url) => {
+    const net = fixtureNet(join(F5, "net", "script.json"));
+    let lookups = 0;
+    let requests = 0;
+    const r = await fetchFeed(url, allowedFeedUrls(registry()), {
+      resolver: (h, sig) => (lookups++, net.resolver(h, sig)),
+      transport: (req) => (requests++, net.transport(req)),
+    });
+    expect(r).toEqual({ ok: false, code: "not-in-registry" });
+    expect([lookups, requests]).toEqual([0, 0]);
+  });
+  it("F5-26 a run fetches each selected Source with the whole set (two selected feeds both succeed)", async () => {
+    const r = await fixtureRun(fresh("allowed-run"));
+    expect(r.summary).toMatch(/^run sources=5 ok=4 failed=1 /);
+    expect(r.summary).not.toMatch(/not-in-registry/);
+  });
+});
+
 describe("F5-28 NODE_TLS_REJECT_UNAUTHORIZED stops intake before any request", () => {
   it.each(["0", "1", ""])(
     "F5-28 with NODE_TLS_REJECT_UNAUTHORIZED=%j: run tls-override, non-zero, 0 requests",
@@ -307,6 +351,30 @@ describe("F5-28 NODE_TLS_REJECT_UNAUTHORIZED stops intake before any request", (
       expect([c.code, c.out]).toEqual([1, "run tls-override\n"]);
     },
   );
+});
+
+describe("F5-28 a swapped trust store also stops intake before any request", () => {
+  it.each([
+    { NODE_EXTRA_CA_CERTS: "/tmp/extra.pem" },
+    { NODE_EXTRA_CA_CERTS: "" },
+    { NODE_OPTIONS: "--use-openssl-ca" },
+    { NODE_OPTIONS: "--max-old-space-size=512 --use-system-ca" },
+  ])("F5-28 with %j: run tls-override, non-zero, 0 requests", async (env) => {
+    const outDir = fresh("tls-ca");
+    const transport: FetchDeps["transport"] = () => {
+      throw new Error("no request may be made");
+    };
+    const r = await fixtureRun(outDir, { env, transport });
+    expect(r.exitCode).toBe(1);
+    expect(readFileSync(join(outDir, "summary.txt"), "utf8")).toBe("run tls-override\n");
+    expect(files(outDir)).toEqual(["summary.txt"]);
+    const c = await cli(["--fixtures", F5, "--out", fresh("tls-ca-cli")], env);
+    expect([c.code, c.out]).toEqual([1, "run tls-override\n"]);
+  });
+  it("F5-28 unrelated NODE_OPTIONS don't trip the guard", () => {
+    expect(tlsOverridden({ NODE_OPTIONS: "--max-old-space-size=512 --use-bundled-ca" })).toBe(false);
+    expect(tlsOverridden({})).toBe(false);
+  });
 });
 
 describe("F5-40 output is the review queue only", () => {
