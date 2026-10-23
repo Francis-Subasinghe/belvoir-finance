@@ -1,6 +1,9 @@
 /**
- * F5-28 (D-3, Q-8): addresses refused after DNS. Pinned by a test. Three IPv6
- * ranges also have their embedded IPv4 address checked against the IPv4 list.
+ * F5-28 (D-3, Q-8): addresses refused after DNS. Pinned by a test. Teredo
+ * (2001::/32) and IPv4-compatible (::/96) addresses are refused outright; five
+ * IPv6 ranges also have their embedded IPv4 address checked against the IPv4 list
+ * (Teredo's server address at bit 32, and its client address, stored inverted, in
+ * the last 32 bits).
  */
 import { isIP } from "node:net";
 
@@ -17,13 +20,25 @@ export const BLOCKED_IPV4 = [
   "224.0.0.0/4",
   "240.0.0.0/4",
 ] as const;
-export const BLOCKED_IPV6 = ["::/128", "::1/128", "fc00::/7", "fe80::/10", "ff00::/8", "fd00:ec2::254/128"] as const;
-/** prefix -> bit offset of the embedded IPv4 address. */
-export const EMBEDDED_IPV4 = [
+export const BLOCKED_IPV6 = [
+  "::/128",
+  "::1/128",
+  "::/96",
+  "2001::/32",
+  "fc00::/7",
+  "fe80::/10",
+  "ff00::/8",
+  "fd00:ec2::254/128",
+] as const;
+/** prefix -> bit offset of the embedded IPv4 address (inverted: stored XOR 0xffffffff). */
+export const EMBEDDED_IPV4: readonly { range: string; offset: number; inverted?: boolean }[] = [
   { range: "::ffff:0:0/96", offset: 96 },
   { range: "64:ff9b::/96", offset: 96 },
   { range: "2002::/16", offset: 16 },
-] as const;
+  { range: "::/96", offset: 96 },
+  { range: "2001::/32", offset: 32 },
+  { range: "2001::/32", offset: 96, inverted: true },
+];
 
 function v4ToBig(a: string): bigint {
   return a.split(".").reduce((acc, p) => (acc << 8n) | BigInt(Number(p)), 0n);
@@ -60,9 +75,10 @@ export function isBlockedAddress(address: string): boolean {
   if (kind !== 6) return true;
   const v = v6ToBig(address);
   if (BLOCKED_IPV6.some((c) => inRange(v, 128, c, v6ToBig))) return true;
-  for (const { range, offset } of EMBEDDED_IPV4) {
+  for (const { range, offset, inverted } of EMBEDDED_IPV4) {
     if (inRange(v, 128, range, v6ToBig)) {
-      const embedded = (v >> BigInt(128 - offset - 32)) & 0xffffffffn;
+      const raw = (v >> BigInt(128 - offset - 32)) & 0xffffffffn;
+      const embedded = inverted ? raw ^ 0xffffffffn : raw;
       if (v4Blocked(embedded)) return true;
     }
   }

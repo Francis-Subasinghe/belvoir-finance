@@ -28,6 +28,8 @@ export function tlsOptions(hostname: string, address: string): ConnectionOptions
 const TLS_CODES =
   /^(?:ERR_TLS_|ERR_SSL_|CERT_|DEPTH_ZERO_SELF_SIGNED_CERT|SELF_SIGNED_CERT_IN_CHAIN|UNABLE_TO_|ERR_TLS_CERT_ALTNAME_INVALID|HOSTNAME_MISMATCH)/;
 
+async function* EMPTY_BODY(): AsyncGenerator<Uint8Array> {}
+
 function pinnedAgent(open: () => Duplex): Agent {
   const agent = new Agent({ keepAlive: false, maxSockets: 1 });
   (agent as unknown as { createConnection: () => Duplex }).createConnection = open;
@@ -56,7 +58,15 @@ export function makeLiveTransport(deps: { connect?: (opts: ConnectionOptions) =>
         (res) => {
           const headers: Record<string, string | undefined> = {};
           for (const [k, v] of Object.entries(res.headers)) headers[k] = Array.isArray(v) ? v.join(", ") : v;
-          resolve({ status: res.statusCode ?? 0, headers, body: res });
+          const status = res.statusCode ?? 0;
+          if (status !== 200) {
+            // Only a 200 body is ever read: a redirect or error body is discarded unread
+            // and the connection closed, so it can't hold the socket or the deadline.
+            res.destroy();
+            resolve({ status, headers, body: EMPTY_BODY() });
+            return;
+          }
+          resolve({ status, headers, body: res });
         },
       );
       r.on("error", (e: NodeJS.ErrnoException) => {

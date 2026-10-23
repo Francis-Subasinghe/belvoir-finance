@@ -151,8 +151,24 @@ describe("F5-28 addresses checked after DNS", () => {
       "224.0.0.0/4",
       "240.0.0.0/4",
     ]);
-    expect(BLOCKED_IPV6).toEqual(["::/128", "::1/128", "fc00::/7", "fe80::/10", "ff00::/8", "fd00:ec2::254/128"]);
-    expect(EMBEDDED_IPV4.map((e) => e.range)).toEqual(["::ffff:0:0/96", "64:ff9b::/96", "2002::/16"]);
+    expect(BLOCKED_IPV6).toEqual([
+      "::/128",
+      "::1/128",
+      "::/96",
+      "2001::/32",
+      "fc00::/7",
+      "fe80::/10",
+      "ff00::/8",
+      "fd00:ec2::254/128",
+    ]);
+    expect(EMBEDDED_IPV4.map((e) => `${e.range}@${e.offset}${e.inverted ? "~" : ""}`)).toEqual([
+      "::ffff:0:0/96@96",
+      "64:ff9b::/96@96",
+      "2002::/16@16",
+      "::/96@96",
+      "2001::/32@32",
+      "2001::/32@96~",
+    ]);
   });
   it.each([
     ["N-09", "127.0.0.1"],
@@ -174,6 +190,12 @@ describe("F5-28 addresses checked after DNS", () => {
     ["N-12", "::ffff:a9fe:a9fe"],
     ["N-22", "64:ff9b::a9fe:a9fe"],
     ["N-28", "2002:a9fe:a9fe::1"],
+    // Aegis Low 1: Teredo carries a server IPv4 at bit 32 and an inverted client IPv4 at bit 96.
+    ["N-33 Teredo", "2001:0:a9fe:a9fe::5641:5641"],
+    ["N-33 Teredo (public embeds)", "2001:0:808:808::f7f7:f7f7"],
+    // IPv4-compatible (deprecated) ::a.b.c.d.
+    ["N-34 IPv4-compatible", "::169.254.169.254"],
+    ["N-34 IPv4-compatible (public embed)", "::8.8.8.8"],
   ])("F5-28 %s resolving to %s is blocked-address with 0 requests", async (_n, addr) => {
     expect(isBlockedAddress(addr)).toBe(true);
     const h = harness({ [FEED]: { status: 200 } }, { [HOST]: [addr] });
@@ -322,7 +344,13 @@ describe("F5-28 TLS is verified against the original hostname (in-memory handsha
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
   /** A transport whose TLS goes over an in-memory pair to a server presenting `cert`. */
-  function transportFor(cert: string, key: string) {
+  function transportFor(
+    cert: string,
+    key: string,
+    response = "HTTP/1.1 200 OK\r\nContent-Type: application/rss+xml\r\nContent-Length: 6\r\nConnection: close\r\n\r\n<rss/>",
+    onServer: (s: TLSSocket) => void = () => undefined,
+    onClient: (c: TLSSocket) => void = () => undefined,
+  ) {
     return makeLiveTransport({
       connect: (opts) => {
         const [client, server] = duplexPair();
@@ -332,13 +360,15 @@ describe("F5-28 TLS is verified against the original hostname (in-memory handsha
           ALPNProtocols: ["http/1.1"],
         });
         s.on("error", () => undefined);
+        onServer(s);
         s.on("data", () => {
-          s.end(
-            "HTTP/1.1 200 OK\r\nContent-Type: application/rss+xml\r\nContent-Length: 6\r\nConnection: close\r\n\r\n<rss/>",
-          );
+          if (response.includes("chunked")) s.write(response);
+          else s.end(response);
         });
         // The test CA is trusted here only; verification itself is never turned off.
-        return tlsConnect({ ...opts, socket: client, ca: pem("ca.crt") });
+        const c = tlsConnect({ ...opts, socket: client, ca: pem("ca.crt") });
+        onClient(c);
+        return c;
       },
     });
   }
@@ -355,4 +385,34 @@ describe("F5-28 TLS is verified against the original hostname (in-memory handsha
   it("F5-28 N-27 / N-20 a self-signed certificate is tls-error", async () => {
     expect(await run("self.crt", "self.key")).toEqual({ ok: false, code: "tls-error" });
   });
+
+  it.each([301, 302, 404, 500])(
+    "F5-28 Aegis Low 4: a %i response's body is destroyed unread and the connection closed",
+    async (status) => {
+      // A body that never ends: if the client kept reading, the socket would stay open.
+      const head = `HTTP/1.1 ${status} X\r\nLocation: https://feeds.fx-rss.test/next\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n0123456789abcdef\r\n`;
+      let closed: Promise<void> = Promise.resolve();
+      const t = transportFor(
+        "good.crt",
+        "good.key",
+        head,
+        () => undefined,
+        (c) => {
+          closed = new Promise((res) => c.on("close", () => res()));
+        },
+      );
+      const r = await t({
+        url: FEED,
+        hostname: HOST,
+        address: PUBLIC,
+        headers: {},
+        signal: new AbortController().signal,
+      });
+      expect(r.status).toBe(status);
+      const chunks: Uint8Array[] = [];
+      for await (const c of r.body) chunks.push(c);
+      expect(chunks).toEqual([]);
+      await closed; // resolves only once the client has torn the connection down
+    },
+  );
 });
