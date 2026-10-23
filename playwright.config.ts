@@ -22,5 +22,8 @@ export default defineConfig({
     { name: "mobile-360", use: { ...devices["Desktop Chrome"], viewport: { width: 360, height: 800 } } },
     { name: "tablet-768", use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 } } },
     { name: "desktop-1280", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
+    // V2-21: the full E2E suite also runs in Firefox at 1280 px (E2E only; visual
+    // regression and Lighthouse stay Chromium-only).
+    { name: "firefox", use: { ...devices["Desktop Firefox"], viewport: { width: 1280, height: 800 } } },
   ],
 });
