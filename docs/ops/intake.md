@@ -14,7 +14,7 @@ npm run intake -- --fixtures tests/fixtures/f5 --out "$(mktemp -d)/intake"
 
 `--out` must be a new or empty folder. It receives:
 
-- `content/source-items/<sourceId>-<16 hex>.json`: new queue items (existing ones are never overwritten),
+- `content/source-items/<sourceId>-<12 hex>.json`: new queue items (existing ones are never overwritten),
 - `content/sources/<id>.yaml`: Sources whose `lastError`, `lastErrorAt` or `consecutiveFailures` changed,
 - `summary.txt`: one `run …` line, then `[failures]`, `[dropped]` and `[items]` sections. It holds ids, codes, counts and hosts only, never titles or URLs.
 

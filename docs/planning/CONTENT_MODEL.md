@@ -71,7 +71,7 @@ F5 rules: `feedUrl` is required for `rss` and `atom` and absent for `none`, `pag
 ## SourceItem (intake queue)
 `id, sourceId, title (plain text, capped at 300 chars), url (https only, never fetched), publishedAt, fetchedAt, excerpt (plain text, capped at 500 chars, and only if rights allow), status: queued | dismissed | used, usedInStory?`
 
-F5 rules: `id` is `<sourceId>-<16 hex>` from the normalised URL (Q-11). `sourceId` references a Source and `usedInStory` a Story; `usedInStory` is set exactly when `status` is `used` (Q-17). `publishedAt` and `fetchedAt` are datetimes with an explicit offset, stored as UTC `Z`; Keystatic edits them as text (Q-13). `title` and `excerpt` are NFC plain text with no control or invisible characters, cut on a code-point boundary (Q-12). `url` is https, at most 2,048 chars, and may point at any host (Q-20). An `excerpt` is allowed only when the Source's `rights` is `titles-and-short-excerpt` or `licensed`.
+F5 rules: `id` is `<sourceId>-<12 hex>` from the normalised URL (Q-11). `sourceId` references a Source and `usedInStory` a Story; `usedInStory` is set exactly when `status` is `used` (Q-17). `publishedAt` and `fetchedAt` are datetimes with an explicit offset, stored as UTC `Z`; Keystatic edits them as text (Q-13). `title` and `excerpt` are NFC plain text with no control or invisible characters, cut on a code-point boundary (Q-12). `url` is https, at most 2,048 chars, and may point at any host (Q-20). An `excerpt` is allowed only when the Source's `rights` is `titles-and-short-excerpt` or `licensed`.
 
 SourceItems are never shown publicly unless a published Story references them together with Belvoir's explanation.
 
