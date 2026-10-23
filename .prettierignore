@@ -18,3 +18,5 @@ tests/fixtures/html/script-*.html
 tests/fixtures/v1/
 # F4 negative fixtures are verbatim
 tests/fixtures/f4/
+# V2 negative fixtures are verbatim
+tests/fixtures/v2/

@@ -1,0 +1,1 @@
+@media (prefers-reduced-motion: no-preference) { .dot { animation: fade-in var(--motion-slow) var(--motion-ease) infinite; } }

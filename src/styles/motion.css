@@ -1,0 +1,96 @@
+/*
+ * Motion (brief §8; V2-16 to V2-25). One easing (--motion-ease) and three
+ * durations (--motion-fast/base/slow = 150/300/500 ms). Only transform and
+ * opacity move; nothing loops, nothing is delayed (no animation-delay; the hero
+ * stagger comes from duration: every item starts together and later items run
+ * longer), and nothing travels more than 8 px.
+ *
+ * Content is visible by default: no base rule hides anything. Keyframes only
+ * apply while an animation runs, every animation sits inside
+ * @media (prefers-reduced-motion: no-preference), and every scroll-driven one
+ * also inside @supports (animation-timeline: view()). Without support
+ * (Firefox today), with JS off and with reduced motion, every page renders
+ * fully visible and static. The H1 (the LCP element) is never animated.
+ */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* Scroll reveal: transform only, so text is never part-transparent while it
+ * scrolls in (V1-26, and axe contrast holds at every scroll position). */
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+  }
+}
+@keyframes header-stuck {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero load: the eyebrow and the two CTAs only. Never the h1, and never the
+   * lead paragraph, which is the LCP element at 360 px (V2-24, V1-29). Stagger
+   * by duration: all start together and run 150/300/500 ms. */
+  .home-hero .eyebrow {
+    animation: fade-up var(--motion-fast) var(--motion-ease);
+  }
+  .home-hero .hero-actions li:first-child {
+    animation: fade-up var(--motion-base) var(--motion-ease);
+  }
+  .home-hero .hero-actions li + li {
+    animation: fade-up var(--motion-slow) var(--motion-ease);
+  }
+
+  /* Hover and keyboard focus: card lift 2 px and a 1 px button nudge. */
+  .story-card {
+    transition: transform var(--motion-base) var(--motion-ease);
+  }
+  .story-card:hover,
+  .story-card:focus-within,
+  .story-card.is-hover,
+  .story-card.is-focus {
+    transform: translateY(-2px);
+  }
+  .button {
+    transition: transform var(--motion-fast) var(--motion-ease);
+  }
+  .button:hover,
+  .button:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Scroll reveal: the home feature and newsletter bands rise 8 px as they
+     * enter. Cards are not revealed: a card can be the LCP element (V2-24) and
+     * carries the hover lift (V1-30). No fill mode: before the range the band is
+     * still below the viewport, and after it the base style applies. */
+    .reveal {
+      animation-name: rise;
+      animation-timing-function: linear;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+    /* Header hairline fades in over the first 64 px of scroll (no JS). */
+    .site-header::before {
+      animation-name: header-stuck;
+      animation-timing-function: linear;
+      animation-timeline: scroll(root);
+      animation-range: 0 4rem;
+    }
+  }
+}
+
+/* Reduced motion: no animation and no transition at all (V2-19; --motion-none is 0s). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: var(--motion-none) !important;
+    scroll-behavior: auto !important;
+  }
+}

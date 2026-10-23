@@ -30,7 +30,8 @@ export default defineConfig({
     // Documented diff threshold: up to 1 % of pixels may differ, per-pixel colour tolerance 0.2.
     toHaveScreenshot: { maxDiffPixelRatio: 0.01, threshold: 0.2, animations: "disabled", caret: "hide" },
   },
-  use: { baseURL: GALLERY },
+  // V2-45: reduced motion for every visual run (plus animations: "disabled" above), so baselines are deterministic.
+  use: { baseURL: GALLERY, reducedMotion: "reduce" },
   webServer: { command: "npm run preview:gallery", url: GALLERY, reuseExistingServer: false, timeout: 60_000 },
   projects: [
     {
