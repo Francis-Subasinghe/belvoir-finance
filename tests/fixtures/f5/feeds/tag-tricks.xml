@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Fixture feed</title><link>https://feeds.example.invalid/</link><description>Fixture</description>
+<item><title>Tricks one</title><link>https://news.example.invalid/k1</link><pubDate>Tue, 06 Oct 2026 09:30:00 +0000</pubDate><description>&lt;scr&lt;script&gt;ipt&gt;alert(1)&lt;/script&gt;</description></item>
+<item><title>Tricks two</title><link>https://news.example.invalid/k2</link><pubDate>Mon, 05 Oct 2026 09:30:00 +0000</pubDate><description>Rates &lt;b and reliefs</description></item>
+<item><title>Tricks three</title><link>https://news.example.invalid/k3</link><pubDate>Sun, 04 Oct 2026 09:30:00 +0000</pubDate><description>A&lt;!-- x &gt; y --&gt;B</description></item>
+</channel></rss>

@@ -187,7 +187,52 @@ export const REFERENCES: readonly RefSpec[] = [
   { from: "tools", field: "reviewer", to: "people", ids: one("reviewer") },
   { from: "tools", field: "sourceRecord", to: "sources", ids: one("sourceRecord") },
   { from: "sources", field: "owner", to: "people", ids: one("owner") },
+  // F5-09 (F1-08 gap, Q-17): ref-item-source and ref-item-story.
+  { from: "sourceItems", field: "sourceId", to: "sources", ids: one("sourceId") },
+  { from: "sourceItems", field: "usedInStory", to: "stories", ids: one("usedInStory") },
 ];
+
+/**
+ * F5-05 (Q-3): real official domains that committed content may not link to.
+ * The one exception is the `website` or `feedUrl` of a non-demo Source.
+ */
+export const REAL_DOMAIN_PATTERN = /gov\.uk|hmrc|ons\.gov/i;
+export const REAL_DOMAIN_SOURCE_FIELDS = ["website", "feedUrl"] as const;
+
+/** Every string value at any depth, with its field path, skipping the given top-level keys. */
+function stringValues(
+  v: unknown,
+  skip: readonly string[] = [],
+  path: (string | number)[] = [],
+): { path: string; value: string }[] {
+  if (typeof v === "string") return [{ path: fieldPath(path), value: v }];
+  if (Array.isArray(v)) return v.flatMap((x, i) => stringValues(x, [], [...path, i]));
+  if (v && typeof v === "object")
+    return Object.entries(v)
+      .filter(([k]) => !(path.length === 0 && skip.includes(k)))
+      .flatMap(([k, x]) => stringValues(x, [], [...path, k]));
+  return [];
+}
+
+/**
+ * F5-48 (deferred, Q-1): until Francis approves the seed, no non-demo Source is
+ * active or has excerpt rights. Test fixtures use the reserved `.test` TLD
+ * (RFC 6761) for their stand-in real sources; a host there can never be a real
+ * registry entry, and committed content may not use one (F5-01 guard).
+ */
+export const SEED_RULE_MESSAGE = "awaiting Francis (Q-1)";
+export const EXCERPT_RIGHTS = ["titles-and-short-excerpt", "licensed"] as const;
+function isFixtureHost(url: unknown): boolean {
+  if (typeof url !== "string") return false;
+  try {
+    return new URL(url).hostname.endsWith(".test");
+  } catch {
+    return false;
+  }
+}
+export function isFixtureSource(raw: Record<string, unknown>): boolean {
+  return isFixtureHost(raw["website"]) && (raw["feedUrl"] === undefined || isFixtureHost(raw["feedUrl"]));
+}
 
 export function checkContentRules(dirs: readonly string[] | string = "content"): ContentReport {
   const roots = typeof dirs === "string" ? [dirs] : dirs;
@@ -342,7 +387,7 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
           s.file,
           `sources[${i}].source`,
           "demo-source",
-          `until F5, demo stories cite only labelled placeholder (demo) sources; "${cite.source}" is not one`,
+          `demo stories cite only labelled placeholder (demo) sources; "${cite.source}" is not one`,
         );
       }
     });
@@ -365,7 +410,7 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
           t.file,
           "sourceRecord",
           "demo-source",
-          `until F5, demo tools cite only labelled placeholder (demo) sources (demo: true, "(placeholder)" in the name, a placeholder https URL); "${String(d["sourceRecord"])}" is not one`,
+          `demo tools cite only labelled placeholder (demo) sources (demo: true, "(placeholder)" in the name, a placeholder https URL); "${String(d["sourceRecord"])}" is not one`,
         );
       }
       continue;
@@ -407,7 +452,7 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
       for (const p of chartProblems(chart.attributes, chart.children))
         add("error", s.file, at(p.attr), p.rule, p.message);
       if (s.raw["demo"] !== true)
-        add("error", s.file, at(""), "chart-demo-only", "charts appear only in demo stories until F5 (V1-44)");
+        add("error", s.file, at(""), "chart-demo-only", "charts appear only in demo stories (V1-44)");
       const id = chart.attributes["source"];
       if (typeof id !== "string") return;
       const src = get("sources", id);
@@ -434,6 +479,57 @@ export function checkContentRules(dirs: readonly string[] | string = "content"):
           `"${id}" is ${String(src.raw["status"])}; a chart cites only an active Source (paused and retired Sources never render, F3-11)`,
         );
     });
+  }
+
+  // F5-48 (deferred, Q-1): the interim seed rule.
+  for (const src of entries.filter((x) => x.collection === "sources")) {
+    if (src.raw["demo"] !== false || isFixtureSource(src.raw)) continue;
+    if (src.raw["status"] === "active")
+      add(
+        "error",
+        src.file,
+        "status",
+        "seed-active",
+        `a non-demo Source stays paused until its seed entry is approved: ${SEED_RULE_MESSAGE}`,
+      );
+    if ((EXCERPT_RIGHTS as readonly unknown[]).includes(src.raw["rights"]))
+      add(
+        "error",
+        src.file,
+        "rights",
+        "seed-rights",
+        `a non-demo Source has rights titles-only or unknown until its terms are approved: ${SEED_RULE_MESSAGE}`,
+      );
+  }
+
+  // F5-08 (CF-09, D-8): an excerpt only when the Source's rights allow one.
+  for (const it of entries.filter((x) => x.collection === "sourceItems")) {
+    if (it.raw["excerpt"] === undefined) continue;
+    const src = typeof it.raw["sourceId"] === "string" ? get("sources", it.raw["sourceId"]) : undefined;
+    if (!src) continue;
+    if (!(EXCERPT_RIGHTS as readonly unknown[]).includes(src.raw["rights"]))
+      add(
+        "error",
+        it.file,
+        "excerpt",
+        "excerpt-rights",
+        `"${String(it.raw["sourceId"])}" has rights: ${String(src.raw["rights"])}, so its items are title and link only (no excerpt)`,
+      );
+  }
+
+  // F5-05 (Q-3): gov.uk, HMRC and ONS only as a non-demo Source's website or feedUrl.
+  for (const e of entries) {
+    const skip = e.collection === "sources" && e.raw["demo"] === false ? REAL_DOMAIN_SOURCE_FIELDS : [];
+    const hits = stringValues(e.raw, skip).filter((h) => REAL_DOMAIN_PATTERN.test(h.value));
+    if (e.body !== undefined && REAL_DOMAIN_PATTERN.test(e.body)) hits.push({ path: "body", value: "" });
+    for (const h of hits)
+      add(
+        "error",
+        e.file,
+        h.path,
+        "real-domain",
+        "gov.uk, HMRC and ONS links appear only as the website or feedUrl of a non-demo Source (F3-34, Q-3)",
+      );
   }
 
   const errors = problems.filter((p) => p.severity === "error");

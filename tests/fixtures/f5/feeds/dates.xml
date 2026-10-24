@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Fixture feed</title><link>https://feeds.example.invalid/</link><description>Fixture</description>
+<item><title>T-01</title><link>https://news.example.invalid/t1</link><pubDate>Tue, 06 Oct 2026 09:30:00 +0100</pubDate></item>
+<item><title>T-02</title><link>https://news.example.invalid/t2</link><pubDate>Tue, 06 Oct 2026 09:30:00 GMT</pubDate></item>
+<item><title>T-03</title><link>https://news.example.invalid/t3</link><pubDate>06 Oct 2026 09:30 +0000</pubDate></item>
+<item><title>T-04</title><link>https://news.example.invalid/t4</link><pubDate>Tue, 06 Oct 2026 09:30:00 EST</pubDate></item>
+<item><title>T-05</title><link>https://news.example.invalid/t5</link><pubDate>Tue, 06 Oct 2026 09:30:00 BST</pubDate></item>
+<item><title>T-06</title><link>https://news.example.invalid/t6</link><pubDate>Tue, 06 Oct 2026 09:30:00</pubDate></item>
+<item><title>T-07</title><link>https://news.example.invalid/t7</link><pubDate>Sat, 31 Feb 2026 10:00:00 +0000</pubDate></item>
+<item><title>T-08</title><link>https://news.example.invalid/t8</link><pubDate>Wed, 06 Oct 2026 09:30:00 +0000</pubDate></item>
+<item><title>T-09</title><link>https://news.example.invalid/t9</link><pubDate>Tue, 06 Oct 26 09:30:00 +0000</pubDate></item>
+</channel></rss>

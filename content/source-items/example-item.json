@@ -2,7 +2,7 @@
   "sourceId": "example-official-statistics",
   "title": "Placeholder source item (demo)",
   "url": "https://www.example.org/placeholder-item",
-  "publishedAt": "2026-10-01",
-  "fetchedAt": "2026-10-02",
+  "publishedAt": "2026-10-01T09:00:00Z",
+  "fetchedAt": "2026-10-02T06:00:00Z",
   "status": "queued"
 }

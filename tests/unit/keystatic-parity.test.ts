@@ -29,6 +29,14 @@ const DEFAULT_EXCEPTIONS: Record<string, unknown> = {
   commercialInterest: false,
 };
 
+/**
+ * Keys that exist only in Zod, each an exact F3-27 parity exception:
+ * F5-07 (CF-08) the intake fields are written only by the intake job, never by an editor.
+ */
+const ZOD_ONLY_KEYS: Record<string, readonly string[]> = {
+  sources: ["lastError", "lastErrorAt", "consecutiveFailures"],
+};
+
 function unwrap(s: AnyZod): { inner: AnyZod; optional: boolean; def: unknown; hasDefault: boolean } {
   let optional = false;
   let hasDefault = false;
@@ -85,7 +93,9 @@ export function parityProblems(
     .filter((k) => !(name === "stories" && k === "body"))
     .sort();
   const zKeys = Object.keys(shape).sort();
-  for (const k of zKeys) if (!ksKeys.includes(k)) out.push(`${name}.${k}: in Zod, missing in Keystatic`);
+  for (const k of zKeys)
+    if (!ksKeys.includes(k) && !(ZOD_ONLY_KEYS[name] ?? []).includes(k))
+      out.push(`${name}.${k}: in Zod, missing in Keystatic`);
   for (const k of ksKeys) if (!zKeys.includes(k)) out.push(`${name}.${k}: in Keystatic, missing in Zod`);
 
   for (const k of zKeys.filter((key) => ksKeys.includes(key))) {
@@ -169,6 +179,19 @@ describe("F3-27 Keystatic parity", () => {
     expect(parityProblems("topics", broken, COLLECTIONS.topics.schema)).toContain(
       "topics.featuredTool: should be a relationship to tools (got no picker)",
     );
+  });
+
+  it("F5-07 the intake fields are the only Zod-only keys, and absent from Keystatic", () => {
+    expect(ZOD_ONLY_KEYS).toEqual({ sources: ["lastError", "lastErrorAt", "consecutiveFailures"] });
+    for (const k of ZOD_ONLY_KEYS.sources ?? []) expect(k in collections.sources.schema, k).toBe(false);
+  });
+
+  it("F5-06 Q-13 SourceItem datetimes are text fields labelled UTC, written by intake", () => {
+    for (const k of ["publishedAt", "fetchedAt"]) {
+      const f = collections.sourceItems.schema[k];
+      expect(f.kind, k).toBe("form");
+      expect(String(f.label), k).toMatch(/\(UTC, written by intake\)$/);
+    }
   });
 
   it("F3-27 Keystatic stays local-only", () => {

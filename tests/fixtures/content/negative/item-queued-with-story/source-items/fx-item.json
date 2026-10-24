@@ -1,0 +1,9 @@
+{
+  "sourceId": "fx-active",
+  "title": "SOURCEITEM-TITLE-MARKER",
+  "url": "https://sourceitem-marker.example.com/item",
+  "publishedAt": "2026-09-01T08:30:15Z",
+  "fetchedAt": "2026-09-02T06:00:00Z",
+  "status": "queued",
+  "usedInStory": "fx-uk-story"
+}

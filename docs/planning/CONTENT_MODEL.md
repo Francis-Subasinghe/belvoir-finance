@@ -62,14 +62,21 @@ Every entry has a stable `id` (a slug, never reused) and, where relevant, `statu
 | editorialNotes | string |
 | demo | boolean, required, no default. A demo Source has "(placeholder)" in its name and its `website` and `feedUrl` on example.org, example.com, example.net (or a subdomain) or a `.invalid` host, judged on the parsed host, with no username or password (F3-48) |
 | status | enum: active, paused, retired. "Verified" means `active`; only active Sources are listed on `/sources/`, from a fixed field allowlist (name, publisher, category, role, jurisdiction, website). `feedUrl`, `rightsNotes`, `owner` and `editorialNotes` never render (F3-11) |
+| lastError | string? written by intake only: one of the fixed codes (`http-<3 digits>`, `timeout`, `malformed-xml`, `too-large`, …), never free text (F5-33) |
+| lastErrorAt | UTC datetime with offset? written by intake only |
+| consecutiveFailures | integer ≥ 1? written by intake only. `lastError`, `lastErrorAt` and `consecutiveFailures` are all present or all absent (Q-15). None of them ever render (F3-11) |
+
+F5 rules: `feedUrl` is required for `rss` and `atom` and absent for `none`, `page` and `newsletter` (Q-18). `website` and `feedUrl` are https with no credentials, no IP literal, no port other than 443 and no invisible characters (Q-8, F5-49). A non-demo Source may not use a placeholder host or "(placeholder)" text (F5-02). Until Francis decides the pre-launch list (Q-1, Q-2), every non-demo Source is `paused` with `rights` `titles-only` or `unknown`, and may have a demo `owner` (F5-48). Real domains (such as `gov.uk`) may appear only in a non-demo Source's `website` and `feedUrl` (Q-3).
 
 ## SourceItem (intake queue)
 `id, sourceId, title (plain text, capped at 300 chars), url (https only, never fetched), publishedAt, fetchedAt, excerpt (plain text, capped at 500 chars, and only if rights allow), status: queued | dismissed | used, usedInStory?`
 
+F5 rules: `id` is `<sourceId>-<12 hex>` from the normalised URL (Q-11). `sourceId` references a Source and `usedInStory` a Story; `usedInStory` is set exactly when `status` is `used` (Q-17). `publishedAt` and `fetchedAt` are datetimes with an explicit offset, stored as UTC `Z`; Keystatic edits them as text (Q-13). `title` and `excerpt` are NFC plain text with no control or invisible characters, cut on a code-point boundary (Q-12). `url` is https, at most 2,048 chars, and may point at any host (Q-20). An `excerpt` is allowed only when the Source's `rights` is `titles-and-short-excerpt` or `licensed`.
+
 SourceItems are never shown publicly unless a published Story references them together with Belvoir's explanation.
 
 ## Feed intake failure modes
-- **Feed dead, timing out or returning a non-200:** record `lastError` and `lastErrorAt` on the source, then skip it. After three consecutive failures, open an issue for the source owner.
+- **Feed dead, timing out or returning a non-200:** record `lastError`, `lastErrorAt` and `consecutiveFailures` on the source, then skip it. A later success clears all three. Every failure, with its count, is listed in the run's `summary.txt`, which the person opening the review PR reads; nothing opens issues automatically (Q-15).
 - **Malformed XML:** reject the whole fetch and record the error. Never partially import.
 - **Duplicates:** dedupe on normalised `url`, falling back to `sourceId` + `title` + `publishedAt`.
 - **Paused or retired source:** never fetched.

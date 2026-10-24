@@ -13,6 +13,15 @@
  * use it as the entry id, F3-26) is rejected.
  */
 import { z } from "astro/zod";
+import {
+  isLastError,
+  itemTextProblem,
+  itemUrlOk,
+  LAST_ERROR_MAX,
+  MAX_ITEM_URL_LENGTH,
+  parseOffsetDateTime,
+  urlShapeProblem,
+} from "../lib/sources/rules.ts";
 
 export const STATUSES = ["draft", "review", "approved", "published", "retired"] as const;
 export const FORMATS = [
@@ -397,6 +406,42 @@ export function isPlaceholderUrl(url: string): boolean {
   return PLACEHOLDER_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`)) || host.endsWith(".invalid");
 }
 
+/**
+ * F5-06 (CF-07, D-7): an RFC 3339 date-time with an offset that is a real
+ * instant. The content check reads JSON and core-schema YAML, so it sees the
+ * string as written. A Date (Astro's YAML loader can resolve a timestamp) is
+ * accepted only when valid; intake always writes a quoted string.
+ */
+export const offsetDateTime = z.unknown().transform((v, ctx) => {
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return v;
+  const p = parseOffsetDateTime(v);
+  if (!p) {
+    ctx.addIssue({
+      code: "custom",
+      message: `must be an RFC 3339 date-time with an offset, such as 2026-10-06T09:30:15+01:00 or 2026-10-06T08:30:15Z (got ${JSON.stringify(v instanceof Date ? "an invalid date" : v)})`,
+    });
+    return z.NEVER;
+  }
+  return new Date(p.ms);
+});
+
+/** F5-49 (Q-8): website and feedUrl are https, a DNS-name host (no IP literal), no userinfo, port 443 only. */
+const registryUrl = z.string().superRefine((v, ctx) => {
+  const p = urlShapeProblem(v);
+  if (p === "invalid" || p === "not-https") ctx.addIssue({ code: "custom", message: "must be an https URL" });
+  else if (p === "bad-host")
+    ctx.addIssue({
+      code: "custom",
+      message: "must use a DNS-name host (no IP address), no username or password, and port 443 only",
+    });
+});
+
+/** F5-07 (CF-08, D-5, Q-15): written only by the intake job, never in Keystatic. */
+export const lastErrorField = z.string().refine(isLastError, {
+  message: `must be one lastError code from the fixed list (at most ${LAST_ERROR_MAX} characters), such as http-500 or timeout`,
+});
+export const SOURCE_INTAKE_FIELDS = ["lastError", "lastErrorAt", "consecutiveFailures"] as const;
+
 export const sourceSchema = z
   .strictObject({
     name: z.string().min(1),
@@ -405,8 +450,8 @@ export const sourceSchema = z
     topics: z.array(z.string()).default([]),
     jurisdiction: jurisdiction.default("UK"),
     jurisdictionNote: optionalText,
-    website: httpsUrl,
-    feedUrl: z.preprocess(blankToUndefined, httpsUrl.optional()),
+    website: registryUrl,
+    feedUrl: z.preprocess(blankToUndefined, registryUrl.optional()),
     feedType: z.enum(FEED_TYPES),
     updateFrequency: z.string().min(1),
     rights: z.enum(RIGHTS),
@@ -417,6 +462,9 @@ export const sourceSchema = z
     editorialNotes: z.string().default(""),
     demo: requiredBool("demo"),
     status: z.enum(SOURCE_STATUSES),
+    lastError: lastErrorField.optional(),
+    lastErrorAt: offsetDateTime.optional(),
+    consecutiveFailures: z.number().int().min(1).optional(),
   })
   .superRefine((s, ctx) => {
     jurisdictionRule(s, ctx);
@@ -438,20 +486,89 @@ export const sourceSchema = z
           message: 'a placeholder (demo) source must say "(placeholder)" in its name',
         });
       }
+    } else {
+      // F5-02 (D-10): a real entry can't look like a demo one.
+      for (const key of ["website", "feedUrl"] as const) {
+        const url = s[key];
+        if (url !== undefined && isPlaceholderUrl(url)) {
+          ctx.addIssue({
+            code: "custom",
+            path: [key],
+            message: `a non-demo source may not use a placeholder host (example.org, example.com, example.net or .invalid); set demo: true or use the real URL (got ${url})`,
+          });
+        }
+      }
+      for (const key of ["name", "publisher"] as const) {
+        if (/\(placeholder\)/i.test(s[key])) {
+          ctx.addIssue({
+            code: "custom",
+            path: [key],
+            message: `a non-demo source may not say "(placeholder)" in its ${key}`,
+          });
+        }
+      }
+    }
+    // F5-03 (Q-18): feedType and feedUrl agree.
+    if ((s.feedType === "rss" || s.feedType === "atom") && s.feedUrl === undefined) {
+      ctx.addIssue({ code: "custom", path: ["feedUrl"], message: `feedType ${s.feedType} needs a feedUrl` });
+    }
+    if ((s.feedType === "none" || s.feedType === "page" || s.feedType === "newsletter") && s.feedUrl !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["feedUrl"],
+        message: `feedType ${s.feedType} has no feed, so feedUrl must be absent`,
+      });
+    }
+    // F5-07 (Q-15): the three intake fields are all present or all absent.
+    const present = SOURCE_INTAKE_FIELDS.filter((k) => s[k] !== undefined);
+    if (present.length > 0 && present.length < SOURCE_INTAKE_FIELDS.length) {
+      for (const k of SOURCE_INTAKE_FIELDS.filter((x) => s[x] === undefined)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [k],
+          message: "lastError, lastErrorAt and consecutiveFailures are written together by intake (all or none)",
+        });
+      }
     }
   });
 
-export const sourceItemSchema = z.strictObject({
-  sourceId: slug,
-  title: z.string().min(1).max(300),
-  url: httpsUrl,
-  // Full datetimes, left to F5 (CF-07).
-  publishedAt: z.coerce.date(),
-  fetchedAt: z.coerce.date(),
-  excerpt: z.string().max(500).optional(),
-  status: z.enum(SOURCE_ITEM_STATUSES),
-  usedInStory: slug.optional(),
-});
+/** F5-10: plain item text. */
+const itemText = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .superRefine((v, ctx) => {
+      const p = itemTextProblem(v);
+      if (p) ctx.addIssue({ code: "custom", message: p });
+    });
+
+export const sourceItemSchema = z
+  .strictObject({
+    sourceId: slug,
+    title: itemText(300).refine((v) => v.trim() !== "", "must not be blank"),
+    url: z
+      .string()
+      .refine(
+        itemUrlOk,
+        `must be an absolute https URL with a host and no username or password, at most ${MAX_ITEM_URL_LENGTH} characters`,
+      ),
+    publishedAt: offsetDateTime,
+    fetchedAt: offsetDateTime,
+    excerpt: itemText(500).optional(),
+    status: z.enum(SOURCE_ITEM_STATUSES),
+    usedInStory: slug.optional(),
+  })
+  .superRefine((it, ctx) => {
+    // F5-09 (Q-17): usedInStory is set exactly when status is used.
+    if (it.status === "used" && it.usedInStory === undefined)
+      ctx.addIssue({ code: "custom", path: ["usedInStory"], message: "status: used needs usedInStory" });
+    if (it.status !== "used" && it.usedInStory !== undefined)
+      ctx.addIssue({
+        code: "custom",
+        path: ["usedInStory"],
+        message: `usedInStory is only set when status is used (status: ${it.status})`,
+      });
+  });
 
 export type Story = z.infer<typeof storySchema>;
 export type Topic = z.infer<typeof topicSchema>;

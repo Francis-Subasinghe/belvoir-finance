@@ -170,6 +170,14 @@ describe("F3 rich fixture build (tests/fixtures/content/base)", () => {
       "PAUSED-SOURCE-MARKER",
       "SOURCEITEM-TITLE-MARKER",
       "sourceitem-marker.example.com",
+      // F5-11: SourceItem excerpt and id; F5-33: intake failure fields; F5-41: the intake User-Agent.
+      "SOURCEITEM-EXCERPT-MARKER",
+      "fx-item",
+      "http-503",
+      "2026-09-03T07:15:42",
+      "consecutiveFailures",
+      "lastError",
+      "BelvoirFinanceIntake",
     ])
       expect(filesContaining(site, m), m).toEqual([]);
     const sources = read(site, "sources/index.html");

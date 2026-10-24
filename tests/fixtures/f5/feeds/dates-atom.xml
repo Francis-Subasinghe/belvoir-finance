@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>t</title>
+<entry><title>T-10</title><link href="https://news.example.invalid/t10"/><published>2026-10-06T09:30:00+01:00</published></entry>
+<entry><title>T-11</title><link href="https://news.example.invalid/t11"/><published>2026-10-06T09:30:00Z</published></entry>
+<entry><title>T-12</title><link href="https://news.example.invalid/t12"/><published>2026-10-06T09:30:00.123Z</published></entry>
+<entry><title>T-13</title><link href="https://news.example.invalid/t13"/><published>2026-10-06</published></entry>
+<entry><title>T-14</title><link href="https://news.example.invalid/t14"/><published>2026-10-06T09:30:00</published></entry>
+<entry><title>T-15</title><link href="https://news.example.invalid/t15"/><published>2026-10-06T24:00:00Z</published></entry>
+<entry><title>T-16</title><link href="https://news.example.invalid/t16"/><published>2026-02-29T10:00:00Z</published></entry>
+<entry><title>T-17</title><link href="https://news.example.invalid/t17"/><published>2028-02-29T10:00:00Z</published></entry>
+<entry><title>T-18</title><link href="https://news.example.invalid/t18"/><published>2026-10-06T09:30:00+14:00</published></entry>
+<entry><title>T-19</title><link href="https://news.example.invalid/t19"/><published>2026-10-06T09:30:00+15:00</published></entry>
+<entry><title>T-20</title><link href="https://news.example.invalid/t20"/><published>2026-10-06T09:30:60Z</published></entry>
+</feed>

@@ -1,0 +1,18 @@
+name: Fixture API
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: "https://www.fx-api.test/"
+feedUrl: "https://feeds.fx-api.test/rss"
+feedType: api
+updateFrequency: Daily
+rights: titles-only
+rightsNotes: ""
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: ""
+demo: false
+status: active

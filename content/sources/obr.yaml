@@ -1,0 +1,18 @@
+name: Office for Budget Responsibility publications
+publisher: Office for Budget Responsibility
+category: primary-official
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: https://obr.uk/
+feedType: rss
+feedUrl: https://obr.uk/feed/
+updateFrequency: Monthly
+rights: unknown
+rightsNotes: Feed reachable on 2026-10-23; reuse terms not yet confirmed, so titles and links only until reviewed. Seed awaiting Francis (pre-launch list).
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: F5 seed. Paused until Francis approves the pre-launch list (Q-1) and rights (Q-2).
+demo: false
+status: paused
