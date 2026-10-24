@@ -20,7 +20,7 @@ import {
   resultsMarkupProblems,
   scriptPolicyProblems,
   SHARED_CSS_ALLOWANCE,
-  SHARED_CSS_GZIP_5FDC80E,
+  SHARED_CSS_GZIP_PIN,
   TOOL_JS_MAX_GZIP,
   TOOL_JS_TARGET_GZIP,
   TOOL_PAGE,
@@ -111,16 +111,20 @@ describe("F4-45 script size", () => {
 });
 
 describe("F4-49 shared stylesheet size", () => {
-  it("F4-49 the shared stylesheet grew by at most 1 KB gzip over 5fdc80e, and the size is reported", () => {
+  it("F4-49 / V2-40 the pin is the measured gzip size of the V2 build's shared stylesheet (node zlib default level)", () => {
+    // tests/fixtures/f4/css/shared-v2.css is dist/_astro/BaseLayout.*.css from the V2 PR's final build.
+    const css = readFileSync("tests/fixtures/f4/css/shared-v2.css");
+    expect(gzipSync(css).length).toBe(SHARED_CSS_GZIP_PIN);
+  });
+  it("F4-49 the shared stylesheet grew by at most 1 KB gzip over the pin, and the size is reported", () => {
     const css =
       jsFiles &&
       readFileSync(join("dist", pages[0]?.html.match(/href="\/belvoir-finance\/(_astro\/[^"]+\.css)"/)?.[1] ?? ""));
     const gz = gzipSync(css).length;
-    console.info(
-      `F4-49: shared CSS ${css.length} bytes raw, ${gz} bytes gzip (5fdc80e was ${SHARED_CSS_GZIP_5FDC80E})`,
-    );
-    expect(gz - SHARED_CSS_GZIP_5FDC80E).toBeLessThanOrEqual(SHARED_CSS_ALLOWANCE);
-    expect(gz - SHARED_CSS_GZIP_5FDC80E).toBeGreaterThan(0);
+    console.info(`F4-49: shared CSS ${css.length} bytes raw, ${gz} bytes gzip (pin ${SHARED_CSS_GZIP_PIN})`);
+    expect(gz - SHARED_CSS_GZIP_PIN).toBeLessThanOrEqual(SHARED_CSS_ALLOWANCE);
+    // ≥ 0, not > 0: the pin is now this build's own size, so the growth is 0 (see the PR body, V2-40/41).
+    expect(gz - SHARED_CSS_GZIP_PIN).toBeGreaterThanOrEqual(0);
   });
 });
 

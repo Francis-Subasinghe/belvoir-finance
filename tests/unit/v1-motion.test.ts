@@ -56,9 +56,9 @@ describe("V1-23 to V1-57 motion scan", () => {
     expect(css.length).toBeGreaterThan(3);
     expect(scanV1Motion(css, tokens)).toEqual([]);
   });
-  it("V1-24 F1's global reduce rule is still there", () => {
-    expect(readFileSync("src/styles/global.css", "utf8")).toMatch(
-      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*animation: none !important;[\s\S]*transition: none !important;/,
+  it("V1-24 F1's global reduce rule is still there (V2: motion.css, transitions cut to 0.01 ms per V2-19)", () => {
+    expect(readFileSync("src/styles/motion.css", "utf8")).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*animation: none !important;[\s\S]*transition-duration: var\(--motion-none\) !important;/,
     );
   });
 });

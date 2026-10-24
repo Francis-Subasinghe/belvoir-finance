@@ -1,0 +1,9 @@
+[
+  {
+    "file": "tests/fixtures/v2/fonts-hash-mismatch/dummy-latin-400-normal.woff2",
+    "family": "Dummy",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "licence": "OFL-1.1",
+    "source": "fixture"
+  }
+]

@@ -34,7 +34,9 @@ export interface CssInput {
   css: string;
 }
 
-export const MOTION_CAPS = { element: 400, staggerEnd: 800, steps: 6, draw: 600, max: 1000 } as const;
+// V2-17 (brief §8) supersedes V1-28's 400 ms per-element cap: the hero stagger
+// runs at 150/300/500 ms, and nothing anywhere exceeds 500 ms (V2 motion scan).
+export const MOTION_CAPS = { element: 500, staggerEnd: 800, steps: 6, draw: 600, max: 1000 } as const;
 const MOVABLE = new Set(["transform", "translate", "scale", "rotate", "opacity"]);
 const KEYFRAME_OK = new Set([...MOVABLE, "animation-timing-function"]);
 const TIME = /^(-?\d*\.?\d+)(ms|s)$/;
@@ -190,7 +192,12 @@ export function scanV1Motion(inputs: readonly CssInput[], tokens: Map<string, st
         const line = d.source?.start?.line;
         const add = (r: MotionRule, message: string) => problems.push({ file, line, rule: r, message });
         const v = d.value.trim();
-        const isNone = /^(none|0s?|0ms)$/.test(v);
+        // V2-19 (Q-V2-3): the reduced-motion reset may cut transitions to <= 0.01 ms instead of none.
+        const inReduce = ancestors(d).some(
+          (x) => x.name === "media" && /prefers-reduced-motion\s*:\s*reduce/.test(x.params),
+        );
+        const resetMs = ms(resolve(v.replace(/\s*!important$/, ""), tokens));
+        const isNone = /^(none|0s?|0ms)$/.test(v) || (inReduce && resetMs !== undefined && resetMs <= 0.01);
         const motionProp = /^(animation|transition)(-|$)/.test(d.prop);
         // V1-26: base opacity
         if (d.prop === "opacity" && Number.parseFloat(resolve(v, tokens)) < 1)

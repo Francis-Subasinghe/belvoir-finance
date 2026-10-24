@@ -16,7 +16,7 @@ for (const [name, path] of VISUAL_PAGES) {
   });
 }
 
-// F4-55: the explorer after a commit with one error per field (focus blurred), and with JavaScript off.
+// F4-55: the explorer after a commit with one error per field (focus blurred, pointer moved away), and with JavaScript off.
 const TOOL = "tools/cash-vs-profit/";
 
 test("F4-55 tool-errors full page", async ({ page }) => {
@@ -32,6 +32,9 @@ test("F4-55 tool-errors full page", async ({ page }) => {
   await page.evaluate(() =>
     document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined,
   );
+  // The click leaves the pointer on "Update results"; move it off so no hover style is captured.
+  await page.mouse.move(0, 0);
+  await expect(page.locator("[data-cvp] :hover"), "hovered explorer elements").toHaveCount(0);
   await expect(page).toHaveScreenshot("tool-errors.png", { fullPage: true });
 });
 

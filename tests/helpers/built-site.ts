@@ -26,7 +26,12 @@ export function compiledGold(files: string[]): { problems: Problem[]; goldRules:
   const problems = scanGold(css, { literalAllowed: () => false });
   // Count the gold-using rules so the check can't pass vacuously.
   const roots = css.map((f) => postcss.parse(f.text));
-  const aliases = aliasesOf(roots, "--color-gold", /#c5a059/i);
+  // V2-28: the dark-only golds are gold-bright and gold-soft (ADR-0003); F2's --color-gold kept for old fixtures.
+  const aliases = new Set([
+    ...aliasesOf(roots, "--color-gold", /#c5a059/i),
+    ...aliasesOf(roots, "--color-gold-bright", /#f2c94c/i),
+    ...aliasesOf(roots, "--color-gold-soft", /#d4c098/i),
+  ]);
   let goldRules = 0;
   for (const r of roots) {
     r.walkRules((rule) => {

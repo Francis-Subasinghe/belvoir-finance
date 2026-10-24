@@ -13,7 +13,7 @@ const all = await tools();
   <ul class="story-list">
     {all.map((t) => (
       <li>
-        <article class="story-card surface-white" data-testid="tool-card">
+        <article class="story-card surface-raised" data-testid="tool-card">
           <h2 class="story-card-title with-icon">
             <ToolIcon id={t.id} />
             <a href={toolHref(t.id)}>{t.data.title}</a>

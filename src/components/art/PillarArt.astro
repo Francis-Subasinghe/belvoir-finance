@@ -2,7 +2,8 @@
 /**
  * V1-41: the illustration for a pillar (one per pillar, Q-1). Decorative
  * (aria-hidden, focusable=false, no title); imported as an Astro SVG component
- * (V1-56), coloured by token classes on a navy panel (V1-14, V1-15).
+ * (V1-56), coloured by token classes on a light surface-raised panel as V2 line
+ * art: green and ink lines, gold-on-light accent (V1-14, V2-28).
  */
 import UnderstandTheNumbers from "../../assets/pillars/understand-the-numbers.svg";
 import MakeBetterDecisions from "../../assets/pillars/make-better-decisions.svg";
@@ -24,6 +25,6 @@ const { pillar, size = "page" } = Astro.props;
 const Art = ART[pillar];
 ---
 
-<div class={`art-panel art-panel-${size} surface-navy`} data-testid="pillar-art" data-pillar={pillar}>
+<div class={`art-panel art-panel-${size} surface-raised`} data-testid="pillar-art" data-pillar={pillar}>
   <Art class="art-svg" aria-hidden="true" focusable="false" />
 </div>

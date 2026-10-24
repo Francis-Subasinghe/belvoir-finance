@@ -149,11 +149,12 @@ function hoverWithoutFocus(css: string): string[] {
 
 describe("V1-30 hover lift has a focus equivalent", () => {
   it("V1-30 every hover lift in src CSS has a :focus-visible or :focus-within twin, and lifts at most 4 px", () => {
-    const css = readFileSync("src/styles/components.css", "utf8");
+    // V2: the hover lift moved to motion.css and is 2 px (brief §8, V2-18 allows <= 4 px).
+    const css = ["src/styles/components.css", "src/styles/motion.css"].map((f) => readFileSync(f, "utf8")).join("\n");
     expect(hoverWithoutFocus(css)).toEqual([]);
     for (const m of css.matchAll(/translateY\((-?\d+(?:\.\d+)?)px\)/g))
       expect(Math.abs(Number(m[1]))).toBeLessThanOrEqual(12);
-    expect(css).toMatch(/\.story-card:hover,\s*\.story-card:focus-within[\s\S]{0,80}transform: translateY\(-4px\)/);
+    expect(css).toMatch(/\.story-card:hover,\s*\.story-card:focus-within[\s\S]{0,80}transform: translateY\(-2px\)/);
   });
   it("V1-30 negative: a hover-only lift fails", () => {
     expect(hoverWithoutFocus(".card:hover { transform: translateY(-4px) }")).toEqual([".card:hover"]);

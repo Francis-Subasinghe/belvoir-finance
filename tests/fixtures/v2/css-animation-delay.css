@@ -1,0 +1,1 @@
+@media (prefers-reduced-motion: no-preference) { .hero-lead { animation: fade-up var(--motion-slow) var(--motion-ease); animation-delay: 80ms; } }

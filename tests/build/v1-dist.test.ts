@@ -118,7 +118,7 @@ describe("V1-41 / V1-42 art placement", () => {
       const pillars = s.raw["pillars"] as string[];
       const html = page(`stories/${s.id}/index.html`);
       expect(html, s.id).toContain(
-        `story-cover-page surface-navy" data-testid="story-cover" data-motif="${coverFor(s.id, pillars[0] ?? "").motif}"`,
+        `story-cover-page surface-raised" data-testid="story-cover" data-motif="${coverFor(s.id, pillars[0] ?? "").motif}"`,
       );
     }
   });

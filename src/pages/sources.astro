@@ -40,7 +40,7 @@ const ROLE_TEXT: Record<string, string> = {
   ) : (
     <ul class="source-list" data-testid="source-list">
       {sources.map((s) => (
-        <li class="source-entry surface-white" data-testid="source-entry">
+        <li class="source-entry surface-raised" data-testid="source-entry">
           <h2>{s.name}</h2>
           {s.demo && <p class="story-card-demo">Demo</p>}
           <dl class="definition-list">

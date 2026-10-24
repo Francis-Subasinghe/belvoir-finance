@@ -89,8 +89,8 @@ test.describe("V1-57 no blink: opacity never drops after first paint", () => {
       await page.goto(path);
       const { drops, animated } = await opacityDrops(page, SAMPLE_MS.length);
       expect(drops).toEqual([]);
-      // The sampler did see the load fade (cards with covers or pillar art).
-      if (path !== STORY) expect(animated, "elements caught mid-fade").toBeGreaterThan(0);
+      // The sampler did see the load fade (V2: the home hero eyebrow, lead and CTAs only).
+      if (path === "./") expect(animated, "elements caught mid-fade").toBeGreaterThan(0);
     });
   }
 
@@ -154,7 +154,7 @@ test.describe("V1-28 / V1-31 animation timings (getAnimations)", () => {
   test.use({ reducedMotion: "no-preference" });
 
   for (const path of ["./", "explore/", STORY]) {
-    test(`V1-28 the load stagger on /${path}: ≤ 6 steps, each ≤ 400 ms, all done ≤ 800 ms, no delay or fill`, async ({
+    test(`V1-28 / V2-16 / V2-17 the load stagger on /${path}: ≤ 6 steps, each ≤ 500 ms, all done ≤ 800 ms, no delay or fill`, async ({
       page,
     }) => {
       const all = await recordAnimations(page, path);
@@ -163,11 +163,12 @@ test.describe("V1-28 / V1-31 animation timings (getAnimations)", () => {
         expect(a.duration, `${a.name} on ${a.target}`).toBeLessThanOrEqual(1000);
         expect(["none", "auto", "forwards"], `${a.name} fill`).toContain(a.fill);
       }
-      const stagger = all.filter((a) => a.name === "belvoir-art-enter");
-      if (path !== STORY) expect(stagger.length, "the stagger runs").toBeGreaterThan(0);
+      // V2: the hero stagger is fade-up on home only (150/300/500 ms, by duration).
+      const stagger = all.filter((a) => a.name === "fade-up");
+      if (path === "./") expect(stagger.length, "the stagger runs").toBeGreaterThan(0);
       for (const a of stagger) {
         expect(a.delay, a.target).toBe(0); // V1-57: stagger by duration, never by delay
-        expect(a.duration, a.target).toBeLessThanOrEqual(400);
+        expect(a.duration, a.target).toBeLessThanOrEqual(500); // V2-17 supersedes the V1 400 ms cap
       }
       expect(new Set(stagger.map((a) => a.duration)).size).toBeLessThanOrEqual(6);
       if (stagger.length > 0) {
@@ -178,7 +179,7 @@ test.describe("V1-28 / V1-31 animation timings (getAnimations)", () => {
     });
   }
 
-  test("V1-31 chart bars draw in once by scaleY from the baseline (≤ 600 ms); values and table are there from the first frame", async ({
+  test("V1-31 (V2-18) chart bars are static: no draw-in; values and table are there from the first frame", async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -196,17 +197,8 @@ test.describe("V1-28 / V1-31 animation timings (getAnimations)", () => {
       );
     });
     const all = await recordAnimations(page, STORY);
-    const bars = all.filter((a) => a.target.includes("chart-bar"));
-    expect(bars.length).toBeGreaterThan(0);
-    for (const b of bars) {
-      expect(b.name).toBe("belvoir-bar-draw");
-      expect(b.duration).toBeLessThanOrEqual(600);
-      expect(b.iterations).toBe(1);
-    }
-    expect(all.filter((a) => !a.target.includes("chart-bar") && a.target.includes("chart"))).toEqual([]);
-    const bar = page.locator(".chart-bar").first();
-    await expect(bar).toHaveCSS("transform-box", "fill-box");
-    await expect(bar).toHaveCSS("transform-origin", /% 100%$|px \d+(\.\d+)?px$/);
+    // V2-18 caps scale at 5 %, so the V1 scaleY-from-0 draw-in is gone: nothing in the chart animates.
+    expect(all.filter((a) => a.target.includes("chart"))).toEqual([]);
     const first = await page.evaluate(() => (window as unknown as { __chartFirstFrame: string[] }).__chartFirstFrame);
     expect(first.length).toBeGreaterThan(0);
     for (const v of first) expect(v, "a chart value or table cell at first frame").toMatch(/\S@1$/);
@@ -298,8 +290,8 @@ test.describe("V1-30 the card lift has a keyboard equivalent", () => {
         .getByTestId(id)
         .locator(".story-card")
         .evaluate((c) => new DOMMatrixReadOnly(getComputedStyle(c).transform).m42);
-    expect(await m42("card-hover")).toBe(-4);
-    expect(await m42("card-focus")).toBe(-4);
+    expect(await m42("card-hover")).toBe(-2); // V2 card lift (brief §8, V2-18 ≤ 4 px)
+    expect(await m42("card-focus")).toBe(-2);
     await expect(page.getByTestId("card-focus").locator(".story-card-title a")).not.toHaveCSS("outline-style", "none");
   });
 });
@@ -372,7 +364,12 @@ test.describe("V1-58 to V1-61 layout fixes", () => {
             .length,
       );
     expect(both).toBeGreaterThan(0);
-    await page.addStyleTag({ content: ".story-card-demo, .story-card-jurisdiction { margin-right: 0 !important; }" });
+    // V2 cards are padded 24 px, so at 768 the gallery's grid cards stack their pills; one column
+    // gives the cards room to put both pills side by side for the negative check.
+    await page.addStyleTag({
+      content:
+        ".story-card-demo, .story-card-jurisdiction { margin-right: 0 !important; } .gallery-grid { grid-template-columns: 1fr !important; }",
+    });
     const f3 = await pillGapProblems(page, ".story-card", PILLS);
     if (test.info().project.name === "mobile-360") {
       // At 360 px every card's pills stack (8 px vertical margin in F3 too), so there is no side-by-side pair to break.

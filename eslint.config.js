@@ -17,6 +17,8 @@ export default defineConfig(
       "coverage/",
       "test-results/",
       "playwright-report/",
+      // V2 negative fixtures are verbatim browser snippets that must fail the V2 scans, not lint.
+      "tests/fixtures/v2/",
     ],
   },
   js.configs.recommended,

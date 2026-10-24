@@ -7,7 +7,24 @@ import type { Page } from "@playwright/test";
 
 export const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
+/**
+ * V2: wait for the time-based load animations (the home hero fade-up, at most
+ * 500 ms) to finish, so axe measures contrast on the settled page rather than
+ * mid-fade. Scroll-driven reveals are transform-only and never block.
+ */
+export async function settleAnimations(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.timeline === document.timeline)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
+}
+
 export async function axeProblems(page: Page): Promise<{ bad: string[]; region: string[] }> {
+  await settleAnimations(page);
   const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
   const bad = results.violations
     .filter((v) => v.impact === "serious" || v.impact === "critical")
@@ -24,12 +41,15 @@ export function collectCspErrors(page: Page): string[] {
   return errors;
 }
 
-/** F2-09: gold only over navy/slate; #7E6026 text/outline only over a light background. */
+/**
+ * F2-09 / V2-28: bright and soft gold only over a dark surface (ink, green,
+ * green-deep); gold-on-light #7A5A0A text/outline only over a light background.
+ */
 export function renderedGoldProblems(page: Page): Promise<string[]> {
   return page.evaluate(() => {
-    const GOLD = "rgb(197, 160, 89)";
-    const GOLD_ON_LIGHT = "rgb(126, 96, 38)";
-    const DARK = new Set(["rgb(11, 19, 43)", "rgb(28, 37, 65)"]);
+    const GOLDS = new Set(["rgb(242, 201, 76)", "rgb(212, 192, 152)"]);
+    const GOLD_ON_LIGHT = "rgb(122, 90, 10)";
+    const DARK = new Set(["rgb(10, 10, 10)", "rgb(44, 95, 52)", "rgb(31, 68, 38)"]);
     const opaqueBg = (el: Element): string => {
       for (let e: Element | null = el; e; e = e.parentElement) {
         const c = getComputedStyle(e).backgroundColor;
@@ -54,12 +74,12 @@ export function renderedGoldProblems(page: Page): Promise<string[]> {
       // An outline is drawn outside the box (with an offset), so it sits on the parent's background.
       const hasOutline = cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0;
       const outlineBg = el.parentElement ? opaqueBg(el.parentElement) : bg;
-      if (props.includes(GOLD) && !DARK.has(bg)) out.push(`gold on ${bg}: ${describe(el)}`);
-      if (hasOutline && cs.outlineColor === GOLD && !DARK.has(outlineBg))
+      if (props.some((p) => GOLDS.has(p)) && !DARK.has(bg)) out.push(`gold on ${bg}: ${describe(el)}`);
+      if (hasOutline && GOLDS.has(cs.outlineColor) && !DARK.has(outlineBg))
         out.push(`gold outline on ${outlineBg}: ${describe(el)}`);
-      if (cs.color === GOLD_ON_LIGHT && DARK.has(bg)) out.push(`#7E6026 text on ${bg}: ${describe(el)}`);
+      if (cs.color === GOLD_ON_LIGHT && DARK.has(bg)) out.push(`gold-on-light text on ${bg}: ${describe(el)}`);
       if (hasOutline && cs.outlineColor === GOLD_ON_LIGHT && DARK.has(outlineBg)) {
-        out.push(`#7E6026 outline on ${outlineBg}: ${describe(el)}`);
+        out.push(`gold-on-light outline on ${outlineBg}: ${describe(el)}`);
       }
     }
     return out;
@@ -129,15 +149,19 @@ export function targetSizeProblems(page: Page): Promise<string[]> {
   });
 }
 
-/** F2-13: serif headings, sans body/nav/forms, mono figures. */
+/** F2-13 (V2): display-serif H1/H2 and titles, sans H3/H4, body, nav and forms, mono figures. */
 export function fontProblems(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     const out: string[] = [];
     const starts = (el: Element, family: string) =>
       getComputedStyle(el).fontFamily.replace(/"/g, "").startsWith(family);
-    for (const el of document.querySelectorAll("h1, h2, h3, h4, .story-card-title, .article-title")) {
-      if (!starts(el, "Source Serif 4"))
-        out.push(`heading not serif: ${el.tagName} ${getComputedStyle(el).fontFamily}`);
+    // V2 (ADR-0003): Fraunces for H1/H2, card and article titles; Inter for the other H3/H4.
+    for (const el of document.querySelectorAll("h1, h2, .story-card-title, .article-title")) {
+      if (!starts(el, "Fraunces")) out.push(`heading not serif: ${el.tagName} ${getComputedStyle(el).fontFamily}`);
+    }
+    for (const el of document.querySelectorAll("h3, h4")) {
+      if (el.matches(".story-card-title, .article-title")) continue;
+      if (!starts(el, "Inter")) out.push(`h3/h4 not sans: ${el.tagName} ${getComputedStyle(el).fontFamily}`);
     }
     for (const el of document.querySelectorAll(
       "body, p, .site-nav a, label, input:not([data-numeric]):not([type=checkbox]), select, button",

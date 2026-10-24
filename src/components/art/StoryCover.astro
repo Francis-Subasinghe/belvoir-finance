@@ -2,8 +2,9 @@
 /**
  * V1-42 story cover: derived from the story id and its first pillar
  * (src/lib/cover.ts), rendered as component markup. Decorative (V1-18): no
- * text, nothing focusable (V1-21). The navy surface scopes the gold accent
- * (F2-06), and the container's aspect-ratio reserves the box (V1-35). Each
+ * text, nothing focusable (V1-21). The surface-raised panel maps the gold accent
+ * to gold-on-light (V2-28), and the container's aspect-ratio reserves the box
+ * (V1-35). Each
  * shape's attributes pass the COVER_ATTRIBUTES allowlist before they are spread.
  */
 import { COVER_H, COVER_W, coverFor, coverShapeAttrs } from "../../lib/cover";
@@ -17,7 +18,7 @@ const { id, pillar, size = "card" } = Astro.props;
 const cover = coverFor(id, pillar);
 ---
 
-<div class={`story-cover story-cover-${size} surface-navy`} data-testid="story-cover" data-motif={cover.motif}>
+<div class={`story-cover story-cover-${size} surface-raised`} data-testid="story-cover" data-motif={cover.motif}>
   <svg
     class="story-cover-svg"
     viewBox={`0 0 ${COVER_W} ${COVER_H}`}

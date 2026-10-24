@@ -1,6 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { fontProblems, overflowProblems, renderedGoldProblems, targetSizeProblems } from "../helpers/e2e-checks";
+import {
+  fontProblems,
+  overflowProblems,
+  renderedGoldProblems,
+  settleAnimations,
+  targetSizeProblems,
+} from "../helpers/e2e-checks";
 import { sitePaths } from "../helpers/e2e-pages";
 
 // F3-35 / F3-36 / F3-37: every built page (derived from the content), plus the 404.
@@ -14,6 +20,7 @@ for (const path of PAGES) {
         if (m.type() === "error" && /Content Security Policy/i.test(m.text())) cspErrors.push(m.text());
       });
       await page.goto(path);
+      await settleAnimations(page);
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
         .analyze();
@@ -60,14 +67,14 @@ for (const path of PAGES) {
       expect(await fontProblems(page)).toEqual([]);
     });
 
-    test("F2-21: one slate contentinfo with the not-advice text and a link list; no forbidden claims", async ({
+    test("F2-21 (V2): one ink contentinfo with the not-advice text and a link list; no forbidden claims", async ({
       page,
     }) => {
       await page.goto(path);
       const footer = page.getByRole("contentinfo");
       await expect(footer).toHaveCount(1);
-      await expect(footer).toHaveClass(/surface-slate/);
-      await expect(footer).toHaveCSS("background-color", "rgb(28, 37, 65)");
+      await expect(footer).toHaveClass(/surface-ink/);
+      await expect(footer).toHaveCSS("background-color", "rgb(10, 10, 10)");
       await expect(footer).toContainText("Educational information, not financial advice.");
       expect(await footer.getByRole("navigation", { name: "Footer" }).getByRole("link").count()).toBeGreaterThan(0);
       const text = (await footer.textContent()) ?? "";

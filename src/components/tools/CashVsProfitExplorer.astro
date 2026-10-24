@@ -40,6 +40,12 @@ interface Props {
   /** The tool page's one results live region (F4-18). Gallery copies are static. */
   live?: boolean;
   headingLevel?: 2 | 3;
+  /**
+   * Id of an element naming this copy (the gallery's variant label). It is added to the
+   * explorer's and the table region's accessible names, so several copies on one page
+   * have unique landmark names (axe landmark-unique). The tool page has one copy and none.
+   */
+  labelId?: string | undefined;
 }
 const {
   idPrefix = "cvp",
@@ -48,7 +54,9 @@ const {
   note = NOJS_NOTE,
   live = true,
   headingLevel = 2,
+  labelId,
 } = Astro.props;
+const withLabel = (id: string) => (labelId ? `${id} ${labelId}` : id);
 const v = view(values);
 const errorFor = (id: string) => (v.ok ? undefined : v.errors.find((e) => e.id === id)?.message);
 const H = `h${headingLevel}` as "h2" | "h3";
@@ -57,7 +65,7 @@ const COLS = ["profit", "cashIn", "cashOut", "closing"] as const;
 const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
 ---
 
-<section class="explorer" aria-labelledby={`${idPrefix}-heading`} data-cvp={idPrefix} data-testid="explorer">
+<section class="explorer" aria-labelledby={withLabel(`${idPrefix}-heading`)} data-cvp={idPrefix} data-testid="explorer">
   <H id={`${idPrefix}-heading`}>{EXPLORER_HEADING}</H>
   {/* F4-36: the script swaps the live text; a CSS copy of it (data-reserve, empty alt text) keeps the line count. */}
   <p class="explorer-note" data-reserve={note}>
@@ -98,7 +106,12 @@ const months = Array.from({ length: MONTHS }, (_, i) => i + 1);
           : errorCountSentence(v.errors.length)}
       </p>
       <div data-cvp-table hidden={!v.ok}>
-        <div class="table-scroll explorer-table" role="region" aria-labelledby={`${idPrefix}-caption`} tabindex="0">
+        <div
+          class="table-scroll explorer-table"
+          role="region"
+          aria-labelledby={withLabel(`${idPrefix}-caption`)}
+          tabindex="0"
+        >
           <table class="data-table">
             <caption id={`${idPrefix}-caption`} class="explorer-caption">
               {TABLE_CAPTION}

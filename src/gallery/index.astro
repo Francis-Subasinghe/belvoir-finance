@@ -56,7 +56,7 @@ const PILLAR_NAMES = [
 ] as const;
 const LONG_OTHER = "Placeholder territory with a long sixty-character label text";
 const LONG_NAME = "Placeholder Reviewer Name Long Enough To Wrap At Small Width";
-const LIGHT = ["white", "alabaster"] as const;
+const LIGHT = ["white", "canvas"] as const;
 /** F4-58: the explorer's default, every error code, the JavaScript-off state and a negative result. */
 const EXPLORER_VARIANTS = [
   {
@@ -108,7 +108,7 @@ const levels = [
     <p class="prose">
       Development and test page for the F2 design system. Placeholder content only; never built into the site. Every
       component is shown in each variant and state, on each surface it supports. Header and footer above and below are
-      the navigation (navy) and footer (slate) components.
+      the navigation (canvas) and footer (ink) components.
     </p>
 
     <nav aria-label="Gallery sections" class="gallery-toc">
@@ -155,40 +155,40 @@ const levels = [
     <section id="story-cards" aria-labelledby="h-story-cards" class="gallery-section">
       <h2 id="h-story-cards">Story card</h2>
       <div class="gallery-grid">
-        <div class="gallery-surface surface-white" data-surface="white">
-          <p class="gallery-label">On white, demo</p>
-          <StoryCard {...card} demo headingLevel={3} surface="white" />
+        <div class="gallery-surface surface-raised" data-surface="raised">
+          <p class="gallery-label">On raised surface, demo</p>
+          <StoryCard {...card} demo headingLevel={3} surface="raised" />
         </div>
-        <div class="gallery-surface surface-alabaster" data-surface="alabaster">
-          <p class="gallery-label">On alabaster, not demo</p>
-          <StoryCard {...card} format="how-to" level="intermediate" headingLevel={3} surface="alabaster" />
+        <div class="gallery-surface surface-canvas" data-surface="canvas">
+          <p class="gallery-label">On canvas, not demo</p>
+          <StoryCard {...card} format="how-to" level="intermediate" headingLevel={3} surface="canvas" />
         </div>
-        <div class="gallery-surface surface-navy" data-surface="navy">
-          <p class="gallery-label">Slate card in a navy band</p>
-          <StoryCard {...card} demo headingLevel={3} surface="slate" />
+        <div class="gallery-surface surface-ink" data-surface="ink">
+          <p class="gallery-label">Ink card in an ink band</p>
+          <StoryCard {...card} demo headingLevel={3} surface="ink" />
         </div>
-        <div class="gallery-surface surface-navy" data-surface="navy" data-testid="light-in-dark">
-          <p class="gallery-label">White card nested in a navy band (gold resets to gold-on-light)</p>
-          <StoryCard {...card} headingLevel={3} surface="white" />
+        <div class="gallery-surface surface-ink" data-surface="ink" data-testid="light-in-dark">
+          <p class="gallery-label">Raised card nested in an ink band (gold resets to gold-on-light)</p>
+          <StoryCard {...card} headingLevel={3} surface="raised" />
         </div>
-        <div class="gallery-surface surface-white" data-surface="white" data-testid="card-non-uk">
+        <div class="gallery-surface surface-raised" data-surface="raised" data-testid="card-non-uk">
           <p class="gallery-label">F3-22: non-UK jurisdiction label (Ireland), demo</p>
-          <StoryCard {...card} jurisdiction="IE" demo headingLevel={3} surface="white" />
+          <StoryCard {...card} jurisdiction="IE" demo headingLevel={3} surface="raised" />
         </div>
-        <div class="gallery-surface surface-alabaster" data-surface="alabaster" data-testid="card-other">
+        <div class="gallery-surface surface-canvas" data-surface="canvas" data-testid="card-other">
           <p class="gallery-label">F3-22: "other" jurisdiction with its note</p>
           <StoryCard
             {...card}
             jurisdiction="other"
             jurisdictionNote="Placeholder territory"
             headingLevel={3}
-            surface="alabaster"
+            surface="canvas"
           />
         </div>
       </div>
     </section>
 
-    <section id="article-header" aria-labelledby="h-article-header" class="gallery-section surface-white">
+    <section id="article-header" aria-labelledby="h-article-header" class="gallery-section surface-raised">
       <h2 id="h-article-header">Article header</h2>
       <p class="gallery-label">Full: reviewer, period, non-UK jurisdiction (title shown as h2 here to keep one h1)</p>
       <ArticleHeader
@@ -233,7 +233,7 @@ const levels = [
       />
     </section>
 
-    <section id="source-note" aria-labelledby="h-source-note" class="gallery-section surface-alabaster">
+    <section id="source-note" aria-labelledby="h-source-note" class="gallery-section surface-canvas">
       <h2 id="h-source-note">Source note</h2>
       <SourceNote
         name="Example official statistics"
@@ -266,7 +266,7 @@ const levels = [
       ))}
     </section>
 
-    <section id="chart" aria-labelledby="h-chart" class="gallery-section surface-alabaster">
+    <section id="chart" aria-labelledby="h-chart" class="gallery-section surface-canvas">
       <h2 id="h-chart">Chart wrapper</h2>
       <ChartWrapper
         title="Placeholder: profit and cash by quarter"
@@ -280,7 +280,7 @@ const levels = [
       />
     </section>
 
-    <section id="art" aria-labelledby="h-art" class="gallery-section surface-white">
+    <section id="art" aria-labelledby="h-art" class="gallery-section surface-raised">
       <h2 id="h-art">Art and icons (V1)</h2>
       <p class="gallery-label">Home hero illustration</p>
       <div class="page-hero">
@@ -348,7 +348,7 @@ const levels = [
       </ul>
     </section>
 
-    <section id="v1-layout" aria-labelledby="h-v1-layout" class="gallery-section surface-alabaster">
+    <section id="v1-layout" aria-labelledby="h-v1-layout" class="gallery-section surface-canvas">
       <h2 id="h-v1-layout">Pills, person flag and byline (V1-58 to V1-61)</h2>
       <p class="gallery-label">Card with a 60-character "other" label and the demo pill</p>
       <div class="gallery-narrow" data-testid="card-long-other">
@@ -359,11 +359,11 @@ const levels = [
           jurisdictionNote={LONG_OTHER}
           demo
           headingLevel={3}
-          surface="white"
+          surface="raised"
         />
       </div>
       <p class="gallery-label">Person page: placeholder flag above the Role term</p>
-      <div class="surface-white" data-testid="person-variant">
+      <div class="surface-raised" data-testid="person-variant">
         <p class="story-card-demo">Placeholder person: not a real person</p>
         <dl class="definition-list page-intro">
           <dt>Role</dt>
@@ -383,13 +383,16 @@ const levels = [
       </div>
     </section>
 
-    <section id="explorer" aria-labelledby="h-explorer" class="gallery-section surface-white">
+    <section id="explorer" aria-labelledby="h-explorer" class="gallery-section surface-raised">
       <h2 id="h-explorer">Cash-versus-profit explorer (F4-58)</h2>
       <p>Static copies of the tool page's explorer: no script runs here, so the gallery stays at 0 KB of JavaScript.</p>
       {EXPLORER_VARIANTS.map((v) => (
         <div class="gallery-explorer" data-testid={`explorer-${v.id}`}>
-          <h3 class="gallery-label">{v.label}</h3>
+          <h3 class="gallery-label" id={`g-${v.id}-label`}>
+            {v.label}
+          </h3>
           <CashVsProfitExplorer
+            labelId={`g-${v.id}-label`}
             idPrefix={`g-${v.id}`}
             values={v.values}
             disabled={v.disabled}
@@ -511,7 +514,7 @@ const levels = [
       ))}
     </section>
 
-    <section id="notices" aria-labelledby="h-notices" class="gallery-section surface-alabaster">
+    <section id="notices" aria-labelledby="h-notices" class="gallery-section surface-canvas">
       <h2 id="h-notices">Demo banner and not-advice notice</h2>
       <p class="gallery-label">
         Restyle only in F2 (wording and behaviour are F10). The not-advice notice is above the page.
@@ -519,7 +522,69 @@ const levels = [
       <DemoBanner />
     </section>
 
-    <section id="type" aria-labelledby="h-type" class="gallery-section surface-white">
+    <section id="v2-components" aria-labelledby="h-v2-components" class="gallery-section surface-canvas">
+      <h2 id="h-v2-components">V2 hero, band and chips</h2>
+      {[
+        { motion: "full", label: "Hero, motion on (eyebrow and CTAs fade up 150/300/500 ms; the title never moves)" },
+        { motion: "reduce", label: "Hero, reduced motion (the static end state: nothing animates)" },
+      ].map((v) => (
+        <div class="gallery-surface surface-canvas" data-testid={`v2-hero-${v.motion}`} data-motion={v.motion}>
+          <p class="gallery-label">{v.label}</p>
+          <div class="page-hero home-hero">
+            <div>
+              <p class="eyebrow">Placeholder eyebrow</p>
+              <h2 class="gallery-hero-title">Placeholder display headline</h2>
+              <p class="page-intro prose">Placeholder lead paragraph for the hero.</p>
+              <ul class="hero-actions">
+                <li>
+                  <a class="button button-primary" href="#v2-components">
+                    Primary action
+                  </a>
+                </li>
+                <li>
+                  <a class="button button-secondary" href="#v2-components">
+                    Secondary action
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      ))}
+      {[
+        { surface: "ink", motion: "full", label: "Feature band on ink, scroll reveal on (rises 8 px where supported)" },
+        { surface: "sand", motion: "reduce", label: "Band on sand, reduced motion (static)" },
+      ].map((b) => (
+        <section
+          class={`band reveal surface-${b.surface}`}
+          aria-label={b.label}
+          data-testid={`v2-band-${b.surface}`}
+          data-motion={b.motion}
+        >
+          <p class="gallery-label">{b.label}</p>
+          <h2 class="gallery-hero-title">Placeholder band heading</h2>
+          <p>
+            Placeholder band text with <a href="#v2-components">a link</a>.
+          </p>
+        </section>
+      ))}
+      <nav aria-label="Chip list example" data-testid="v2-chips">
+        <p class="gallery-label">Chip list (topic jump links)</p>
+        <ul class="link-list chip-list">
+          <li>
+            <a href="#v2-components">Placeholder topic one</a>
+          </li>
+          <li>
+            <a href="#v2-components">Placeholder topic two with a longer label</a>
+          </li>
+          <li>
+            <a href="#v2-components">Topic three</a>
+          </li>
+        </ul>
+      </nav>
+    </section>
+
+    <section id="type" aria-labelledby="h-type" class="gallery-section surface-raised">
       <h2 id="h-type">Type and figures</h2>
       <h3>Heading level 3</h3>
       <h4>Heading level 4</h4>
@@ -538,20 +603,20 @@ const levels = [
           1,234.50
         </span>
       </p>
-      <div class="surface-navy gallery-surface" data-surface="navy">
-        <p class="eyebrow">Eyebrow on navy</p>
+      <div class="surface-ink gallery-surface" data-surface="ink">
+        <p class="eyebrow">Eyebrow on ink</p>
         <p>
-          Text on navy with <a href="#type">a gold link</a>.
+          Text on ink with <a href="#type">a link</a>.
         </p>
       </div>
-      <div class="surface-slate gallery-surface" data-surface="slate">
+      <div class="surface-green-deep gallery-surface" data-surface="green-deep">
         <p>
-          Text on slate with <a href="#type">a gold link</a> and <span class="brand-accent">a gold accent</span>.
+          Text on green-deep with <a href="#type">a link</a> and <span class="brand-accent">a gold accent</span>.
         </p>
       </div>
     </section>
 
-    <section id="wireframes" aria-labelledby="h-wireframes" class="gallery-section surface-white">
+    <section id="wireframes" aria-labelledby="h-wireframes" class="gallery-section surface-raised">
       <h2 id="h-wireframes">D12 wireframes</h2>
       <ul class="gallery-links">
         {WIREFRAMES.map((w) => (

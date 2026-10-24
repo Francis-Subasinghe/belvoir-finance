@@ -78,3 +78,28 @@
 .gallery-narrow {
   max-width: 20rem;
 }
+
+/* F4-23: below 30rem the explorer copies get the full width, as on the tool page. */
+#explorer.gallery-section {
+  padding-inline: 0;
+}
+@media (min-width: 30rem) {
+  #explorer.gallery-section {
+    padding-inline: var(--space-3);
+  }
+}
+
+/* V2 gallery (brief §10): the display-headline look without a second h1, and
+ * the reduced-motion variants shown in their static end state. */
+.gallery-hero-title {
+  font-family: var(--font-display);
+  font-size: var(--step-5);
+  font-weight: 300;
+  line-height: 1.05;
+  margin: 0 0 var(--space-3);
+}
+[data-motion="reduce"],
+[data-motion="reduce"] * {
+  animation-name: none !important;
+  transition-property: none !important;
+}

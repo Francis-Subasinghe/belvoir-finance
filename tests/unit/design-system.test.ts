@@ -76,9 +76,9 @@ describe("F2-03 tokens are declared once, in :root of tokens.css", () => {
       "--color-chart-bg",
       "--measure",
       "--container-max",
-      "--motion-duration-fast",
-      "--motion-duration-base",
-      "--motion-ease-standard",
+      "--motion-fast",
+      "--motion-base",
+      "--motion-ease",
     ]) {
       expect(defined.has(name), name).toBe(true);
     }
@@ -116,7 +116,7 @@ describe("F2-05 every var() resolves to a token", () => {
 });
 
 describe("F2-06 gold rule source scan (PostCSS)", () => {
-  it("src/ passes: gold only under .surface-navy/.surface-slate, #7E6026 never on them", () => {
+  it("src/ passes: gold only under .surface-ink/.surface-green/.surface-green-deep, gold-on-light never on them", () => {
     expect(scanGold(src)).toEqual([]);
   });
   it("the scanner learns aliases of gold from tokens.css", () => {
@@ -202,7 +202,8 @@ describe("F2-30 focus indicators are never removed without a replacement", () =>
 
 describe("F2-32 motion", () => {
   it("motion tokens exist", () => {
-    for (const t of ["--motion-duration-fast", "--motion-duration-base", "--motion-ease-standard"]) {
+    // V2-17: one easing and three durations replace the F2 duration/easing tokens.
+    for (const t of ["--motion-fast", "--motion-base", "--motion-slow", "--motion-ease"]) {
       expect(defined.has(t)).toBe(true);
     }
   });
@@ -214,10 +215,10 @@ describe("F2-32 motion", () => {
     expect(r).toContain("motion-token");
     expect(r).toContain("motion-loop");
   });
-  it("F1's global reduced-motion rule is kept", () => {
-    const css = readFileSync("src/styles/global.css", "utf8");
+  it("F1's global reduced-motion rule is kept (V2: in motion.css, transitions cut to 0.01 ms per V2-19)", () => {
+    const css = readFileSync("src/styles/motion.css", "utf8");
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*animation: none !important;[\s\S]*transition: none !important;[\s\S]*scroll-behavior: auto !important;/,
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*animation: none !important;[\s\S]*transition-duration: var\(--motion-none\) !important;[\s\S]*scroll-behavior: auto !important;/,
     );
   });
 });

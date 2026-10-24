@@ -37,7 +37,7 @@ export const COVER_ATTRIBUTES: Readonly<Record<CoverElement, readonly string[]>>
   circle: ["cx", "cy", "r"],
   path: ["d", "fill", "stroke-width", "stroke-linecap"],
 };
-/** The token classes a cover may use (V1-14); gold resolves only under .surface-navy. */
+/** The token classes a cover may use (V1-14); gold resolves to gold-on-light on .surface-raised (V2-28). */
 export const COVER_CLASSES: readonly string[] = [
   "art-f-gold",
   "art-f-teal",
