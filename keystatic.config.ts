@@ -200,13 +200,14 @@ export default config({
       format: { data: "json" },
       schema: {
         title: fields.slug({ name: { label: "Title (plain text, max 300)" } }),
-        sourceId: fields.text({ label: "Source id" }),
+        sourceId: ref("Source", "sources"),
         url: fields.url({ label: "URL (https; never fetched)" }),
-        publishedAt: fields.date({ label: "Published at" }),
-        fetchedAt: fields.date({ label: "Fetched at" }),
+        // Q-13 (F3-27 parity exception): fields.datetime stores no offset, so these are text.
+        publishedAt: fields.text({ label: "Published at (UTC, written by intake)" }),
+        fetchedAt: fields.text({ label: "Fetched at (UTC, written by intake)" }),
         excerpt: fields.text({ label: "Excerpt (plain text, max 500; only if rights allow)", multiline: true }),
         status: select("Status", SOURCE_ITEM_STATUSES),
-        usedInStory: fields.text({ label: "Used in story id" }),
+        usedInStory: ref("Used in story (set exactly when status is used)", "stories"),
       },
     }),
   },

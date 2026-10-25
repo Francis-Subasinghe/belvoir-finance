@@ -183,6 +183,58 @@ const CASES: Record<string, [string, string, string, RegExp]> = {
   "id-case-duplicate": ["F3-26", "id-invalid", "", /file name "FX-IE-STORY" must be a lowercase slug/],
   "id-slug-key": ["F3-26", "schema", "", /a "slug" key is not allowed/],
   "id-wrong-extension": ["F3-26", "unexpected-file", "", /only \.yaml files belong in content\/topics\//],
+  // ---- F5 (AC_F5_SOURCES.md)
+  "source-real-on-placeholder-host": ["F5-02", "schema", "website", /non-demo source may not use a placeholder host/],
+  "source-real-placeholder-name": ["F5-02", "schema", "name", /non-demo source may not say "\(placeholder\)"/],
+  "source-rss-no-feed-url": ["F5-03", "schema", "feedUrl", /feedType rss needs a feedUrl/],
+  "source-none-with-feed-url": ["F5-03", "schema", "feedUrl", /feedType none has no feed, so feedUrl must be absent/],
+  "source-url-ip-dotted": ["F5-49", "schema", "website", /DNS-name host \(no IP address\)/],
+  "source-url-ip-decimal": ["F5-49", "schema", "website", /DNS-name host \(no IP address\)/],
+  "source-url-ip-v6": ["F5-49", "schema", "website", /DNS-name host \(no IP address\)/],
+  "source-url-port": ["F5-49", "schema", "feedUrl", /port 443 only/],
+  "real-domain-story-body": ["F5-05", "real-domain", "body", /only as the website or feedUrl of a non-demo Source/],
+  "real-domain-demo-source": ["F5-05", "real-domain", "website", /only as the website or feedUrl of a non-demo Source/],
+  // M-32: a non-demo Source is exempt only in website and feedUrl, not in every field.
+  "real-domain-nondemo-other-field": [
+    "F5-05",
+    "real-domain",
+    "editorialNotes",
+    /only as the website or feedUrl of a non-demo Source/,
+  ],
+  "real-domain-demo-story-source": [
+    "F5-05",
+    "real-domain",
+    "sources[0].url",
+    /only as the website or feedUrl of a non-demo Source/,
+  ],
+  "item-date-only": ["F5-06", "schema", "publishedAt", /RFC 3339 date-time with an offset.*\(got "2026-10-06"\)/],
+  "item-no-offset": ["F5-06", "schema", "publishedAt", /\(got "2026-10-06T09:30:00"\)/],
+  "item-impossible-date": ["F5-06", "schema", "fetchedAt", /\(got "2026-02-30T10:00:00Z"\)/],
+  "item-empty-datetime": ["F5-06", "schema", "fetchedAt", /\(got ""\)/],
+  "last-error-url": ["F5-07", "schema", "lastError", /one lastError code from the fixed list/],
+  "last-error-query": ["F5-07", "schema", "lastError", /one lastError code from the fixed list/],
+  "last-error-feed-text": ["F5-07", "schema", "lastError", /one lastError code from the fixed list/],
+  "last-error-no-at": ["F5-07", "schema", "lastErrorAt", /written together by intake \(all or none\)/],
+  "last-error-too-long": ["F5-07", "schema", "lastError", /at most 32 characters/],
+  "excerpt-rights-unknown": [
+    "F5-08",
+    "excerpt-rights",
+    "excerpt",
+    /rights: unknown, so its items are title and link only/,
+  ],
+  "excerpt-rights-titles-only": ["F5-08", "excerpt-rights", "excerpt", /rights: titles-only/],
+  "excerpt-rights-none": ["F5-08", "excerpt-rights", "excerpt", /rights: none/],
+  "excerpt-too-long": ["F5-08", "schema", "excerpt", /<=500 characters/],
+  "ref-item-source": ["F5-09", "ref-missing", "sourceId", /no Source with id "no-such-source"/],
+  "ref-item-story": ["F5-09", "ref-missing", "usedInStory", /no Story with id "no-such-story"/],
+  "item-used-no-story": ["F5-09", "schema", "usedInStory", /status: used needs usedInStory/],
+  "item-queued-with-story": ["F5-09", "schema", "usedInStory", /only set when status is used/],
+  "item-title-blank": ["F5-10", "schema", "title", /must not be blank/],
+  "item-title-nul": ["F5-10", "schema", "title", /control character/],
+  "item-url-javascript": ["F5-10", "schema", "url", /absolute https URL/],
+  "seed-active": ["F5-48", "seed-active", "status", /awaiting Francis \(Q-1\)/],
+  "seed-rights-licensed": ["F5-48", "seed-rights", "rights", /awaiting Francis \(Q-1\)/],
+  "seed-rights-excerpt": ["F5-48", "seed-rights", "rights", /awaiting Francis \(Q-1\)/],
 };
 
 describe("F3-31 content fixtures", () => {
@@ -200,8 +252,11 @@ describe("F3-31 content fixtures", () => {
     expect(readdirSync(NEG).sort()).toEqual(Object.keys(CASES).sort());
   });
 
-  it("F3-15 the reference table covers the eleven reference types", () => {
-    expect(REFERENCES).toHaveLength(11);
+  it("F3-15 / F5-09 the reference table covers the eleven F3 reference types plus the two SourceItem ones", () => {
+    expect(REFERENCES).toHaveLength(13);
+    expect(REFERENCES.map((r) => `${r.from}.${r.field}->${r.to}`)).toEqual(
+      expect.arrayContaining(["sourceItems.sourceId->sources", "sourceItems.usedInStory->stories"]),
+    );
     expect(REFERENCES.map((r) => `${r.from}.${r.field}->${r.to}`)).toEqual(
       expect.arrayContaining(["tools.reviewer->people", "tools.sourceRecord->sources"]),
     );
@@ -320,5 +375,56 @@ describe("F3-30 every problem is reported, not just the first", () => {
         rmSync(dir, { recursive: true, force: true });
       }
     }
+  });
+});
+
+describe("F5 content rules (AC_F5_SOURCES.md)", () => {
+  const tmp = mkdtempSync(join(tmpdir(), "belvoir-f5-rules-"));
+  afterAll(() => rmSync(tmp, { recursive: true, force: true }));
+  const r0 = (id: string) => must(checkContentRules(BASE).entries.find((e) => e.id === id));
+  function overlay(name: string, dir: "sources" | "source-items", file: string, text: string): string {
+    mkdirSync(join(tmp, name, dir), { recursive: true });
+    writeFileSync(join(tmp, name, dir, file), text);
+    return join(tmp, name);
+  }
+  const scheme = "https";
+  const at = String.fromCharCode(64);
+
+  it.each(["excerpt-rights-licensed", "excerpt-rights-titles-and-short-excerpt"])(
+    "F5-08 positive: an excerpt of 500 characters with %s rights passes",
+    (name) => {
+      expect(checkContentRules([BASE, `${ROOT}/positive/${name}`]).errors.map(formatProblem)).toEqual([]);
+    },
+  );
+
+  it("F5-49 a feedUrl with userinfo (built in code) fails", () => {
+    const feedUrl = `${scheme}://${"user"}${at}${"feeds.fixture-source.test"}/rss`;
+    const dir = overlay("userinfo", "sources", "fx-active.yaml", stringify({ ...r0("fx-active").raw, feedUrl }));
+    const r = checkContentRules([BASE, dir]);
+    expect(r.errors.some((e) => e.field === "feedUrl" && /no username or password/.test(e.message))).toBe(true);
+  });
+
+  it("F5-07 a token-like lastError (built in code) fails", () => {
+    const lastError = `${"ghp"}_${"a".repeat(36)}`;
+    const dir = overlay("token", "sources", "fx-active.yaml", stringify({ ...r0("fx-active").raw, lastError }));
+    const r = checkContentRules([BASE, dir]);
+    expect(r.errors.some((e) => e.field === "lastError")).toBe(true);
+  });
+
+  it("F5-48 positive control: the committed demo Source stays active, and every committed non-demo Source is paused", () => {
+    const r = checkContentRules("content");
+    expect(r.errors.map(formatProblem)).toEqual([]);
+    const sources = r.entries.filter((e) => e.collection === "sources");
+    expect(sources.find((s) => s.id === "example-placeholder-research")?.raw.status).toBe("active");
+    for (const s of sources.filter((x) => x.raw.demo === false)) {
+      expect(s.raw.status, s.file).toBe("paused");
+      expect(["titles-only", "unknown"], s.file).toContain(s.raw.rights);
+    }
+  });
+
+  it("F5-48 the .test fixture exemption never applies to committed content", () => {
+    for (const s of checkContentRules("content").entries.filter((e) => e.collection === "sources"))
+      for (const k of ["website", "feedUrl"])
+        if (typeof s.raw[k] === "string") expect(new URL(String(s.raw[k])).hostname, s.file).not.toMatch(/\.test$/);
   });
 });

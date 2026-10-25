@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Fixture feed</title><link>https://feeds.example.invalid/</link><description>Fixture</description>
+<item><title><![CDATA[<b>Rates</b> &amp; reliefs]]></title><link>https://news.example.invalid/cdata</link><pubDate>Tue, 06 Oct 2026 09:30:00 +0000</pubDate></item>
+</channel></rss>

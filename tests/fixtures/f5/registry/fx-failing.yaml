@@ -1,0 +1,21 @@
+name: Fixture Failing
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: "https://www.fx-failing.test/"
+feedUrl: "https://feeds.fx-failing.test/rss"
+feedType: rss
+updateFrequency: Daily
+rights: titles-only
+rightsNotes: ""
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: ""
+demo: false
+status: active
+lastError: http-503
+lastErrorAt: "2026-10-22T08:00:00Z"
+consecutiveFailures: 2

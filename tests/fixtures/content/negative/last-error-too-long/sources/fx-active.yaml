@@ -1,0 +1,21 @@
+name: Fixture Active Source
+publisher: Fixture publisher
+category: primary-official
+topics:
+  - fx-topic-a
+jurisdiction: UK
+website: "https://www.fixture-source.test/"
+feedUrl: "https://feed-marker-k3j.fixture-source.test/feed"
+feedType: rss
+updateFrequency: Monthly
+rights: titles-only
+rightsNotes: RIGHTS-MARKER-K3J
+role: primary
+owner: owner-marker-q7x
+lastChecked: 2026-09-01
+editorialNotes: EDITORIAL-MARKER-K3J
+demo: false
+status: active
+lastError: "too-many-redirects-too-many-redir"
+lastErrorAt: "2026-09-03T07:15:42Z"
+consecutiveFailures: 917

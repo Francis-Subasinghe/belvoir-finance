@@ -1,0 +1,18 @@
+name: Institute for Fiscal Studies research
+publisher: Institute for Fiscal Studies
+category: professional-research
+topics:
+  - understand-the-numbers
+jurisdiction: UK
+website: https://ifs.org.uk/
+feedType: rss
+feedUrl: https://ifs.org.uk/rss.xml
+updateFrequency: Weekly
+rights: unknown
+rightsNotes: Feed reachable on 2026-10-23; reuse terms not yet confirmed, so titles and links only until reviewed. Seed awaiting Francis (pre-launch list).
+role: expert-interpretation
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: F5 seed. Paused until Francis approves the pre-launch list (Q-1) and rights (Q-2).
+demo: false
+status: paused

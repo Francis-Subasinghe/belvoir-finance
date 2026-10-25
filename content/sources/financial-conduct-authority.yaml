@@ -1,0 +1,18 @@
+name: Financial Conduct Authority news
+publisher: Financial Conduct Authority
+category: primary-official
+topics:
+  - make-better-decisions
+jurisdiction: UK
+website: https://www.fca.org.uk/
+feedType: rss
+feedUrl: https://www.fca.org.uk/news/rss.xml
+updateFrequency: Several a week
+rights: unknown
+rightsNotes: Feed reachable on 2026-10-23; reuse terms not yet confirmed, so titles and links only until reviewed. Seed awaiting Francis (pre-launch list).
+role: primary
+owner: placeholder-reviewer
+lastChecked: 2026-10-23
+editorialNotes: F5 seed. Paused until Francis approves the pre-launch list (Q-1) and rights (Q-2).
+demo: false
+status: paused

@@ -29,6 +29,7 @@
     "eslint-plugin-astro": "3.2.1",
     "eslint-plugin-jsx-a11y-x": "0.2.0",
     "globals": "17.13.0",
+    "parse5": "8.0.1",
     "postcss": "8.5.28",
     "postcss-selector-parser": "7.1.6",
     "prettier": "3.9.9",
@@ -65,6 +66,7 @@
     "postbuild": "npm run test:build",
     "test:e2e": "npm run build:gallery && playwright test",
     "test:visual": "playwright test --config playwright.visual.config.ts",
-    "wireframes": "playwright test --config playwright.visual.config.ts --project wireframes"
+    "wireframes": "playwright test --config playwright.visual.config.ts --project wireframes",
+    "intake": "node scripts/intake.ts"
   }
 }

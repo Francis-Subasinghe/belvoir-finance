@@ -4,11 +4,11 @@ category: primary-official
 topics:
   - fx-topic-a
 jurisdiction: UK
-website: "https://www.example.com/"
-feedUrl: "https://feed-marker-k3j.example.com/feed"
+website: "https://www.fixture-source.test/"
+feedUrl: "https://feed-marker-k3j.fixture-source.test/feed"
 feedType: rss
 updateFrequency: Monthly
-rights: titles-only
+rights: titles-and-short-excerpt
 rightsNotes: RIGHTS-MARKER-K3J
 role: primary
 owner: owner-marker-q7x
@@ -16,3 +16,6 @@ lastChecked: 2026-09-01
 editorialNotes: EDITORIAL-MARKER-K3J
 demo: false
 status: active
+lastError: http-503
+lastErrorAt: "2026-09-03T07:15:42Z"
+consecutiveFailures: 917
