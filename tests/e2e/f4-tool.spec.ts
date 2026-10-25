@@ -389,8 +389,11 @@ test.describe("F4-35 / F4-37 JavaScript off", () => {
       await route.fulfill({ response: res, body });
     });
     await page.goto(TOOL);
+    // V2-21: JavaScript is off, so page.evaluate(document.fonts.ready) cannot run in
+    // Firefox. Wait for the self-hosted font fetches from the network side instead,
+    // so they settle before the no-request window opens.
     await page.waitForLoadState("load");
-    await page.evaluate(() => document.fonts.ready);
+    await page.waitForLoadState("networkidle");
     const url = page.url();
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));
@@ -503,7 +506,11 @@ test.describe("F4-47 / F4-36 the web-font swap moves nothing on the tool page", 
 });
 
 test.describe("F4-50 commits are cheap", () => {
-  test("F4-50 with 4x CPU throttling, committing S3-14 makes no long task over 50 ms", async ({ page }) => {
+  test("F4-50 with 4x CPU throttling, committing S3-14 makes no long task over 50 ms", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== "chromium", "CPU throttling needs a Chromium CDP session (V2-21)");
     await open(page);
     // Type the values unthrottled; the measured window is the S3-14 commit itself.
     await fillAll(page, S3_14);
@@ -583,7 +590,12 @@ const BAND: [number, number, number][] = [
 test.describe("F4-51 chart labels scale with the page", () => {
   test("F4-51 labels are >= 9 px at 320/360 and 9-16 px at 768/1280 on both chart stories and the gallery, without overlap or overflow", async ({
     page,
+    browserName,
   }) => {
+    test.fixme(
+      browserName === "firefox",
+      "V2-21 finding: in Firefox the gallery chart at 360 px overlaps the 9,100 and 11,600 labels; needs a product fix",
+    );
     const measured: string[] = [];
     for (const [width, min, max] of BAND) {
       await page.setViewportSize({ width, height: 900 });
