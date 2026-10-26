@@ -1,0 +1,52 @@
+# Negative fixture (AC_F5_SOURCES.md): F5-38 a non-allowlisted ${{ }} in run:
+name: Intake
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: intake
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    name: Intake (fixtures only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Intake on the committed fixtures (no network)
+        run: npm run intake -- --fixtures tests/fixtures/f5 --out "$RUNNER_TEMP/intake"
+      - name: "F5-40 / F5-51: check the queue before upload"
+        # The same checks the import runs: path patterns, regular files only, size caps,
+        # canonical JSON and the schemas. Fails the job before anything is uploaded.
+        run: npm run intake:verify -- "${{ github.event.inputs.dir }}"
+      - name: Run summary
+        # summary.txt is fixed-format (F5-35) and was checked by the step above.
+        run: |
+          {
+            echo "## Intake (fixtures only)"
+            echo
+            echo '```text'
+            cat "$RUNNER_TEMP/intake/summary.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: intake-queue
+          path: ${{ runner.temp }}/intake/
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 7

@@ -240,7 +240,7 @@ describe("Repo guard: every actions/checkout sets persist-credentials: false", (
       expect(checkoutSteps(doc).length, f).toBeGreaterThan(0);
       steps += checkoutSteps(doc).length;
     }
-    expect(steps).toBe(6);
+    expect(steps).toBe(7); // ci.yml and lighthouse.yml 6, intake.yml 1 (F5-37)
   });
 
   it("the positive fixture passes (two jobs, any key order; a reusable-workflow job has no steps)", () => {
@@ -300,7 +300,7 @@ describe("Repo guard: every actions/checkout sets persist-credentials: false", (
     it("passes on the real workflows", () => {
       const r = spawnSync(process.execPath, [CLI], { encoding: "utf8" });
       expect(r.status, r.stderr).toBe(0);
-      expect(r.stdout).toContain("6 checkout step(s)");
+      expect(r.stdout).toContain("7 checkout step(s)");
     });
 
     it("is an npm script that CI runs right after npm ci", () => {
