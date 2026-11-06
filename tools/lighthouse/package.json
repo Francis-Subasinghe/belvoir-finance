@@ -8,7 +8,7 @@
     "node": ">=24.11.0 <25"
   },
   "devDependencies": {
-    "@lhci/cli": "0.15.1"
+    "@lhci/cli": "0.16.0"
   },
   "//overrides": [
     "Overrides clear the high/moderate npm audit findings in @lhci/cli 0.15.1 deps (it pins lighthouse 12.6.1). Re-check each with npm audit when bumping @lhci/cli.",
